@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Competitive Intel</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber-bg:#fffbf5;--amber-border:#fde68a;
+  --cyan:#0369a1;--cyan-bg:#f0f9ff;--cyan-border:#bae6fd;
+  --green:#059669;--green-bg:#d1fae5;--green-border:#6ee7b7;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;--violet-border:#ddd6fe;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --red:#991b1b;--red-bg:#fee2e2;--red-border:#fecaca;
+  --rose:#be123c;--rose-bg:#fff1f2;--rose-border:#fecdd3;
+  --teal:#0d9488;--teal-bg:#f0fdfa;--teal-border:#99f6e4;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --indigo:#4338ca;--indigo-bg:#eef2ff;--indigo-border:#c7d2fe;
+  --slate:#475569;--slate-bg:#f8fafc;--slate-border:#e2e8f0;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.12),0 4px 10px rgba(0,0,0,.06);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+.layout{display:grid;grid-template-columns:300px 1fr;height:100vh;overflow:hidden}
+
+/* ══ SIDEBAR ══ */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-scroll{flex:1;overflow-y:auto}
+.sb-head{padding:22px 20px 16px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:center;line-height:1.3}
+.mode-btn svg{width:17px;height:17px;flex-shrink:0}
+.mode-btn:hover,.mode-btn.on-monitor{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-bg)}
+.mode-btn.on-report{border-color:var(--indigo);color:var(--indigo);background:var(--indigo-bg)}
+.mode-btn.on-threats{border-color:var(--rose);color:var(--rose);background:var(--rose-bg)}
+.mode-btn.on-opportunities{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.mode-btn.on-hiring{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.full-row{grid-column:1/-1}
+.mode-btn.on-deep{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.sb-sec{padding:14px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Watched companies */
+.company-list{display:flex;flex-direction:column;gap:5px}
+.company-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);font-size:12.5px;cursor:pointer;transition:all .12s;position:relative}
+.company-item:hover{background:var(--cyan-bg);border-color:var(--cyan-border)}
+.company-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.co-ai{background:#6366f1}
+.co-tech{background:#0ea5e9}
+.co-corp{background:#10b981}
+.co-other{background:#f59e0b}
+.company-name{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.company-sector{font-size:10.5px;color:var(--muted)}
+.company-remove{display:none;background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;margin-left:auto}
+.company-item:hover .company-remove{display:flex}
+.add-company-row{display:flex;gap:6px;margin-top:8px}
+.co-input{flex:1;padding:7px 10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--txt);outline:none;transition:border-color .15s}
+.co-input:focus{border-color:var(--cyan)}
+.co-input::placeholder{color:var(--muted)}
+.co-add-btn{padding:7px 12px;background:var(--txt);border:none;border-radius:var(--r2);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s;flex-shrink:0}
+.co-add-btn:hover{background:#2d2a26}
+
+/* Stats */
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--cyan-bg);color:var(--cyan)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-bg)}
+
+
+
+/* ══ MAIN ══ */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:12px 26px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.tl{display:flex;align-items:center;gap:10px;min-width:0}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow);white-space:nowrap}
+.mode-pill.monitor{color:var(--cyan);border-color:var(--cyan-border);background:var(--cyan-bg)}
+.mode-pill.report{color:var(--indigo);border-color:var(--indigo-border);background:var(--indigo-bg)}
+.mode-pill.threats{color:var(--rose);border-color:var(--rose-border);background:var(--rose-bg)}
+.mode-pill.opportunities{color:var(--green);border-color:var(--green-border);background:var(--green-bg)}
+.mode-pill.hiring{color:var(--amber);border-color:var(--amber-border);background:var(--amber-bg)}
+.mode-pill.deep{color:var(--violet);border-color:var(--violet-border);background:var(--violet-bg)}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;white-space:nowrap}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+.live-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:20px;font-size:11px;font-weight:600;color:#065f46}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+
+/* ══ MESSAGES ══ */
+.msgs-wrap{flex:1;overflow-y:auto;padding:28px 0;scroll-behavior:smooth}
+.msgs{max-width:900px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ WELCOME ══ */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;padding:20px 0}
+.w-icon{width:64px;height:64px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:32px;height:32px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:500px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:620px}
+.hint{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.h-monitor:hover{border-color:var(--cyan);background:var(--cyan-bg)}
+.hint.h-report:hover{border-color:var(--indigo);background:var(--indigo-bg)}
+.hint.h-threats:hover{border-color:var(--rose);background:var(--rose-bg)}
+.hint.h-opps:hover{border-color:var(--green);background:var(--green-bg)}
+.hint.h-hiring:hover{border-color:var(--amber);background:var(--amber-bg)}
+.hint.h-deep:hover{border-color:var(--violet);background:var(--violet-bg)}
+.hint-em{font-size:20px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* ══ INPUT BAR ══ */
+.input-bar{flex-shrink:0;padding:12px 26px 16px;background:var(--bg);border-top:1px solid var(--border)}
+.input-inner{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:7px}
+.input-wrap{display:flex;align-items:flex-end;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;transition:border-color .15s;box-shadow:var(--shadow)}
+.input-wrap:focus-within{border-color:#c5c0b8;box-shadow:0 0 0 3px rgba(3,105,161,.06)}
+.task-ta{flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;color:var(--txt);background:transparent;resize:none;min-height:24px;max-height:200px}
+.task-ta::placeholder{color:var(--muted)}
+.send-btn{width:34px;height:34px;background:var(--txt);border:none;border-radius:var(--r2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.send-btn:hover:not(:disabled){background:#2d2a26;transform:translateY(-1px)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.send-btn svg{width:14px;height:14px}
+.input-hint{font-size:11.5px;color:var(--muted)}
+
+/* ══ MESSAGE ROW ══ */
+.msg-row{display:flex;gap:12px;padding:18px 0;border-bottom:1px solid var(--border2);animation:fadein .3s ease}
+.msg-row:last-child{border-bottom:none}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.av-agent{background:var(--txt)}
+.av-user{background:var(--cyan)}
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.msg-time{font-weight:400;font-size:11px;color:var(--muted)}
+.msg-content{font-size:14px;line-height:1.7;color:var(--txt)}
+.thinking-row{display:flex;gap:12px;padding:18px 0}
+.dots{display:flex;gap:4px;align-items:center;height:22px}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* ══ STATUS CARDS ══ */
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-monitor{background:var(--cyan-bg);color:#0c4a6e;border:1px solid var(--cyan-border)}
+.card-report{background:var(--indigo-bg);color:var(--indigo);border:1px solid var(--indigo-border)}
+.card-threats{background:var(--rose-bg);color:var(--rose);border:1px solid var(--rose-border)}
+.card-opportunities{background:var(--green-bg);color:#065f46;border:1px solid var(--green-border)}
+.card-hiring{background:var(--amber-bg);color:#92400e;border:1px solid var(--amber-border)}
+.card-deep{background:var(--violet-bg);color:#5b21b6;border:1px solid var(--violet-border)}
+.card-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+
+/* ══ INTELLIGENCE REPORT BLOCK ══ */
+.intel-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:8px 0 4px;box-shadow:var(--shadow)}
+.intel-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);gap:10px}
+.intel-hd-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;min-width:0}
+.intel-hd-left.monitor{color:var(--cyan)}
+.intel-hd-left.report{color:var(--indigo)}
+.intel-hd-left.threats{color:var(--rose)}
+.intel-hd-left.opportunities{color:var(--green)}
+.intel-hd-left.hiring{color:var(--amber)}
+.intel-hd-left.deep{color:var(--violet)}
+.intel-hd-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.intel-timestamp{font-size:10.5px;color:var(--muted)}
+.copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover{background:var(--border);color:var(--txt)}
+.copy-btn.copied{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.intel-bd{padding:0;max-height:740px;overflow-y:auto;background:#fafaf9}
+
+/* Report sections */
+.report-section{padding:18px 22px;border-bottom:1px solid var(--border2)}
+.report-section:last-child{border-bottom:none}
+.rs-title{font-size:10.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.rs-title::after{content:'';flex:1;height:1px;background:var(--border2)}
+
+/* Company profile cards */
+.company-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.co-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px 15px;transition:border-color .15s}
+.co-card:hover{border-color:#c5c0b8}
+.co-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.co-logo{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;font-family:'Lora',serif}
+.co-logo.ai{background:var(--indigo-bg);color:var(--indigo)}
+.co-logo.tech{background:var(--cyan-bg);color:var(--cyan)}
+.co-logo.corp{background:var(--teal-bg);color:var(--teal)}
+.co-logo.other{background:var(--amber-bg);color:var(--amber)}
+.co-card-title{font-size:13px;font-weight:600}
+.co-card-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.co-meta-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.co-meta-chip{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:500}
+.cmc-funding{background:var(--green-bg);color:#065f46}
+.cmc-employees{background:var(--blue-bg);color:var(--blue)}
+.cmc-founded{background:var(--surface2);color:var(--txt2)}
+.cmc-hq{background:var(--violet-bg);color:var(--violet)}
+.co-summary{font-size:12px;color:var(--txt2);line-height:1.6}
+
+/* Signal feed */
+.signal-list{display:flex;flex-direction:column;gap:8px}
+.signal-item{display:flex;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);transition:border-color .15s}
+.signal-item:hover{border-color:#c5c0b8}
+.signal-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.si-product{background:var(--cyan-bg)}
+.si-pricing{background:var(--green-bg)}
+.si-hiring{background:var(--amber-bg)}
+.si-tech{background:var(--violet-bg)}
+.si-partnership{background:var(--teal-bg)}
+.si-funding{background:var(--indigo-bg)}
+.si-executive{background:var(--rose-bg)}
+.si-strategy{background:var(--orange-bg)}
+.signal-body{flex:1;min-width:0}
+.signal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.signal-title{font-size:12.5px;font-weight:600;line-height:1.4}
+.signal-date{font-size:10.5px;color:var(--muted);flex-shrink:0;white-space:nowrap}
+.signal-text{font-size:12px;color:var(--txt2);line-height:1.6}
+.signal-meta{display:flex;align-items:center;gap:7px;margin-top:6px}
+.signal-company-tag{padding:2px 8px;background:var(--surface2);border-radius:10px;font-size:10.5px;font-weight:500;color:var(--txt2)}
+.signal-impact{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.imp-high{background:var(--rose-bg);color:var(--rose)}
+.imp-medium{background:var(--amber-bg);color:var(--amber)}
+.imp-low{background:var(--green-bg);color:var(--green)}
+.signal-source{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:3px;margin-left:auto}
+.signal-source a{color:var(--cyan);text-decoration:none}
+.signal-source a:hover{text-decoration:underline}
+
+/* Threat / Opportunity cards */
+.to-list{display:flex;flex-direction:column;gap:8px}
+.to-card{padding:14px 16px;border-radius:var(--r);border-left:3px solid}
+.to-card.threat-critical{background:#fff1f2;border-color:var(--rose)}
+.to-card.threat-high{background:var(--red-bg);border-color:#dc2626}
+.to-card.threat-medium{background:var(--orange-bg);border-color:var(--orange)}
+.to-card.threat-low{background:var(--amber-bg);border-color:var(--amber)}
+.to-card.opp-high{background:var(--green-bg);border-color:var(--green)}
+.to-card.opp-medium{background:var(--teal-bg);border-color:var(--teal)}
+.to-card.opp-low{background:var(--cyan-bg);border-color:var(--cyan)}
+.to-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.to-title{font-size:13px;font-weight:600;line-height:1.4}
+.to-severity{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:8px;flex-shrink:0}
+.ts-critical{background:var(--rose);color:#fff}
+.ts-high{background:#dc2626;color:#fff}
+.ts-medium{background:var(--orange);color:#fff}
+.ts-low{background:var(--amber);color:#fff}
+.os-high{background:var(--green);color:#fff}
+.os-medium{background:var(--teal);color:#fff}
+.os-low{background:var(--cyan);color:#fff}
+.to-body{font-size:12.5px;line-height:1.65}
+.to-meta{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--muted)}
+.to-action{font-size:11.5px;margin-top:6px;padding:7px 10px;background:rgba(255,255,255,.6);border-radius:var(--r2);color:var(--txt2);font-style:italic}
+
+/* Hiring trends */
+.hiring-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hiring-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px}
+.hc-company{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.hc-roles{display:flex;flex-direction:column;gap:5px}
+.hc-role{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hc-role-name{font-size:12px;color:var(--txt2)}
+.hc-role-count{font-size:11px;font-weight:600;padding:1px 7px;background:var(--amber-bg);border-radius:8px;color:var(--amber);flex-shrink:0}
+.hc-trend{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
+
+/* Score / rating */
+.score-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.score-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:12px 10px;text-align:center}
+.score-num{font-family:'Lora',serif;font-size:22px;font-weight:500;line-height:1}
+.score-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.score-trend{font-size:11px;margin-top:4px;font-weight:500}
+.score-trend.up{color:var(--green)}
+.score-trend.down{color:var(--rose)}
+.score-trend.flat{color:var(--muted)}
+
+/* Strategy recommendations */
+.strategy-list{display:flex;flex-direction:column;gap:8px}
+.strategy-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;display:flex;gap:12px}
+.sc-num{width:26px;height:26px;border-radius:6px;background:var(--indigo-bg);color:var(--indigo);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-body{flex:1;min-width:0}
+.sc-title{font-size:12.5px;font-weight:600;margin-bottom:4px}
+.sc-desc{font-size:12px;color:var(--txt2);line-height:1.6}
+.sc-priority{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:8px;margin-top:6px;display:inline-block}
+.scp-urgent{background:var(--rose-bg);color:var(--rose)}
+.scp-high{background:var(--amber-bg);color:var(--amber)}
+.scp-medium{background:var(--cyan-bg);color:var(--cyan)}
+.scp-low{background:var(--surface2);color:var(--muted)}
+
+/* Technology shift */
+.tech-list{display:flex;flex-direction:column;gap:6px}
+.tech-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2)}
+.tech-badge{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0;margin-top:1px}
+.tb-adopting{background:var(--violet-bg);color:var(--violet)}
+.tb-abandoning{background:var(--rose-bg);color:var(--rose)}
+.tb-investing{background:var(--green-bg);color:var(--green)}
+.tb-patenting{background:var(--amber-bg);color:var(--amber)}
+.tech-body{flex:1;min-width:0}
+.tech-name{font-size:12.5px;font-weight:600;margin-bottom:2px}
+.tech-desc{font-size:12px;color:var(--txt2);line-height:1.5}
+
+/* Sources strip */
+.sources-strip{padding:12px 16px;border-top:1px solid var(--border2);background:var(--surface2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sources-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-right:4px}
+.source-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;font-size:10.5px;color:var(--txt2)}
+.source-chip a{color:var(--cyan);text-decoration:none}
+.source-chip a:hover{text-decoration:underline}
+
+/* Download row */
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border2);background:var(--surface2)}
+.dl-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-pdf{background:var(--txt);color:#fff}
+.dl-pdf:hover{background:#2d2a26;transform:translateY(-1px)}
+.dl-json{background:var(--teal);color:#fff}
+.dl-json:hover{background:#0f766e;transform:translateY(-1px)}
+.dl-md{background:var(--indigo);color:#fff}
+.dl-md:hover{background:#3730a3;transform:translateY(-1px)}
+
+@media(max-width:800px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .hint-grid{grid-template-columns:1fr}
+  .company-grid,.hiring-grid,.score-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="sb-scroll">
+      <div class="sb-head">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="logo-name">Stremini</div>
+            <div class="logo-sub">Intel Agent</div>
+          </div>
+        </div>
+        <div class="sb-label" style="margin-bottom:9px">Mode</div>
+        <div class="mode-grid">
+          <button class="mode-btn on-monitor" id="btnMonitor" onclick="setMode('monitor')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Monitor
+          </button>
+          <button class="mode-btn" id="btnAsk" onclick="setMode('ask')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Ask Anything
+          </button>
+          <button class="mode-btn" id="btnReport" onclick="setMode('report')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Strategy Report
+          </button>
+          <button class="mode-btn" id="btnThreats" onclick="setMode('threats')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Threats
+          </button>
+          <button class="mode-btn" id="btnOpps" onclick="setMode('opportunities')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Opportunities
+          </button>
+          <button class="mode-btn" id="btnHiring" onclick="setMode('hiring')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Hiring Trends
+          </button>
+          <button class="mode-btn full-row" id="btnDeep" onclick="setMode('deep')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Deep Company Analysis
+          </button>
+        </div>
+      </div>
+
+      <div class="sb-sec">
+        <div class="sb-label">Status</div>
+        <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+        <div style="margin-top:8px;font-size:11.5px;color:var(--muted)" id="modeNote">Monitor — live competitor updates</div>
+      </div>
+
+      <!-- Watched Companies -->
+      <div class="sb-sec">
+        <div class="sb-label" style="margin-bottom:9px">Watched Companies</div>
+        <div class="company-list" id="companyList"></div>
+        <div class="add-company-row">
+          <input class="co-input" id="coInput" type="text" placeholder="Add company…" onkeydown="if(event.key==='Enter')addCompany()"/>
+          <button class="co-add-btn" onclick="addCompany()">Add</button>
+        </div>
+      </div>
+
+      <div class="sb-sec">
+        <div class="sb-label">Session Stats</div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-n" id="sReports">0</div><div class="stat-l">Reports</div></div>
+          <div class="stat-box"><div class="stat-n" id="sSignals">0</div><div class="stat-l">Signals</div></div>
+          <div class="stat-box"><div class="stat-n" id="sThreats">0</div><div class="stat-l">Threats</div></div>
+        </div>
+      </div>
+
+      <div class="sb-sec" style="flex:1">
+        <div class="sb-label">Recent Queries</div>
+        <div class="recent-list" id="recentList"><div class="muted-note">No queries yet</div></div>
+      </div>
+
+      <div class="sb-sec">
+        <button class="new-btn" onclick="clearChat()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New session
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill monitor" id="modePill">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span id="pillTxt">Monitor Mode</span>
+        </div>
+        <div class="live-badge" id="liveBadge">
+          <div class="live-dot"></div>Live Search
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="ghost-btn" onclick="runWeeklyReport()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Weekly Report
+        </button>
+        <button class="ghost-btn" onclick="clearChat()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="msgs-wrap" id="msgsWrap">
+      <div class="msgs" id="msgs"></div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-wrap">
+          <textarea id="ta" class="task-ta" rows="1" placeholder="Ask about competitors, request a report, or monitor specific signals…"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint" id="inputHint">Enter to send · Shift+Enter for new line · Add companies in the sidebar to watch them</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────
+const BACKEND = "https://compeititve.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let currentMode  = "monitor";
+let running      = false;
+let chatHistory  = [];
+let thinkingRow  = null;
+let reportCount  = 0;
+let signalCount  = 0;
+let threatCount  = 0;
+
+const DEFAULT_COMPANIES = [
+  { name:"Perplexity AI", sector:"AI Search", type:"ai" },
+  { name:"Anthropic",     sector:"AI Safety", type:"ai" },
+  { name:"Google DeepMind", sector:"AI Research", type:"corp" },
+  { name:"OpenAI",        sector:"AI Platform", type:"ai" },
+  { name:"Mistral AI",    sector:"Open Source AI", type:"ai" },
+];
+
+let watchedCompanies = [...DEFAULT_COMPANIES];
+
+// ─────────────────────────────────────────
+// DOM
+// ─────────────────────────────────────────
+const ta       = document.getElementById("ta");
+const sendBtn  = document.getElementById("sendBtn");
+const msgsEl   = document.getElementById("msgs");
+const msgsWrap = document.getElementById("msgsWrap");
+
+// ─────────────────────────────────────────
+// Textarea
+// ─────────────────────────────────────────
+ta.addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 200) + "px";
+});
+ta.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+// ─────────────────────────────────────────
+// Company list
+// ─────────────────────────────────────────
+function renderCompanies() {
+  const el = document.getElementById("companyList");
+  el.innerHTML = "";
+  watchedCompanies.forEach((co, i) => {
+    const item = document.createElement("div");
+    item.className = "company-item";
+    item.innerHTML = `
+      <div class="company-dot co-${co.type||'other'}"></div>
+      <div class="company-name">${escHtml(co.name)}</div>
+      <div class="company-sector">${escHtml(co.sector||"")}</div>
+      <button class="company-remove" onclick="removeCompany(${i})" title="Remove">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>`;
+    item.querySelector(".company-name").onclick = () => hintClick("monitor", `Give me the latest updates on ${co.name}`);
+    el.appendChild(item);
+  });
+}
+function addCompany() {
+  const input = document.getElementById("coInput");
+  const name  = input.value.trim();
+  if (!name) return;
+  watchedCompanies.push({ name, sector:"", type:"other" });
+  input.value = "";
+  renderCompanies();
+}
+function removeCompany(i) {
+  watchedCompanies.splice(i, 1);
+  renderCompanies();
+}
+renderCompanies();
+
+// ─────────────────────────────────────────
+// Mode config
+// ─────────────────────────────────────────
+const modeConfig = {
+  monitor: {
+    pillClass:"monitor", pillTxt:"Monitor Mode",
+    note:"Monitor — live competitor updates",
+    placeholder:"Which company, market signal, or strategic move should I monitor?",
+    btnId:"btnMonitor", btnClass:"on-monitor",
+    statusLabel:"Scanning signals…", doneLabel:"Intelligence gathered",
+  },
+  ask: {
+    pillClass:"monitor", pillTxt:"Ask Mode",
+    note:"Ask — query any competitor, market, segment, or strategy question",
+    placeholder:"Ask any competitive question (company, market, pricing, GTM, trend, geography)…",
+    btnId:"btnAsk", btnClass:"on-monitor",
+    statusLabel:"Researching your query…", doneLabel:"Answer ready",
+  },
+  report: {
+    pillClass:"report", pillTxt:"Strategy Report",
+    note:"Strategy Report — full weekly competitive brief",
+    placeholder:"Generate a weekly strategy report for my watched companies…",
+    btnId:"btnReport", btnClass:"on-report",
+    statusLabel:"Compiling report…", doneLabel:"Strategy report ready",
+  },
+  threats: {
+    pillClass:"threats", pillTxt:"Threat Analysis",
+    note:"Threats — identify competitive risks",
+    placeholder:"What threats should I be aware of? Specify companies or domain…",
+    btnId:"btnThreats", btnClass:"on-threats",
+    statusLabel:"Analysing threats…", doneLabel:"Threat analysis complete",
+  },
+  opportunities: {
+    pillClass:"opportunities", pillTxt:"Opportunity Finder",
+    note:"Opportunities — find gaps and white space",
+    placeholder:"Find opportunities based on competitor weaknesses and market gaps…",
+    btnId:"btnOpps", btnClass:"on-opportunities",
+    statusLabel:"Finding opportunities…", doneLabel:"Opportunities identified",
+  },
+  hiring: {
+    pillClass:"hiring", pillTxt:"Hiring Trends",
+    note:"Hiring — decode strategy through talent signals",
+    placeholder:"Show me hiring trends and what they signal strategically…",
+    btnId:"btnHiring", btnClass:"on-hiring",
+    statusLabel:"Tracking hiring…", doneLabel:"Hiring analysis complete",
+  },
+  deep: {
+    pillClass:"deep", pillTxt:"Deep Analysis",
+    note:"Deep — comprehensive single-company analysis",
+    placeholder:"Which company do you want a deep-dive analysis on?",
+    btnId:"btnDeep", btnClass:"on-deep",
+    statusLabel:"Deep diving…", doneLabel:"Deep analysis complete",
+  },
+};
+
+function setMode(m) {
+  currentMode = m;
+  const cfg = modeConfig[m];
+  Object.values(modeConfig).forEach(c => {
+    const btn = document.getElementById(c.btnId);
+    if (btn) btn.className = "mode-btn" + (c.btnId === "btnDeep" ? " full-row" : "");
+  });
+  const btn = document.getElementById(cfg.btnId);
+  if (btn) btn.className = "mode-btn" + (m === "deep" ? " full-row" : "") + " " + cfg.btnClass;
+  document.getElementById("modePill").className = "mode-pill " + cfg.pillClass;
+  document.getElementById("pillTxt").textContent = cfg.pillTxt;
+  document.getElementById("modeNote").textContent = cfg.note;
+  ta.placeholder = cfg.placeholder;
+}
+
+function hintClick(m, text) {
+  setMode(m);
+  ta.value = text;
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+  ta.focus();
+}
+
+function runWeeklyReport() {
+  const companies = watchedCompanies.map(c => c.name).join(", ");
+  hintClick("report", `Generate a comprehensive weekly strategy report for: ${companies}`);
+  handleSend();
+}
+
+// ─────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────
+function nowStr() { return new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}); }
+function dateStr() { return new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); }
+function escHtml(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function scrollBottom() { requestAnimationFrame(()=>{ msgsWrap.scrollTop=msgsWrap.scrollHeight; }); }
+function hideWelcome() { const w=document.getElementById("welcomeScreen"); if(w) w.style.display="none"; }
+function setStatus(state, label) {
+  const badge = document.getElementById("statusBadge");
+  if (!badge) return;
+  badge.className = "badge badge-" + ({run:"run",done:"done",err:"err"}[state]||"idle");
+  badge.innerHTML = `<span class="dot"></span>${escHtml(label)}`;
+}
+function updateStats() {
+  document.getElementById("sReports").textContent = reportCount;
+  document.getElementById("sSignals").textContent = signalCount;
+  document.getElementById("sThreats").textContent = threatCount;
+}
+function addRecent(txt) {
+  const rl = document.getElementById("recentList");
+  const short = txt.length > 48 ? txt.slice(0,48)+"…" : txt;
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<span class="ri-dot"></span><span>${escHtml(short)}</span>`;
+  item.onclick = () => { ta.value=txt; ta.focus(); };
+  if (rl.querySelector(".muted-note")) rl.innerHTML="";
+  rl.insertBefore(item, rl.firstChild);
+  while (rl.children.length > 8) rl.removeChild(rl.lastChild);
+}
+
+// ─────────────────────────────────────────
+// Welcome screen
+// ─────────────────────────────────────────
+function buildWelcome() {
+  const w = document.createElement("div");
+  w.className = "welcome"; w.id = "welcomeScreen";
+  w.innerHTML = `
+    <div class="w-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+      </svg>
+    </div>
+    <h2>Competitive Intelligence</h2>
+    <p>Track your competitors in real time. Monitor product launches, pricing shifts, hiring signals, and technology moves — then turn them into strategy.</p>
+    <div class="hint-grid">
+      <div class="hint h-monitor" onclick="hintClick('monitor','What are the latest product updates and announcements from Perplexity AI, Anthropic, and Google DeepMind this week?')">
+        <span class="hint-em">👁️</span><div><strong>Monitor signals</strong><small>Latest updates across all watched companies</small></div>
+      </div>
+      <div class="hint h-ask" onclick="hintClick('ask','Compare AI coding assistants for enterprise security and compliance needs in 2026')">
+        <span class="hint-em">❓</span><div><strong>Ask any query</strong><small>Not limited to watched or top companies</small></div>
+      </div>
+      <div class="hint h-report" onclick="hintClick('report','Generate a full weekly competitive strategy report for Perplexity AI, Anthropic, OpenAI, and Google DeepMind')">
+        <span class="hint-em">📋</span><div><strong>Weekly strategy report</strong><small>Full brief with threats, opportunities, recommendations</small></div>
+      </div>
+      <div class="hint h-threats" onclick="hintClick('threats','What are the biggest competitive threats from OpenAI and Google DeepMind to an AI startup right now?')">
+        <span class="hint-em">⚠️</span><div><strong>Threat analysis</strong><small>Identify and rank competitive risks</small></div>
+      </div>
+      <div class="hint h-opps" onclick="hintClick('opportunities','What gaps and opportunities exist based on what my competitors are NOT doing well?')">
+        <span class="hint-em">✨</span><div><strong>Opportunity finder</strong><small>White space and competitor weaknesses</small></div>
+      </div>
+      <div class="hint h-hiring" onclick="hintClick('hiring','Analyze hiring trends at Anthropic, OpenAI, and Perplexity AI — what do they signal about strategy?')">
+        <span class="hint-em">👥</span><div><strong>Hiring trends</strong><small>Decode strategy through talent signals</small></div>
+      </div>
+      <div class="hint h-deep" onclick="hintClick('deep','Give me a comprehensive deep-dive analysis of Perplexity AI — products, pricing, strategy, and trajectory')">
+        <span class="hint-em">🔬</span><div><strong>Deep analysis</strong><small>Full single-company intelligence report</small></div>
+      </div>
+    </div>`;
+  return w;
+}
+msgsEl.appendChild(buildWelcome());
+
+// ─────────────────────────────────────────
+// Message rows
+// ─────────────────────────────────────────
+function addUserRow(text) {
+  hideWelcome();
+  const row = document.createElement("div"); row.className = "msg-row";
+  row.innerHTML = `
+    <div class="av av-user">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">You <span class="msg-time">${nowStr()}</span></div>
+      <div class="msg-content"><p style="white-space:pre-wrap">${escHtml(text)}</p></div>
+    </div>`;
+  msgsEl.appendChild(row); scrollBottom();
+}
+
+function showThinking() {
+  thinkingRow = document.createElement("div"); thinkingRow.className = "thinking-row";
+  thinkingRow.innerHTML = `
+    <div class="av av-agent">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">Intel Agent <span class="msg-time">${nowStr()}</span></div>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>`;
+  msgsEl.appendChild(thinkingRow); scrollBottom();
+}
+function hideThinking() {
+  if (thinkingRow?.parentNode) { thinkingRow.parentNode.removeChild(thinkingRow); thinkingRow=null; }
+}
+function addAgentRow() {
+  hideWelcome();
+  const row = document.createElement("div"); row.className = "msg-row";
+  row.innerHTML = `
+    <div class="av av-agent">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">Intel Agent <span class="msg-time">${nowStr()}</span></div>
+      <div class="msg-content"></div>
+    </div>`;
+  msgsEl.appendChild(row); scrollBottom();
+  return row.querySelector(".msg-content");
+}
+
+// ─────────────────────────────────────────
+// Status card
+// ─────────────────────────────────────────
+function makeCardHtml(type, text) {
+  const icons = {
+    monitor:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    report:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+    threats:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
+    opportunities:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+    hiring:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
+    deep:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    err:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  };
+  return `<div class="card card-${type}">${icons[type]||""} ${escHtml(text)}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Render intelligence report
+// ─────────────────────────────────────────
+function renderIntelReport(data, mode) {
+  const wrap = document.createElement("div");
+  wrap.className = "intel-block";
+
+  const modeLabels = { monitor:"Intelligence Feed", report:"Strategy Report", threats:"Threat Analysis", opportunities:"Opportunity Brief", hiring:"Hiring Intelligence", deep:"Deep Analysis" };
+
+  // Header
+  const hd = document.createElement("div"); hd.className = "intel-hd";
+  hd.innerHTML = `
+    <div class="intel-hd-left ${mode}">
+      ${modeConfig[mode] ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${modeConfig[mode].svgPath||""}</svg>` : ""}
+      ${escHtml(modeLabels[mode]||mode)}
+      ${data.companies_covered ? `<span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:4px">· ${escHtml(data.companies_covered.join(", "))}</span>` : ""}
+    </div>
+    <div class="intel-hd-right">
+      <span class="intel-timestamp">${dateStr()}</span>
+      <button class="copy-btn" id="copyBtn_${Date.now()}" onclick="copyReport(this)">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>`;
+  hd.querySelector(".copy-btn")._data = data;
+  wrap.appendChild(hd);
+
+  const bd = document.createElement("div"); bd.className = "intel-bd";
+
+  // Executive summary
+  if (data.executive_summary) {
+    const sec = makeSec("Executive Summary");
+    const p = document.createElement("div");
+    p.style.cssText = "font-size:13.5px;line-height:1.8;color:var(--txt);padding:0";
+    p.textContent = data.executive_summary;
+    sec.appendChild(p);
+    bd.appendChild(sec);
+  }
+
+  // Scores / health
+  if (data.scores && data.scores.length) {
+    const sec = makeSec("Competitive Positioning");
+    const sr = document.createElement("div"); sr.className = "score-row";
+    data.scores.forEach(s => {
+      const box = document.createElement("div"); box.className = "score-box";
+      const trendCls = s.trend === "up" ? "up" : s.trend === "down" ? "down" : "flat";
+      const trendArrow = s.trend === "up" ? "↑" : s.trend === "down" ? "↓" : "→";
+      box.innerHTML = `
+        <div class="score-num" style="color:${scoreColor(s.value)}">${escHtml(String(s.value))}</div>
+        <div class="score-label">${escHtml(s.label)}</div>
+        <div class="score-trend ${trendCls}">${trendArrow} ${escHtml(s.change||"")}</div>`;
+      sr.appendChild(box);
+    });
+    sec.appendChild(sr);
+    bd.appendChild(sec);
+  }
+
+  // Company profiles
+  if (data.company_profiles && data.company_profiles.length) {
+    const sec = makeSec("Company Profiles");
+    const grid = document.createElement("div"); grid.className = "company-grid";
+    data.company_profiles.forEach(co => {
+      const card = document.createElement("div"); card.className = "co-card";
+      const initial = (co.name||"?")[0].toUpperCase();
+      const coType = co.type || "ai";
+      card.innerHTML = `
+        <div class="co-card-head">
+          <div class="co-logo ${coType}">${escHtml(initial)}</div>
+          <div><div class="co-card-title">${escHtml(co.name||"")}</div><div class="co-card-sub">${escHtml(co.tagline||co.sector||"")}</div></div>
+        </div>
+        <div class="co-meta-row">
+          ${co.funding ? `<span class="co-meta-chip cmc-funding">💰 ${escHtml(co.funding)}</span>` : ""}
+          ${co.employees ? `<span class="co-meta-chip cmc-employees">👥 ${escHtml(co.employees)}</span>` : ""}
+          ${co.founded ? `<span class="co-meta-chip cmc-founded">📅 ${escHtml(co.founded)}</span>` : ""}
+          ${co.hq ? `<span class="co-meta-chip cmc-hq">📍 ${escHtml(co.hq)}</span>` : ""}
+        </div>
+        <div class="co-summary">${escHtml(co.summary||"")}</div>`;
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid);
+    bd.appendChild(sec);
+  }
+
+  // Signals feed
+  if (data.signals && data.signals.length) {
+    signalCount += data.signals.length; updateStats();
+    const sec = makeSec(`Intelligence Signals (${data.signals.length})`);
+    const sl = document.createElement("div"); sl.className = "signal-list";
+    data.signals.forEach(sig => {
+      const item = document.createElement("div"); item.className = "signal-item";
+      const typeClass = `si-${sig.type||"product"}`;
+      const impCls = sig.impact === "high" ? "imp-high" : sig.impact === "low" ? "imp-low" : "imp-medium";
+      const sigIcon = signalIcon(sig.type||"product");
+      item.innerHTML = `
+        <div class="signal-icon ${typeClass}">${sigIcon}</div>
+        <div class="signal-body">
+          <div class="signal-head">
+            <div class="signal-title">${escHtml(sig.title||"")}</div>
+            <div class="signal-date">${escHtml(sig.date||"")}</div>
+          </div>
+          <div class="signal-text">${escHtml(sig.summary||"")}</div>
+          <div class="signal-meta">
+            <span class="signal-company-tag">${escHtml(sig.company||"")}</span>
+            <span class="signal-impact ${impCls}">${escHtml((sig.impact||"medium").toUpperCase())} IMPACT</span>
+            ${sig.source_url ? `<span class="signal-source">🔗 <a href="${escHtml(sig.source_url)}" target="_blank" rel="noopener">${escHtml(sig.source||"Source")}</a></span>` : sig.source ? `<span class="signal-source">🔗 ${escHtml(sig.source)}</span>` : ""}
+          </div>
+        </div>`;
+      sl.appendChild(item);
+    });
+    sec.appendChild(sl);
+    bd.appendChild(sec);
+  }
+
+  // Threats
+  if (data.threats && data.threats.length) {
+    threatCount += data.threats.length; updateStats();
+    const sec = makeSec(`Threats (${data.threats.length})`);
+    const tl = document.createElement("div"); tl.className = "to-list";
+    data.threats.forEach(t => {
+      const sev = t.severity||"medium";
+      const card = document.createElement("div");
+      card.className = `to-card threat-${sev}`;
+      card.innerHTML = `
+        <div class="to-head">
+          <div class="to-title">${escHtml(t.title||"")}</div>
+          <span class="to-severity ts-${sev}">${escHtml(sev.toUpperCase())}</span>
+        </div>
+        <div class="to-body">${escHtml(t.description||"")}</div>
+        ${t.source_company ? `<div class="to-meta">📍 From: ${escHtml(t.source_company)} · ${escHtml(t.timeframe||"")}</div>` : ""}
+        ${t.recommended_action ? `<div class="to-action">💡 ${escHtml(t.recommended_action)}</div>` : ""}`;
+      tl.appendChild(card);
+    });
+    sec.appendChild(tl);
+    bd.appendChild(sec);
+  }
+
+  // Opportunities
+  if (data.opportunities && data.opportunities.length) {
+    const sec = makeSec(`Opportunities (${data.opportunities.length})`);
+    const ol = document.createElement("div"); ol.className = "to-list";
+    data.opportunities.forEach(o => {
+      const size = o.size||"medium";
+      const card = document.createElement("div");
+      card.className = `to-card opp-${size}`;
+      card.innerHTML = `
+        <div class="to-head">
+          <div class="to-title">${escHtml(o.title||"")}</div>
+          <span class="to-severity os-${size}">${escHtml(size.toUpperCase())}</span>
+        </div>
+        <div class="to-body">${escHtml(o.description||"")}</div>
+        ${o.evidence ? `<div class="to-meta">🔍 Evidence: ${escHtml(o.evidence)}</div>` : ""}
+        ${o.action ? `<div class="to-action">🚀 ${escHtml(o.action)}</div>` : ""}`;
+      ol.appendChild(card);
+    });
+    sec.appendChild(ol);
+    bd.appendChild(sec);
+  }
+
+  // Hiring trends
+  if (data.hiring_trends && data.hiring_trends.length) {
+    const sec = makeSec("Hiring Intelligence");
+    const hg = document.createElement("div"); hg.className = "hiring-grid";
+    data.hiring_trends.forEach(ht => {
+      const card = document.createElement("div"); card.className = "hiring-card";
+      card.innerHTML = `<div class="hc-company">${escHtml(ht.company||"")}</div>`;
+      if (ht.roles && ht.roles.length) {
+        const rl = document.createElement("div"); rl.className = "hc-roles";
+        ht.roles.forEach(r => {
+          const row = document.createElement("div"); row.className = "hc-role";
+          row.innerHTML = `<span class="hc-role-name">${escHtml(r.role||r)}</span>${r.count?`<span class="hc-role-count">${escHtml(String(r.count))}</span>`:""}`;
+          rl.appendChild(row);
+        });
+        card.appendChild(rl);
+      }
+      if (ht.strategic_signal) {
+        const t = document.createElement("div"); t.className = "hc-trend";
+        t.textContent = "📊 " + ht.strategic_signal;
+        card.appendChild(t);
+      }
+      hg.appendChild(card);
+    });
+    sec.appendChild(hg);
+    bd.appendChild(sec);
+  }
+
+  // Technology shifts
+  if (data.tech_shifts && data.tech_shifts.length) {
+    const sec = makeSec("Technology Shifts");
+    const tl = document.createElement("div"); tl.className = "tech-list";
+    data.tech_shifts.forEach(t => {
+      const item = document.createElement("div"); item.className = "tech-item";
+      const type = t.type || "adopting";
+      item.innerHTML = `
+        <span class="tech-badge tb-${type}">${escHtml(type)}</span>
+        <div class="tech-body">
+          <div class="tech-name">${escHtml(t.company||"")} — ${escHtml(t.technology||"")}</div>
+          <div class="tech-desc">${escHtml(t.description||"")}</div>
+        </div>`;
+      tl.appendChild(item);
+    });
+    sec.appendChild(tl);
+    bd.appendChild(sec);
+  }
+
+  // Strategy recommendations
+  if (data.recommendations && data.recommendations.length) {
+    const sec = makeSec("Strategic Recommendations");
+    const sl = document.createElement("div"); sl.className = "strategy-list";
+    data.recommendations.forEach((r, i) => {
+      const card = document.createElement("div"); card.className = "strategy-card";
+      const pri = r.priority || "medium";
+      card.innerHTML = `
+        <div class="sc-num">${i+1}</div>
+        <div class="sc-body">
+          <div class="sc-title">${escHtml(r.title||"")}</div>
+          <div class="sc-desc">${escHtml(r.description||"")}</div>
+          <span class="sc-priority scp-${pri}">${escHtml(pri.toUpperCase())}</span>
+        </div>`;
+      sl.appendChild(card);
+    });
+    sec.appendChild(sl);
+    bd.appendChild(sec);
+  }
+
+  wrap.appendChild(bd);
+
+  // Sources strip
+  if (data.sources && data.sources.length) {
+    const ss = document.createElement("div"); ss.className = "sources-strip";
+    ss.innerHTML = `<span class="sources-label">Sources</span>`;
+    data.sources.slice(0,8).forEach(s => {
+      const chip = document.createElement("span"); chip.className = "source-chip";
+      chip.innerHTML = s.url
+        ? `🔗 <a href="${escHtml(s.url)}" target="_blank" rel="noopener">${escHtml(s.title||s.url)}</a>`
+        : `🔗 ${escHtml(s.title||s)}`;
+      ss.appendChild(chip);
+    });
+    wrap.appendChild(ss);
+  }
+
+  // Download row
+  const dlRow = document.createElement("div"); dlRow.className = "dl-row";
+  dlRow._reportData = data;
+  dlRow._reportMode = mode;
+  dlRow.innerHTML = `
+    <button class="dl-btn dl-pdf" onclick="downloadTxt(this)">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download .txt
+    </button>
+    <button class="dl-btn dl-json" onclick="downloadJson(this)">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Export JSON
+    </button>
+    <button class="dl-btn dl-md" onclick="downloadMarkdown(this)">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+      Export Markdown
+    </button>`;
+  wrap.appendChild(dlRow);
+
+  return wrap;
+}
+
+function makeSec(title) {
+  const sec = document.createElement("div"); sec.className = "report-section";
+  const t = document.createElement("div"); t.className = "rs-title"; t.textContent = title;
+  sec.appendChild(t);
+  return sec;
+}
+function scoreColor(v) {
+  const n = parseInt(v);
+  if (n>=80) return "var(--green)";
+  if (n>=60) return "var(--amber)";
+  return "var(--rose)";
+}
+function signalIcon(type) {
+  const icons = {
+    product:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+    pricing:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+    hiring:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
+    tech:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+    partnership:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`,
+    funding:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+    executive:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    strategy:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+  };
+  return icons[type] || icons.product;
+}
+
+// ─────────────────────────────────────────
+// Copy / Download
+// ─────────────────────────────────────────
+function copyReport(btn) {
+  const data = btn._data;
+  const text = JSON.stringify(data, null, 2);
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "✓ Copied";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+      btn.classList.remove("copied");
+    }, 2000);
+  });
+}
+function reportToText(data) {
+  let out = `COMPETITIVE INTELLIGENCE REPORT\n${dateStr()}\n${"═".repeat(50)}\n\n`;
+  if (data.executive_summary) out += `EXECUTIVE SUMMARY\n${data.executive_summary}\n\n`;
+  if (data.signals) { out += `INTELLIGENCE SIGNALS\n${"─".repeat(40)}\n`; data.signals.forEach(s => { out += `[${(s.type||"").toUpperCase()}] ${s.company} — ${s.title}\n${s.summary}\nImpact: ${s.impact}\n\n`; }); }
+  if (data.threats) { out += `THREATS\n${"─".repeat(40)}\n`; data.threats.forEach(t => { out += `[${(t.severity||"").toUpperCase()}] ${t.title}\n${t.description}\n${t.recommended_action?`Action: ${t.recommended_action}`:""}\n\n`; }); }
+  if (data.opportunities) { out += `OPPORTUNITIES\n${"─".repeat(40)}\n`; data.opportunities.forEach(o => { out += `[${(o.size||"").toUpperCase()}] ${o.title}\n${o.description}\n\n`; }); }
+  if (data.recommendations) { out += `RECOMMENDATIONS\n${"─".repeat(40)}\n`; data.recommendations.forEach((r,i) => { out += `${i+1}. ${r.title} [${(r.priority||"").toUpperCase()}]\n${r.description}\n\n`; }); }
+  return out;
+}
+function reportToMarkdown(data) {
+  let md = `# Competitive Intelligence Report\n_${dateStr()}_\n\n`;
+  if (data.executive_summary) md += `## Executive Summary\n${data.executive_summary}\n\n`;
+  if (data.signals) { md += `## Intelligence Signals\n`; data.signals.forEach(s => { md += `### ${s.company} — ${s.title}\n- **Type:** ${s.type} · **Impact:** ${s.impact}\n- ${s.summary}\n\n`; }); }
+  if (data.threats) { md += `## Threats\n`; data.threats.forEach(t => { md += `### ⚠️ ${t.title} [${(t.severity||"").toUpperCase()}]\n${t.description}\n${t.recommended_action?`> 💡 ${t.recommended_action}`:""}\n\n`; }); }
+  if (data.opportunities) { md += `## Opportunities\n`; data.opportunities.forEach(o => { md += `### ✨ ${o.title} [${(o.size||"").toUpperCase()}]\n${o.description}\n\n`; }); }
+  if (data.recommendations) { md += `## Strategic Recommendations\n`; data.recommendations.forEach((r,i) => { md += `${i+1}. **${r.title}** _(${r.priority})_\n   ${r.description}\n\n`; }); }
+  if (data.sources) { md += `## Sources\n`; data.sources.forEach(s => { md += `- [${s.title||s.url||s}](${s.url||""})\n`; }); }
+  return md;
+}
+function downloadTxt(btn) { const data=btn.closest(".intel-block")?.querySelector(".dl-row")._reportData; if(!data)return; const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([reportToText(data)],{type:"text/plain"}));a.download=`intel-report-${Date.now()}.txt`;a.click(); }
+function downloadJson(btn) { const data=btn.closest(".intel-block")?.querySelector(".dl-row")._reportData||btn.parentNode._reportData; if(!data)return; const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download=`intel-report-${Date.now()}.json`;a.click(); }
+function downloadMarkdown(btn) { const data=btn.closest(".intel-block")?.querySelector(".dl-row")._reportData; if(!data)return; const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([reportToMarkdown(data)],{type:"text/markdown"}));a.download=`intel-report-${Date.now()}.md`;a.click(); }
+
+// ─────────────────────────────────────────
+// SEND
+// ─────────────────────────────────────────
+async function handleSend() {
+  const query = ta.value.trim();
+  if (!query || running) return;
+
+  const m   = currentMode;
+  const cfg = modeConfig[m];
+
+  addUserRow(query);
+  addRecent(query);
+  ta.value = ""; ta.style.height = "auto";
+  running = true; sendBtn.disabled = true;
+  setStatus("run", cfg.statusLabel);
+  showThinking();
+
+  chatHistory.push({ role:"user", content:query });
+
+  const requestBody = {
+    query,
+    mode: m,
+    history: chatHistory.slice(-10),
+    companies: m === "ask" ? [] : watchedCompanies.map(c => c.name),
+    response_format: "structured_json",
+  };
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(requestBody),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    data = await res.json();
+  } catch(err) {
+    hideThinking();
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err","Network error: "+err.message);
+    setStatus("err","Error");
+    running=false; sendBtn.disabled=false;
+    return;
+  }
+
+  hideThinking();
+
+  if (data.status === "ERROR") {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", data.message||"Unknown error");
+    setStatus("err","Error");
+  } else if (data.report) {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml(m, cfg.doneLabel);
+    slot.appendChild(renderIntelReport(data.report, m));
+    reportCount++; updateStats();
+    chatHistory.push({ role:"assistant", content:`[${m} intel report — ${(data.report.signals||[]).length} signals, ${(data.report.threats||[]).length} threats]` });
+    setStatus("done", cfg.doneLabel);
+  } else if (data.content) {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml(m, cfg.doneLabel);
+    const p = document.createElement("div");
+    p.style.cssText="padding:16px 20px;font-size:13.5px;line-height:1.8;color:var(--txt);background:#fafaf9;border-radius:0 0 var(--r) var(--r)";
+    p.style.whiteSpace="pre-wrap";
+    p.textContent=data.content;
+    const wrap = document.createElement("div"); wrap.className="intel-block";
+    wrap.innerHTML=`<div class="intel-hd"><div class="intel-hd-left ${m}">${escHtml(cfg.doneLabel)}</div></div>`;
+    wrap.appendChild(p);
+    slot.appendChild(wrap);
+    chatHistory.push({ role:"assistant", content:data.content.slice(0,300) });
+    setStatus("done","Done");
+  } else {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err","Unexpected response from server.");
+    setStatus("err","Error");
+  }
+
+  running=false; sendBtn.disabled=false;
+}
+
+// ─────────────────────────────────────────
+// CLEAR
+// ─────────────────────────────────────────
+function clearChat() {
+  while(msgsEl.firstChild) msgsEl.removeChild(msgsEl.firstChild);
+  msgsEl.appendChild(buildWelcome());
+  chatHistory=[]; reportCount=signalCount=threatCount=0; updateStats();
+  document.getElementById("recentList").innerHTML=`<div class="muted-note">No queries yet</div>`;
+  setStatus("idle","Ready");
+  running=false; sendBtn.disabled=false; thinkingRow=null;
+}
+</script>
+</body>
+</html>

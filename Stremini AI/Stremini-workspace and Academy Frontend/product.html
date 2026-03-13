@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Product Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js" onerror="window._hljsFailed=true"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber-bg:#fffbf5;--amber-border:#fde68a;
+  --cyan:#0369a1;--cyan-bg:#f0f9ff;--cyan-border:#bae6fd;
+  --green:#059669;--green-bg:#d1fae5;--green-border:#6ee7b7;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;--violet-border:#ddd6fe;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --red:#991b1b;--red-bg:#fee2e2;--red-border:#fecaca;
+  --emerald:#065f46;--emerald-bg:#ecfdf5;--emerald-border:#6ee7b7;
+  --indigo:#3730a3;--indigo-bg:#eef2ff;--indigo-border:#c7d2fe;
+  --teal:#0d9488;--teal-bg:#f0fdfa;--teal-border:#99f6e4;
+  --rose:#be123c;--rose-bg:#fff1f2;--rose-border:#fecdd3;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+
+/* Phase selector */
+.phase-list{display:flex;flex-direction:column;gap:5px}
+.phase-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:left}
+.phase-btn svg{width:15px;height:15px;flex-shrink:0}
+.phase-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.phase-btn.active-full{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.phase-btn.active-prd{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-bg)}
+.phase-btn.active-schema{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.phase-btn.active-frontend{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.phase-btn.active-deployment{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--amber-bg);color:var(--amber)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.mode-pill.full{color:var(--amber);border-color:var(--amber-border);background:var(--amber-bg)}
+.mode-pill.prd{color:var(--cyan);border-color:var(--cyan-border);background:var(--cyan-bg)}
+.mode-pill.schema{color:var(--violet);border-color:var(--violet-border);background:var(--violet-bg)}
+.mode-pill.frontend{color:var(--teal);border-color:var(--teal-border);background:var(--teal-bg)}
+.mode-pill.deployment{color:var(--green);border-color:var(--green-border);background:var(--green-bg)}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* ── Messages ── */
+.msgs-wrap{flex:1;overflow-y:auto;padding:28px 0;scroll-behavior:smooth}
+.msgs{max-width:900px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column}
+
+/* ── Welcome ── */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:32px;height:32px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:480px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:620px}
+.hint{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{border-color:var(--amber);background:var(--amber-bg);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint-em{font-size:20px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* ── Input bar ── */
+.input-bar{padding:14px 28px 18px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+.input-inner{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.input-row{display:flex;gap:8px;align-items:flex-end}
+.ta-wrap{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);transition:border-color .15s}
+.ta-wrap:focus-within{border-color:var(--amber)}
+textarea{width:100%;padding:12px 16px;background:transparent;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);resize:none;line-height:1.6;min-height:52px;max-height:180px}
+textarea::placeholder{color:var(--muted)}
+.send-btn{flex-shrink:0;width:44px;height:44px;background:var(--txt);border:none;border-radius:var(--r2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:var(--shadow)}
+.send-btn:hover:not(:disabled){background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.send-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.send-btn svg{width:17px;height:17px}
+.input-hint{font-size:11.5px;color:var(--muted);text-align:center}
+
+/* ── Message row ── */
+.msg-row{display:flex;gap:12px;padding:18px 0;border-bottom:1px solid var(--border2);animation:fadein .3s ease}
+.msg-row:last-child{border-bottom:none}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.av-agent{background:var(--txt)}
+.av-user{background:var(--amber)}
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.msg-time{font-weight:400;font-size:11px;color:var(--muted)}
+.msg-content{font-size:14px;line-height:1.7;color:var(--txt)}
+
+/* ── Thinking ── */
+.thinking-row{display:flex;gap:12px;padding:18px 0}
+.dots{display:flex;gap:4px;align-items:center;height:22px}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* ── Status cards ── */
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-full{background:var(--amber-bg);color:#92400e;border:1px solid var(--amber-border)}
+.card-prd{background:var(--cyan-bg);color:#0c4a6e;border:1px solid var(--cyan-border)}
+.card-schema{background:var(--violet-bg);color:#5b21b6;border:1px solid var(--violet-border)}
+.card-frontend{background:var(--teal-bg);color:#134e4a;border:1px solid var(--teal-border)}
+.card-deployment{background:var(--green-bg);color:#065f46;border:1px solid var(--green-border)}
+.card-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+
+/* ── Product output container ── */
+.product-output{display:flex;flex-direction:column;gap:12px;margin:8px 0 4px}
+
+/* ── Collapsible section ── */
+.prod-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.prod-sec-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;cursor:pointer;user-select:none;transition:background .15s}
+.prod-sec-hd:hover{background:var(--surface2)}
+.prod-sec-hd-left{display:flex;align-items:center;gap:10px}
+.prod-sec-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-icon-prd{background:var(--cyan-bg);color:var(--cyan)}
+.sec-icon-schema{background:var(--violet-bg);color:var(--violet)}
+.sec-icon-frontend{background:var(--teal-bg);color:var(--teal)}
+.sec-icon-deployment{background:var(--green-bg);color:var(--green)}
+.prod-sec-title{font-family:'Lora',serif;font-size:14px;font-weight:600;letter-spacing:-.2px}
+.prod-sec-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.prod-sec-hd-right{display:flex;align-items:center;gap:8px}
+.sec-copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.sec-copy-btn:hover{background:var(--border);color:var(--txt)}
+.sec-copy-btn.copied{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.sec-chevron{transition:transform .2s;color:var(--muted);flex-shrink:0}
+.prod-section.open .sec-chevron{transform:rotate(180deg)}
+.prod-sec-body{display:none;border-top:1px solid var(--border)}
+.prod-section.open .prod-sec-body{display:block}
+
+/* ── Section content renderer ── */
+.sec-content{padding:22px 24px;font-family:'DM Mono','Courier New',monospace;font-size:12.5px;line-height:1.85;color:var(--txt);max-height:640px;overflow-y:auto;background:#fafaf9}
+.sec-content .text-line{display:block;white-space:pre-wrap;word-break:break-word;font-family:'DM Mono','Courier New',monospace;font-size:12.5px}
+.sec-content .text-blank{display:block;height:.6em}
+.sec-content .sec-div{display:block;border:none;border-top:1px solid var(--border2);margin:14px 0}
+.sec-content .sec-head{display:block;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 6px;padding-top:4px}
+.sec-content pre{margin:10px 0;border-radius:var(--r2);overflow-x:auto;border:1px solid var(--border);background:#fff}
+.sec-content pre code.hljs{font-family:'DM Mono','Courier New',monospace;font-size:12px;line-height:1.65;padding:14px 16px;background:#fff;display:block;border-radius:var(--r2)}
+
+/* ── File widgets inside frontend section ── */
+.file-widgets{display:flex;flex-direction:column;gap:8px;margin:6px 0 4px}
+.file-widget{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:border-color .15s}
+.file-widget:hover{border-color:#c5c0b8}
+.file-widget-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--surface2);cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:border-color .15s}
+.file-widget.open .file-widget-hd{border-bottom-color:var(--border)}
+.file-widget-hd:hover{background:#eceae5}
+.fw-hd-left{display:flex;align-items:center;gap:9px}
+.fw-file-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:-.3px}
+.fw-fi-js{background:#fef3c7;color:#b45309}.fw-fi-ts{background:#dbeafe;color:#1d4ed8}.fw-fi-jsx{background:#fef3c7;color:#d97706}.fw-fi-tsx{background:#dbeafe;color:#2563eb}
+.fw-fi-py{background:#ede9fe;color:#7c3aed}.fw-fi-html{background:#fee2e2;color:#dc2626}.fw-fi-css{background:#dbeafe;color:#1d4ed8}.fw-fi-json{background:#dcfce7;color:#15803d}
+.fw-fi-yaml{background:#fef9c3;color:#a16207}.fw-fi-sql{background:#d1fae5;color:#065f46}.fw-fi-sh{background:#f0fdfa;color:#0d9488}.fw-fi-env{background:#f5f3ff;color:#7c3aed}
+.fw-fi-default{background:var(--surface2);color:var(--txt2)}
+.fw-name-block{display:flex;flex-direction:column;gap:1px}
+.fw-filename{font-family:'DM Mono','Courier New',monospace;font-size:12.5px;font-weight:500;color:var(--txt)}
+.fw-filepath{font-size:11px;color:var(--muted)}
+.fw-hd-right{display:flex;align-items:center;gap:8px}
+.fw-lang-badge{padding:2px 8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:10.5px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px}
+.fw-copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.fw-copy-btn:hover{background:var(--border);color:var(--txt)}
+.fw-copy-btn.copied{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.fw-chevron{transition:transform .2s;color:var(--muted);flex-shrink:0}
+.file-widget.open .fw-chevron{transform:rotate(180deg)}
+.file-widget-body{display:none;padding:0}
+.file-widget.open .file-widget-body{display:block}
+.file-widget-body pre{margin:0;border-radius:0;border:none;background:#fafaf9}
+.file-widget-body pre code.hljs{font-family:'DM Mono','Courier New',monospace;font-size:12px;line-height:1.65;padding:16px 18px;background:#fafaf9;display:block;border-radius:0}
+.fw-lines-badge{font-size:10.5px;color:var(--muted);font-family:'DM Mono',monospace}
+
+/* ── Download bar ── */
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--border);background:var(--surface2)}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-txt{background:var(--txt);color:#fff}
+.dl-txt:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.dl-md{background:#0369a1;color:#fff}
+.dl-md:hover{background:#075985;transform:translateY(-1px)}
+.dl-md-schema{background:var(--violet);color:#fff}
+.dl-md-schema:hover{background:#6d28d9;transform:translateY(-1px)}
+.dl-md-deploy{background:var(--green);color:#fff}
+.dl-md-deploy:hover{background:#047857;transform:translateY(-1px)}
+
+/* ── Summary strip ── */
+.build-summary{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--r2);font-size:12.5px;color:#92400e}
+.bs-name{font-weight:600;font-family:'Lora',serif;font-size:13px}
+.bs-chips{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.bs-chip{padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:600;background:rgba(0,0,0,.06)}
+
+@media(max-width:720px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .hint-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Product Builder</div>
+        </div>
+      </div>
+      <div class="sb-label">Build Phase</div>
+      <div class="phase-list">
+        <button class="phase-btn active-full" id="btnFull" onclick="setPhase('full')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Full MVP Build
+        </button>
+        <button class="phase-btn" id="btnPrd" onclick="setPhase('prd')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          PRD Only
+        </button>
+        <button class="phase-btn" id="btnSchema" onclick="setPhase('schema')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          Schema Only
+        </button>
+        <button class="phase-btn" id="btnFrontend" onclick="setPhase('frontend')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Frontend Only
+        </button>
+        <button class="phase-btn" id="btnDeployment" onclick="setPhase('deployment')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Deployment Only
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="phaseNote">Full MVP — PRD + Schema + Frontend + Deployment</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sBuilt">0</div><div class="stat-l">Built</div></div>
+        <div class="stat-box"><div class="stat-n" id="sSections">0</div><div class="stat-l">Sections</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent Ideas</div>
+      <div class="recent-list" id="recentList"><div class="muted-note">No builds yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearChat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill full" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span id="pillTxt">Full MVP Build</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="msgs-wrap" id="msgsWrap">
+      <div class="msgs" id="msgs"></div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-row">
+          <div class="ta-wrap">
+            <textarea id="ta" rows="2" placeholder="Describe your product idea — e.g. 'a marketplace for local farmers' or 'an AI scheduling app for clinics'…" autocomplete="off" spellcheck="false"></textarea>
+          </div>
+          <button class="send-btn" id="sendBtn" onclick="sendIdea()" title="Build">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// Config
+// ─────────────────────────────────────────
+const BACKEND = "https://product-builder.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let currentPhase = "full";
+let running = false;
+let chatHistory = [];
+let builtCount = 0;
+let totalSections = 0;
+let thinkingRow = null;
+
+// ─────────────────────────────────────────
+// Phase config
+// ─────────────────────────────────────────
+const PHASE_CFG = {
+  full:       { label:"Full MVP Build",   note:"PRD + Schema + Frontend + Deployment", statusLabel:"Building MVP…",      doneLabel:"MVP Built" },
+  prd:        { label:"PRD Only",         note:"Product requirements document only",   statusLabel:"Writing PRD…",        doneLabel:"PRD Ready" },
+  schema:     { label:"Schema Only",      note:"Database schema and seed data only",   statusLabel:"Designing Schema…",   doneLabel:"Schema Ready" },
+  frontend:   { label:"Frontend Only",    note:"UI components and screens only",       statusLabel:"Generating Frontend…",doneLabel:"Frontend Ready" },
+  deployment: { label:"Deployment Only",  note:"Deployment guide and checklist only",  statusLabel:"Writing Guide…",      doneLabel:"Guide Ready" },
+};
+
+// ─────────────────────────────────────────
+// DOM helpers
+// ─────────────────────────────────────────
+const msgsEl   = document.getElementById("msgs");
+const msgsWrap = document.getElementById("msgsWrap");
+const ta       = document.getElementById("ta");
+const sendBtn  = document.getElementById("sendBtn");
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") }
+function now(){ return new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) }
+function scrollBottom(){ msgsWrap.scrollTop = msgsWrap.scrollHeight }
+
+// ─────────────────────────────────────────
+// Phase switching
+// ─────────────────────────────────────────
+function setPhase(p) {
+  currentPhase = p;
+  const cfg = PHASE_CFG[p];
+  // sidebar buttons
+  document.querySelectorAll(".phase-btn").forEach(b => {
+    b.className = "phase-btn";
+    const id = b.id.replace("btn","").toLowerCase();
+    if (id === p) b.classList.add(`active-${p}`);
+  });
+  // top pill
+  const pill = document.getElementById("modePill");
+  pill.className = `mode-pill ${p}`;
+  document.getElementById("pillTxt").textContent = cfg.label;
+  document.getElementById("phaseNote").textContent = cfg.note;
+}
+
+// ─────────────────────────────────────────
+// Status
+// ─────────────────────────────────────────
+function setStatus(s, txt) {
+  const el = document.getElementById("statusBadge");
+  el.className = `badge badge-${s}`;
+  el.innerHTML = `<span class="dot"></span>${esc(txt)}`;
+}
+function updateStats() {
+  document.getElementById("sBuilt").textContent = builtCount;
+  document.getElementById("sSections").textContent = totalSections;
+}
+
+// ─────────────────────────────────────────
+// Welcome screen
+// ─────────────────────────────────────────
+function buildWelcome() {
+  const w = document.createElement("div");
+  w.className = "welcome";
+  w.innerHTML = `
+    <div class="w-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <h2>Autonomous Product Builder</h2>
+    <p>Describe any product idea and get a complete MVP — requirements, database schema, frontend code, and deployment guide — generated instantly.</p>
+    <div class="hint-grid">
+      <div class="hint" onclick="useHint(this)">
+        <span class="hint-em">🌾</span>
+        <div><strong>Farmer's Marketplace</strong><small>Connect local farmers with urban buyers</small></div>
+      </div>
+      <div class="hint" onclick="useHint(this)">
+        <span class="hint-em">🏥</span>
+        <div><strong>Clinic Scheduler</strong><small>AI-powered appointment booking for clinics</small></div>
+      </div>
+      <div class="hint" onclick="useHint(this)">
+        <span class="hint-em">📚</span>
+        <div><strong>Tutoring Platform</strong><small>Peer-to-peer learning marketplace for students</small></div>
+      </div>
+      <div class="hint" onclick="useHint(this)">
+        <span class="hint-em">🚚</span>
+        <div><strong>Last-Mile Delivery</strong><small>Hyperlocal logistics platform for SMEs</small></div>
+      </div>
+    </div>`;
+  return w;
+}
+
+function useHint(el) {
+  ta.value = el.querySelector("strong").textContent + " — " + el.querySelector("small").textContent;
+  ta.focus();
+  autoResize();
+}
+
+// ─────────────────────────────────────────
+// Textarea auto-resize + keyboard
+// ─────────────────────────────────────────
+function autoResize() {
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 180) + "px";
+}
+ta.addEventListener("input", autoResize);
+ta.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendIdea(); }
+});
+
+// ─────────────────────────────────────────
+// Message rows
+// ─────────────────────────────────────────
+function addUserRow(text) {
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  row.innerHTML = `
+    <div class="av av-user">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">You <span class="msg-time">${now()}</span></div>
+      <div class="msg-content"><p>${esc(text)}</p></div>
+    </div>`;
+  msgsEl.appendChild(row);
+  scrollBottom();
+}
+
+function addAgentRow() {
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  row.innerHTML = `
+    <div class="av av-agent">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="msg-body" id="agentBody_${Date.now()}">
+      <div class="msg-who">Product Builder <span class="msg-time">${now()}</span></div>
+      <div class="msg-content"></div>
+    </div>`;
+  msgsEl.appendChild(row);
+  scrollBottom();
+  return row.querySelector(".msg-content");
+}
+
+function showThinking() {
+  const row = document.createElement("div");
+  row.className = "thinking-row";
+  row.innerHTML = `
+    <div class="av av-agent">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">Product Builder <span class="msg-time">${now()}</span></div>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>`;
+  msgsEl.appendChild(row);
+  thinkingRow = row;
+  scrollBottom();
+}
+
+function hideThinking() {
+  thinkingRow?.remove();
+  thinkingRow = null;
+}
+
+// ─────────────────────────────────────────
+// Status card
+// ─────────────────────────────────────────
+function makeCardHtml(type, label) {
+  const icons = {
+    full:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+    prd:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+    schema:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+    frontend:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+    deployment:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    err:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+  };
+  return `<div class="card card-${type}">${icons[type]||icons.full} ${esc(label)}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Content renderer (prose + code blocks)
+// ─────────────────────────────────────────
+function renderContent(raw) {
+  const lines = raw.split("\n");
+  const frag = document.createDocumentFragment();
+  let i = 0;
+
+  function flushText(parts) {
+    if (!parts.length) return;
+    const pre = document.createElement("pre");
+    pre.style.cssText = "margin:0;border-radius:0;border:none;background:transparent";
+    const code = document.createElement("code");
+    code.style.cssText = "font-family:'DM Mono','Courier New',monospace;font-size:12.5px;line-height:1.85;padding:0;background:transparent;display:block";
+    code.textContent = parts.join("\n");
+    pre.appendChild(code);
+    frag.appendChild(pre);
+  }
+
+  const textBuffer = [];
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Code fence
+    if (line.trimStart().startsWith("```")) {
+      flushText(textBuffer.splice(0));
+      const lang = line.trim().slice(3).trim() || "text";
+      const codeLines = [];
+      i++;
+      while (i < lines.length && !lines[i].trimStart().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing fence
+      const pre = document.createElement("pre");
+      pre.style.margin = "10px 0";
+      const code = document.createElement("code");
+      code.className = `language-${lang}`;
+      code.textContent = codeLines.join("\n");
+      pre.appendChild(code);
+      if (!window._hljsFailed && window.hljs) {
+        try { hljs.highlightElement(code); } catch(_) {}
+      }
+      frag.appendChild(pre);
+      continue;
+    }
+
+    // Divider (━━━ lines)
+    if (/^━{3,}/.test(line.trim())) {
+      flushText(textBuffer.splice(0));
+      const hr = document.createElement("hr");
+      hr.className = "sec-div";
+      hr.style.cssText = "border:none;border-top:1px solid var(--border2);margin:14px 0";
+      frag.appendChild(hr);
+      i++;
+      continue;
+    }
+
+    // Section header (ALL CAPS line followed by ===)
+    if (i + 1 < lines.length && /^[=]{3,}/.test(lines[i+1]) && line.trim().length > 0) {
+      flushText(textBuffer.splice(0));
+      const span = document.createElement("span");
+      span.className = "sec-head";
+      span.style.cssText = "display:block;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 4px;padding-top:4px";
+      span.textContent = line.trim();
+      frag.appendChild(span);
+      i += 2; // skip === line
+      continue;
+    }
+
+    textBuffer.push(line);
+    i++;
+  }
+  flushText(textBuffer.splice(0));
+  return frag;
+}
+
+// ─────────────────────────────────────────
+// File widget parser (for frontend section)
+// ─────────────────────────────────────────
+function parseFileWidgets(raw) {
+  const container = document.createElement("div");
+
+  // Split on FILE: markers
+  const parts = raw.split(/^FILE:\s*/m);
+
+  if (parts.length <= 1) {
+    // No FILE: markers — render as plain content
+    const sec = document.createElement("div");
+    sec.className = "sec-content";
+    sec.appendChild(renderContent(raw));
+    container.appendChild(sec);
+    return container;
+  }
+
+  // Preamble before first FILE:
+  if (parts[0].trim()) {
+    const preamble = document.createElement("div");
+    preamble.className = "sec-content";
+    preamble.style.paddingBottom = "10px";
+    preamble.appendChild(renderContent(parts[0]));
+    container.appendChild(preamble);
+  }
+
+  const widgets = document.createElement("div");
+  widgets.className = "file-widgets";
+  widgets.style.cssText = "display:flex;flex-direction:column;gap:8px;padding:14px 18px";
+
+  parts.slice(1).forEach((part, idx) => {
+    const firstNl = part.indexOf("\n");
+    const filename = firstNl === -1 ? part.trim() : part.slice(0, firstNl).trim();
+    const rest = firstNl === -1 ? "" : part.slice(firstNl + 1);
+
+    // Extract code block
+    const fenceMatch = rest.match(/```(\w*)\n([\s\S]*?)```/);
+    const lang = fenceMatch ? (fenceMatch[1] || "text") : "text";
+    const code = fenceMatch ? fenceMatch[2] : rest.trim();
+    const lines = code.split("\n").length;
+
+    const ext = (filename.split(".").pop() || "").toLowerCase();
+    const extIconMap = {js:"fw-fi-js",ts:"fw-fi-ts",jsx:"fw-fi-jsx",tsx:"fw-fi-tsx",py:"fw-fi-py",
+      html:"fw-fi-html",css:"fw-fi-css",json:"fw-fi-json",yaml:"fw-fi-yaml",yml:"fw-fi-yaml",
+      sql:"fw-fi-sql",sh:"fw-fi-sh",bash:"fw-fi-sh",env:"fw-fi-env"};
+    const iconCls = extIconMap[ext] || "fw-fi-default";
+
+    const widget = document.createElement("div");
+    widget.className = `file-widget ${idx === 0 ? "open" : ""}`;
+    const wid = `fw_${Date.now()}_${idx}`;
+    widget.innerHTML = `
+      <div class="file-widget-hd" onclick="toggleFileWidget('${wid}')">
+        <div class="fw-hd-left">
+          <div class="fw-file-icon ${iconCls}">.${ext}</div>
+          <div class="fw-name-block">
+            <span class="fw-filename">${esc(filename)}</span>
+          </div>
+        </div>
+        <div class="fw-hd-right">
+          <span class="fw-lines-badge">${lines} lines</span>
+          <span class="fw-lang-badge">${esc(lang)}</span>
+          <button class="fw-copy-btn" onclick="fwCopy(event,'${wid}')">Copy</button>
+          <svg class="fw-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="file-widget-body" id="${wid}">
+        <pre><code class="language-${lang}" id="${wid}_code">${esc(code)}</code></pre>
+      </div>`;
+
+    widgets.appendChild(widget);
+
+    // Syntax highlight
+    const codeEl = widget.querySelector(`#${wid}_code`);
+    if (!window._hljsFailed && window.hljs && codeEl) {
+      try { hljs.highlightElement(codeEl); } catch(_) {}
+    }
+
+    // Store code for copy
+    widget.dataset.code = code;
+  });
+
+  container.appendChild(widgets);
+  return container;
+}
+
+function toggleFileWidget(id) {
+  const body = document.getElementById(id);
+  const widget = body?.closest(".file-widget");
+  if (!widget) return;
+  widget.classList.toggle("open");
+}
+
+function fwCopy(e, id) {
+  e.stopPropagation();
+  const widget = document.getElementById(id)?.closest(".file-widget");
+  const code = widget?.dataset.code || "";
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = e.currentTarget;
+    btn.textContent = "Copied!";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1500);
+  });
+}
+
+// ─────────────────────────────────────────
+// Build the 4 collapsible sections
+// ─────────────────────────────────────────
+function buildProductOutput(data, idea) {
+  const container = document.createElement("div");
+  container.className = "product-output";
+
+  // Summary strip
+  const summary = document.createElement("div");
+  summary.className = "build-summary";
+  const productName = extractProductName(data.prd || "");
+  summary.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span class="bs-name">${esc(productName || "MVP Built")}</span>
+    <div class="bs-chips">
+      ${data.prd        ? `<span class="bs-chip">PRD</span>` : ""}
+      ${data.schema     ? `<span class="bs-chip">Schema</span>` : ""}
+      ${data.frontend   ? `<span class="bs-chip">Frontend</span>` : ""}
+      ${data.deployment ? `<span class="bs-chip">Deployment</span>` : ""}
+    </div>`;
+  container.appendChild(summary);
+
+  const sectionDefs = [
+    {
+      key: "prd", title: "Product Requirements Document", sub: "Problem, features, metrics, stack",
+      iconCls: "sec-icon-prd", openByDefault: true,
+      render: (raw) => {
+        const body = document.createElement("div");
+        body.className = "sec-content";
+        body.appendChild(renderContent(raw));
+        // download
+        const dl = document.createElement("div");
+        dl.className = "dl-row";
+        dl.innerHTML = `<button class="dl-btn dl-txt" onclick="dlTxt(this)">↓ Download PRD .txt</button><button class="dl-btn dl-md" onclick="dlMd(this)">↓ Download .md</button>`;
+        body.appendChild(dl);
+        dl.querySelector("[onclick='dlTxt(this)']").addEventListener("click", () => download(raw, `prd-${slugify(productName)}.txt`, "text/plain"));
+        dl.querySelector("[onclick='dlMd(this)']").addEventListener("click", () => download(raw, `prd-${slugify(productName)}.md`, "text/markdown"));
+        return body;
+      }
+    },
+    {
+      key: "schema", title: "Database Schema", sub: "Tables, relationships, indexes, seed data",
+      iconCls: "sec-icon-schema", openByDefault: false,
+      render: (raw) => {
+        const body = document.createElement("div");
+        body.className = "sec-content";
+        body.appendChild(renderContent(raw));
+        const dl = document.createElement("div");
+        dl.className = "dl-row";
+        dl.innerHTML = `<button class="dl-btn dl-md-schema">↓ Download Schema .sql</button>`;
+        body.appendChild(dl);
+        const sqlContent = extractSqlBlocks(raw);
+        dl.querySelector("button").addEventListener("click", () => download(sqlContent, `schema-${slugify(productName)}.sql`, "text/plain"));
+        return body;
+      }
+    },
+    {
+      key: "frontend", title: "Frontend Code", sub: "Complete UI components and screens",
+      iconCls: "sec-icon-frontend", openByDefault: false,
+      render: (raw) => parseFileWidgets(raw)
+    },
+    {
+      key: "deployment", title: "Deployment Guide", sub: "Step-by-step deploy, env vars, checklist",
+      iconCls: "sec-icon-deployment", openByDefault: false,
+      render: (raw) => {
+        const body = document.createElement("div");
+        body.className = "sec-content";
+        body.appendChild(renderContent(raw));
+        const dl = document.createElement("div");
+        dl.className = "dl-row";
+        dl.innerHTML = `<button class="dl-btn dl-md-deploy">↓ Download Guide .md</button>`;
+        body.appendChild(dl);
+        dl.querySelector("button").addEventListener("click", () => download(raw, `deploy-${slugify(productName)}.md`, "text/markdown"));
+        return body;
+      }
+    }
+  ];
+
+  const sectionIcons = {
+    "sec-icon-prd":    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+    "sec-icon-schema": `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+    "sec-icon-frontend":`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+    "sec-icon-deployment":`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`
+  };
+
+  let secCount = 0;
+  sectionDefs.forEach(def => {
+    const raw = data[def.key];
+    if (!raw) return;
+    secCount++;
+
+    const sec = document.createElement("div");
+    sec.className = `prod-section ${def.openByDefault ? "open" : ""}`;
+    const secId = `sec_${def.key}_${Date.now()}`;
+
+    const hd = document.createElement("div");
+    hd.className = "prod-sec-hd";
+    hd.innerHTML = `
+      <div class="prod-sec-hd-left">
+        <div class="prod-sec-icon ${def.iconCls}">${sectionIcons[def.iconCls]}</div>
+        <div>
+          <div class="prod-sec-title">${esc(def.title)}</div>
+          <div class="prod-sec-sub">${esc(def.sub)}</div>
+        </div>
+      </div>
+      <div class="prod-sec-hd-right">
+        <button class="sec-copy-btn" id="copyBtn_${secId}">Copy</button>
+        <svg class="sec-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>`;
+
+    hd.addEventListener("click", (e) => {
+      if (e.target.closest(".sec-copy-btn")) return;
+      sec.classList.toggle("open");
+    });
+
+    const copyBtn = hd.querySelector(`#copyBtn_${secId}`);
+    copyBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(raw).then(() => {
+        copyBtn.textContent = "Copied!";
+        copyBtn.classList.add("copied");
+        setTimeout(() => { copyBtn.textContent = "Copy"; copyBtn.classList.remove("copied"); }, 1500);
+      });
+    });
+
+    const body = document.createElement("div");
+    body.className = "prod-sec-body";
+    body.appendChild(def.render(raw));
+
+    sec.appendChild(hd);
+    sec.appendChild(body);
+    container.appendChild(sec);
+  });
+
+  totalSections += secCount;
+  updateStats();
+  return container;
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function extractProductName(prd) {
+  const m = prd.match(/Product:\s*(.+)/);
+  return m ? m[1].trim() : "";
+}
+
+function extractSqlBlocks(raw) {
+  const blocks = [];
+  const re = /```sql\n([\s\S]*?)```/gi;
+  let m;
+  while ((m = re.exec(raw)) !== null) blocks.push(m[1]);
+  return blocks.length ? blocks.join("\n\n-- ──────────────────────────────────\n\n") : raw;
+}
+
+function slugify(s) {
+  return (s||"product").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+}
+
+function download(content, filename, mime) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], {type: mime}));
+  a.download = filename;
+  a.click();
+}
+
+// ─────────────────────────────────────────
+// Recent list
+// ─────────────────────────────────────────
+function addRecent(idea) {
+  const rl = document.getElementById("recentList");
+  const mn = rl.querySelector(".muted-note");
+  if (mn) mn.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  const snippet = idea.length > 55 ? idea.slice(0, 55) + "…" : idea;
+  item.innerHTML = `<span class="ri-dot"></span>${esc(snippet)}`;
+  rl.insertBefore(item, rl.firstChild);
+  if (rl.children.length > 8) rl.removeChild(rl.lastChild);
+}
+
+// ─────────────────────────────────────────
+// Main send
+// ─────────────────────────────────────────
+async function sendIdea() {
+  if (running) return;
+
+  const idea = ta.value.trim();
+  if (!idea) return;
+
+  // Remove welcome screen
+  const wc = msgsEl.querySelector(".welcome");
+  if (wc) wc.remove();
+
+  addUserRow(idea);
+  chatHistory.push({ role: "user", content: idea });
+  addRecent(idea);
+
+  ta.value = "";
+  ta.style.height = "auto";
+  running = true;
+  sendBtn.disabled = true;
+
+  const cfg = PHASE_CFG[currentPhase];
+  setStatus("run", cfg.statusLabel);
+  showThinking();
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idea, phase: currentPhase, history: chatHistory.slice(-8) })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    data = await res.json();
+  } catch (err) {
+    hideThinking();
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", "Network error: " + esc(err.message));
+    setStatus("err", "Error");
+    running = false;
+    sendBtn.disabled = false;
+    return;
+  }
+
+  hideThinking();
+
+  if (data.status === "PRODUCT_BUILT" && data.data) {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("full", cfg.doneLabel);
+    slot.appendChild(buildProductOutput(data.data, idea));
+    builtCount++;
+    updateStats();
+    chatHistory.push({ role: "assistant", content: `[MVP built for: ${idea}]` });
+    setStatus("done", cfg.doneLabel);
+
+  } else if (data.status === "ERROR") {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", esc(data.message || "Unknown error"));
+    setStatus("err", "Error");
+
+  } else if (data.status === "COMPLETED") {
+    const slot = addAgentRow();
+    const p = document.createElement("p");
+    p.style.whiteSpace = "pre-wrap";
+    p.textContent = data.solution || "";
+    slot.appendChild(p);
+    chatHistory.push({ role: "assistant", content: data.solution || "" });
+    setStatus("done", "Done");
+
+  } else {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", "Unexpected response from server.");
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  sendBtn.disabled = false;
+  scrollBottom();
+}
+
+// ─────────────────────────────────────────
+// Clear
+// ─────────────────────────────────────────
+function clearChat() {
+  while (msgsEl.firstChild) msgsEl.removeChild(msgsEl.firstChild);
+  msgsEl.appendChild(buildWelcome());
+  chatHistory = [];
+  builtCount = 0;
+  totalSections = 0;
+  updateStats();
+  const rl = document.getElementById("recentList");
+  if (rl) rl.innerHTML = `<div class="muted-note">No builds yet</div>`;
+  setStatus("idle", "Ready");
+  running = false;
+  sendBtn.disabled = false;
+  thinkingRow = null;
+}
+
+// ─────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────
+msgsEl.appendChild(buildWelcome());
+</script>
+</body>
+</html>

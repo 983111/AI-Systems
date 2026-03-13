@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Code Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;
+  --surface:#ffffff;
+  --surface2:#f2f0ec;
+  --surface3:#eceae5;
+  --border:#e4e0d8;
+  --border2:#ece9e2;
+  --txt:#1a1814;
+  --txt2:#6b6459;
+  --muted:#9e9589;
+  --muted2:#b8b2a8;
+
+  --amber:#d97706;--amber-light:#fffbf5;--amber-border:#fde68a;
+  --cyan:#0369a1;--cyan-light:#f0f9ff;--cyan-border:#bae6fd;
+  --green:#059669;--green-light:#ecfdf5;--green-border:#6ee7b7;
+  --violet:#7c3aed;--violet-light:#f5f3ff;--violet-border:#ddd6fe;
+  --orange:#ea580c;--orange-light:#fff7ed;--orange-border:#fed7aa;
+  --red:#b91c1c;--red-light:#fef2f2;--red-border:#fecaca;
+
+  --shadow-xs:0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm:0 1px 4px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r-sm:6px;--r-xs:4px;
+}
+
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased;line-height:1.5}
+
+/* ────────────────── LAYOUT ────────────────── */
+.layout{display:grid;grid-template-columns:268px 1fr;height:100vh;overflow:hidden}
+
+/* ────────────────── SIDEBAR ────────────────── */
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sb-head{padding:20px 18px 16px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.logo-mark{
+  width:30px;height:30px;
+  background:var(--txt);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.logo-mark svg{width:15px;height:15px}
+.logo-name{font-family:'Lora',serif;font-size:16px;font-weight:600;letter-spacing:-.3px;line-height:1.1}
+.logo-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+
+.sb-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.mode-btn{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 6px;
+  background:var(--surface2);
+  border:1.5px solid transparent;
+  border-radius:var(--r-sm);
+  font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:500;
+  color:var(--txt2);cursor:pointer;
+  transition:all .15s;outline:none;
+}
+.mode-btn svg{width:16px;height:16px;flex-shrink:0}
+.mode-btn:hover{border-color:var(--border);background:var(--surface3);color:var(--txt)}
+.mode-btn.active-implement{background:var(--cyan-light);border-color:var(--cyan-border);color:var(--cyan)}
+.mode-btn.active-review{background:var(--amber-light);border-color:var(--amber-border);color:var(--amber)}
+.mode-btn.active-debug{background:var(--orange-light);border-color:var(--orange-border);color:var(--orange)}
+.mode-btn.active-explain{background:var(--violet-light);border-color:var(--violet-border);color:var(--violet)}
+
+.sb-sec{padding:14px 18px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+
+/* Status badge */
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:500;
+}
+.status-idle{background:var(--surface2);color:var(--muted)}
+.status-run{background:#fef3c7;color:#92400e}
+.status-done{background:var(--green-light);color:#065f46}
+.status-err{background:var(--red-light);color:var(--red)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.status-run .status-dot{animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.mode-desc{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+
+/* Stats */
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:8px 4px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:18px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+
+/* Recent */
+.recent-list{display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto}
+.recent-item{
+  display:flex;align-items:flex-start;gap:6px;
+  padding:6px 8px;border-radius:var(--r-xs);
+  font-size:11.5px;color:var(--txt2);cursor:pointer;
+  transition:all .12s;line-height:1.4;
+}
+.recent-item:hover{background:var(--cyan-light);color:var(--cyan)}
+.ri-dot{width:4px;height:4px;border-radius:50%;background:var(--muted2);flex-shrink:0;margin-top:5px}
+.no-recent{font-size:11.5px;color:var(--muted);font-style:italic}
+
+.new-btn{
+  display:flex;align-items:center;gap:6px;width:100%;
+  padding:8px 10px;
+  background:transparent;border:1.5px dashed var(--border);border-radius:var(--r-sm);
+  font-family:'DM Sans',sans-serif;font-size:12px;color:var(--txt2);cursor:pointer;
+  transition:all .15s;
+}
+.new-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-light)}
+
+/* ────────────────── MAIN ────────────────── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+
+/* Topbar */
+.topbar{
+  padding:12px 24px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.mode-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;border:1px solid;
+  font-size:11.5px;font-weight:500;
+  background:var(--surface);box-shadow:var(--shadow-xs);
+}
+.pill-implement{color:var(--cyan);border-color:var(--cyan-border);background:var(--cyan-light)}
+.pill-review{color:var(--amber);border-color:var(--amber-border);background:var(--amber-light)}
+.pill-debug{color:var(--orange);border-color:var(--orange-border);background:var(--orange-light)}
+.pill-explain{color:var(--violet);border-color:var(--violet-border);background:var(--violet-light)}
+.ghost-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 12px;background:transparent;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;
+  color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;
+}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted2)}
+
+/* ────────────────── CHAT AREA ────────────────── */
+.chat-wrap{flex:1;overflow-y:auto;padding:24px 0;scroll-behavior:smooth}
+.chat-inner{max-width:780px;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;gap:0}
+
+/* ────────────────── WELCOME ────────────────── */
+.welcome{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:420px;text-align:center;padding:32px 0;
+}
+.welcome-icon{
+  width:56px;height:56px;background:var(--txt);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;box-shadow:var(--shadow-md);
+}
+.welcome-icon svg{width:28px;height:28px}
+.welcome h2{font-family:'Lora',serif;font-size:24px;font-weight:500;margin-bottom:6px;letter-spacing:-.4px}
+.welcome p{font-size:14px;color:var(--txt2);line-height:1.65;max-width:400px;margin-bottom:24px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;max-width:520px}
+.hint{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 13px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-xs);
+}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.hint.h-implement:hover{border-color:var(--cyan-border);background:var(--cyan-light)}
+.hint.h-review:hover{border-color:var(--amber-border);background:var(--amber-light)}
+.hint.h-debug:hover{border-color:var(--orange-border);background:var(--orange-light)}
+.hint.h-explain:hover{border-color:var(--violet-border);background:var(--violet-light)}
+.hint-em{font-size:18px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:600;margin-bottom:1px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* ────────────────── MESSAGE ROWS ────────────────── */
+.msg-row{
+  display:flex;gap:14px;
+  padding:20px 0;
+  border-bottom:1px solid var(--border2);
+  animation:fadein .25s ease;
+}
+.msg-row:last-child{border-bottom:none}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.av{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+}
+.av-agent{background:var(--txt)}
+.av-user{background:var(--cyan)}
+
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:11.5px;font-weight:600;color:var(--txt2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.msg-time{font-weight:400;color:var(--muted);font-size:11px}
+
+/* ────────────────── THINKING ────────────────── */
+.thinking-row{display:flex;gap:14px;padding:20px 0}
+.thinking-dots{display:flex;gap:4px;align-items:center;height:22px}
+.thinking-dots span{
+  width:5px;height:5px;background:var(--muted2);border-radius:50%;
+  animation:bounce 1.1s ease-in-out infinite;
+}
+.thinking-dots span:nth-child(2){animation-delay:.12s}
+.thinking-dots span:nth-child(3){animation-delay:.24s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ────────────────── PROSE CONTENT ────────────────── */
+/* The core fix: prose renders in DM Sans, not monospace */
+.prose{
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;
+  line-height:1.75;
+  color:var(--txt);
+}
+.prose p{margin:0 0 .75em}
+.prose p:last-child{margin-bottom:0}
+
+/* Section headings from AI output */
+.prose .sh{
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;letter-spacing:.7px;
+  margin:1.4em 0 .5em;
+  display:block;
+}
+.prose .sh:first-child{margin-top:0}
+
+/* Markdown headings */
+.prose h1,.prose h2{font-family:'Lora',serif;font-size:17px;font-weight:500;margin:.8em 0 .3em;letter-spacing:-.2px}
+.prose h3,.prose h4{font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;margin:.8em 0 .3em}
+
+/* Dividers */
+.prose hr{border:none;border-top:1px solid var(--border);margin:1em 0}
+
+/* Lists */
+.prose ul,.prose ol{padding-left:1.4em;margin:.4em 0 .8em}
+.prose li{margin:.25em 0;line-height:1.65}
+.prose li+li{}
+
+/* Inline code */
+.prose code{
+  font-family:'DM Mono','Courier New',monospace;
+  font-size:12.5px;background:var(--surface3);
+  border:1px solid var(--border);
+  padding:1px 5px;border-radius:3px;
+  color:#c7254e;
+}
+
+/* Blockquote */
+.prose blockquote{
+  border-left:3px solid var(--border);
+  margin:.5em 0;padding:.3em .8em;
+  color:var(--txt2);font-style:italic;
+}
+
+/* Bold / italic inline */
+.prose strong{font-weight:600}
+.prose em{font-style:italic}
+
+/* ► Arrow items (AI uses these in debug/review) */
+.prose .arrow-item{
+  display:flex;gap:8px;margin:.3em 0;align-items:flex-start;
+}
+.prose .arrow-item .arrow{
+  color:var(--amber);font-size:12px;flex-shrink:0;margin-top:.2em;font-weight:700;
+}
+.prose .arrow-item .arrow-body{flex:1}
+
+/* Step items */
+.prose .step-item{margin:.5em 0}
+.prose .step-label{
+  font-size:10.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;
+}
+
+/* ────────────────── CODE BLOCKS ────────────────── */
+.code-block{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+  margin:.75em 0;
+  box-shadow:var(--shadow-xs);
+}
+.code-block-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+}
+.code-lang{
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  color:var(--muted);text-transform:lowercase;
+}
+.code-copy-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  background:none;border:1px solid var(--border);cursor:pointer;
+  font-size:11px;color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+  padding:3px 8px;border-radius:3px;
+  transition:all .15s;
+}
+.code-copy-btn:hover{background:var(--surface3);color:var(--txt)}
+.code-copy-btn.copied{background:var(--green-light);color:var(--green);border-color:var(--green-border)}
+.code-block pre{margin:0;border-radius:0;border:none;background:#fafaf9}
+.code-block pre code.hljs{
+  font-family:'DM Mono','Courier New',monospace;
+  font-size:12.5px;line-height:1.65;
+  padding:14px 16px;
+  background:#fafaf9;display:block;
+  border-radius:0;
+}
+
+/* ────────────────── STATUS CHIP ────────────────── */
+.status-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 11px;border-radius:6px;
+  font-size:12.5px;font-weight:500;
+  margin-bottom:10px;
+}
+.chip-implement{background:var(--cyan-light);color:#0c4a6e;border:1px solid var(--cyan-border)}
+.chip-review{background:var(--amber-light);color:#78350f;border:1px solid var(--amber-border)}
+.chip-debug{background:var(--orange-light);color:#7c2d12;border:1px solid var(--orange-border)}
+.chip-explain{background:var(--violet-light);color:#4c1d95;border:1px solid var(--violet-border)}
+.chip-err{background:var(--red-light);color:var(--red);border:1px solid var(--red-border)}
+.chip-ok{background:var(--green-light);color:#065f46;border:1px solid var(--green-border)}
+
+/* ────────────────── FILE WIDGETS ────────────────── */
+.files-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 13px;
+  background:var(--cyan-light);border:1px solid var(--cyan-border);border-radius:var(--r-sm);
+  font-size:12.5px;color:#0c4a6e;
+  margin-bottom:8px;
+}
+.files-bar svg{flex-shrink:0}
+.files-bar-count{font-weight:600}
+.files-bar-actions{display:flex;gap:5px;margin-left:auto}
+.files-bar-btn{
+  background:none;border:1px solid var(--cyan-border);cursor:pointer;
+  font-size:11px;color:#0369a1;font-family:'DM Sans',sans-serif;
+  padding:2px 8px;border-radius:3px;transition:all .15s;
+}
+.files-bar-btn:hover{background:#e0f2fe}
+
+.file-widgets{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+
+.file-widget{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-xs);
+  transition:border-color .15s;
+}
+.file-widget:hover{border-color:#c5c0b8}
+.file-widget-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 13px;background:var(--surface2);
+  cursor:pointer;user-select:none;
+  border-bottom:1px solid transparent;transition:border-color .15s;
+}
+.file-widget.fw-open .file-widget-hd{border-bottom-color:var(--border)}
+.file-widget-hd:hover{background:var(--surface3)}
+.fw-left{display:flex;align-items:center;gap:8px}
+.fw-icon{
+  width:26px;height:26px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:9px;font-weight:700;letter-spacing:-.3px;
+}
+/* Icon colors */
+.fi-dart{background:#e0f2fe;color:#0284c7}.fi-yaml{background:#fef9c3;color:#a16207}
+.fi-json{background:#dcfce7;color:#15803d}.fi-js{background:#fef3c7;color:#b45309}
+.fi-ts{background:#dbeafe;color:#1d4ed8}.fi-py{background:#ede9fe;color:#7c3aed}
+.fi-go{background:#d1fae5;color:#059669}.fi-rb{background:#fee2e2;color:#b91c1c}
+.fi-kt{background:#ede9fe;color:#7c3aed}.fi-swift{background:#fff7ed;color:#c2410c}
+.fi-rs{background:#fef3c7;color:#d97706}.fi-cpp{background:#dbeafe;color:#2563eb}
+.fi-cs{background:#ede9fe;color:#6d28d9}.fi-html{background:#fee2e2;color:#dc2626}
+.fi-css{background:#dbeafe;color:#1d4ed8}.fi-default{background:var(--surface3);color:var(--txt2)}
+.fw-name{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--txt)}
+.fw-path{font-size:10.5px;color:var(--muted)}
+.fw-right{display:flex;align-items:center;gap:7px}
+.fw-lines{font-size:10.5px;color:var(--muted);font-family:'DM Mono',monospace}
+.fw-lang{
+  padding:2px 7px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;font-size:10px;font-weight:600;color:var(--txt2);
+  text-transform:uppercase;letter-spacing:.3px;
+}
+.fw-copy{
+  background:none;border:1px solid var(--border);cursor:pointer;
+  font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;gap:3px;
+  padding:3px 8px;border-radius:3px;transition:all .15s;
+}
+.fw-copy:hover{background:var(--surface3);color:var(--txt)}
+.fw-copy.copied{background:var(--green-light);color:var(--green);border-color:var(--green-border)}
+.fw-chevron{transition:transform .18s;color:var(--muted);flex-shrink:0}
+.file-widget.fw-open .fw-chevron{transform:rotate(180deg)}
+.file-widget-body{display:none}
+.file-widget.fw-open .file-widget-body{display:block}
+.file-widget-body pre{margin:0;border-radius:0;border:none;background:#fafaf9}
+.file-widget-body pre code.hljs{
+  font-family:'DM Mono','Courier New',monospace;font-size:12px;
+  line-height:1.6;padding:14px 16px;background:#fafaf9;display:block;border-radius:0;
+}
+
+/* Download row */
+.dl-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.dl-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border:none;border-radius:var(--r-sm);
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.dl-dark{background:var(--txt);color:#fff}
+.dl-dark:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.dl-blue{background:#0369a1;color:#fff}
+.dl-blue:hover{background:#075985;transform:translateY(-1px)}
+
+/* ────────────────── INPUT BAR ────────────────── */
+.input-bar{
+  padding:14px 24px 18px;
+  background:var(--bg);border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.input-inner{max-width:780px;margin:0 auto}
+.input-wrap{
+  display:flex;align-items:flex-end;gap:8px;
+  background:var(--surface);
+  border:1.5px solid var(--border);border-radius:13px;
+  padding:8px 10px;
+  box-shadow:var(--shadow-xs);
+  transition:border-color .15s,box-shadow .15s;
+}
+.input-wrap:focus-within{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px rgba(3,105,161,.1),var(--shadow-xs);
+}
+.input-ta{
+  flex:1;border:none;background:transparent;
+  padding:3px 2px;
+  font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.55;
+  min-height:22px;max-height:180px;resize:none;overflow-y:auto;
+  outline:none;color:var(--txt);
+}
+.input-ta::placeholder{color:var(--muted2)}
+.send-btn{
+  width:32px;height:32px;
+  background:var(--txt);border:none;border-radius:7px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.send-btn:hover:not(:disabled){background:#2d2a26;transform:scale(1.05)}
+.send-btn:disabled{opacity:.35;cursor:not-allowed}
+.input-hint{margin-top:6px;font-size:11px;color:var(--muted);text-align:center}
+
+/* ────────────────── SCROLLBAR ────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ────────────────── RESPONSIVE ────────────────── */
+@media(max-width:720px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .hint-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Code Agent</div>
+        </div>
+      </div>
+      <div class="sb-label">Mode</div>
+      <div class="mode-grid">
+        <button class="mode-btn active-implement" id="btn-implement" onclick="setMode('implement')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Implement
+        </button>
+        <button class="mode-btn" id="btn-review" onclick="setMode('review')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Review
+        </button>
+        <button class="mode-btn" id="btn-debug" onclick="setMode('debug')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Debug
+        </button>
+        <button class="mode-btn" id="btn-explain" onclick="setMode('explain')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Explain
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="status-badge status-idle"><span class="status-dot"></span>Ready</div>
+      <div class="mode-desc" id="modeDesc">Write complete, production-ready code</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sImpl">0</div><div class="stat-l">Built</div></div>
+        <div class="stat-box"><div class="stat-n" id="sReview">0</div><div class="stat-l">Reviewed</div></div>
+        <div class="stat-box"><div class="stat-n" id="sDebug">0</div><div class="stat-l">Debugged</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent</div>
+      <div class="recent-list" id="recentList"><div class="no-recent">No queries yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <div class="main">
+    <div class="topbar">
+      <div id="modePill" class="mode-pill pill-implement">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span id="pillTxt">Implement Mode</span>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="chat-wrap" id="chatWrap">
+      <div class="chat-inner" id="chat">
+        <!-- Welcome injected by JS -->
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-wrap">
+          <textarea id="ta" class="input-ta" rows="1" placeholder="Describe what to build, or paste code to review, debug, or explain…"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+const BACKEND = "https://k2-code-agent.vishwajeetadkine705.workers.dev";
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let currentMode = "implement";
+let running = false;
+let chatHistory = [];
+let implCount = 0, reviewCount = 0, debugCount = 0;
+let outputStore = {};
+let thinkingRow = null;
+
+/* ═══════════════════════════════════════════════
+   DOM REFS
+═══════════════════════════════════════════════ */
+const ta       = document.getElementById("ta");
+const sendBtn  = document.getElementById("sendBtn");
+const chatEl   = document.getElementById("chat");
+const chatWrap = document.getElementById("chatWrap");
+
+/* ═══════════════════════════════════════════════
+   MODE CONFIG
+═══════════════════════════════════════════════ */
+const MODES = {
+  implement: {
+    pillClass:"pill-implement", pillTxt:"Implement Mode",
+    desc:"Write complete, production-ready code",
+    placeholder:"Describe what to build…",
+    btnClass:"active-implement",
+    chipClass:"chip-implement",
+    statusLabel:"Building…",
+    doneLabel:"Implementation complete",
+    icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  },
+  review: {
+    pillClass:"pill-review", pillTxt:"Review Mode",
+    desc:"Bugs, security & best practices",
+    placeholder:"Paste code to review…",
+    btnClass:"active-review",
+    chipClass:"chip-review",
+    statusLabel:"Reviewing…",
+    doneLabel:"Code review complete",
+    icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  },
+  debug: {
+    pillClass:"pill-debug", pillTxt:"Debug Mode",
+    desc:"Root cause analysis & fix",
+    placeholder:"Paste buggy code and describe the problem…",
+    btnClass:"active-debug",
+    chipClass:"chip-debug",
+    statusLabel:"Debugging…",
+    doneLabel:"Debug analysis complete",
+    icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  },
+  explain: {
+    pillClass:"pill-explain", pillTxt:"Explain Mode",
+    desc:"Deep technical breakdown",
+    placeholder:"Paste code or describe a concept…",
+    btnClass:"active-explain",
+    chipClass:"chip-explain",
+    statusLabel:"Explaining…",
+    doneLabel:"Explanation complete",
+    icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+  },
+};
+
+/* ═══════════════════════════════════════════════
+   WELCOME SCREEN
+═══════════════════════════════════════════════ */
+function buildWelcome() {
+  const w = document.createElement("div");
+  w.className = "welcome";
+  w.id = "welcomeScreen";
+  w.innerHTML = `
+    <div class="welcome-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      </svg>
+    </div>
+    <h2>Code Agent</h2>
+    <p>Write production code, review for bugs and security, debug step-by-step, or get deep explanations of any concept.</p>
+    <div class="hint-grid">
+      <div class="hint h-implement" onclick="hintClick('implement','Build a production-ready rate limiter in TypeScript using a sliding window algorithm with Redis')">
+        <div class="hint-em">⚡</div>
+        <div><strong>Implement</strong><small>Complete production code</small></div>
+      </div>
+      <div class="hint h-review" onclick="hintClick('review','Review this code for bugs and security issues:\n\nasync function getUser(id) {\n  const res = await db.query(\"SELECT * FROM users WHERE id = \" + id);\n  return res.rows[0];\n}')">
+        <div class="hint-em">🔍</div>
+        <div><strong>Code Review</strong><small>Bugs, security & best practices</small></div>
+      </div>
+      <div class="hint h-debug" onclick="hintClick('debug','Debug this React hook — it causes an infinite loop:\n\nuseEffect(() => {\n  setCount(count + 1);\n}, [count]);')">
+        <div class="hint-em">🐛</div>
+        <div><strong>Debug</strong><small>Root cause + fix</small></div>
+      </div>
+      <div class="hint h-explain" onclick="hintClick('explain','Explain how the JavaScript event loop, microtask queue, and macrotask queue work together with concrete examples')">
+        <div class="hint-em">💡</div>
+        <div><strong>Explain</strong><small>Deep technical explanation</small></div>
+      </div>
+    </div>`;
+  return w;
+}
+
+chatEl.appendChild(buildWelcome());
+
+/* ═══════════════════════════════════════════════
+   TEXTAREA BEHAVIOUR
+═══════════════════════════════════════════════ */
+ta.addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 180) + "px";
+});
+ta.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+/* ═══════════════════════════════════════════════
+   MODE CONTROL
+═══════════════════════════════════════════════ */
+function setMode(m) {
+  currentMode = m;
+  const cfg = MODES[m];
+  // Buttons
+  Object.keys(MODES).forEach(k => {
+    const btn = document.getElementById("btn-" + k);
+    if (btn) btn.className = "mode-btn" + (k === m ? " " + cfg.btnClass : "");
+  });
+  // Pill
+  const pill = document.getElementById("modePill");
+  if (pill) pill.className = "mode-pill " + cfg.pillClass;
+  const pillTxt = document.getElementById("pillTxt");
+  if (pillTxt) pillTxt.textContent = cfg.pillTxt;
+  // Desc + placeholder
+  const desc = document.getElementById("modeDesc");
+  if (desc) desc.textContent = cfg.desc;
+  ta.placeholder = cfg.placeholder;
+}
+
+function hintClick(m, text) {
+  setMode(m);
+  ta.value = text;
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 180) + "px";
+  ta.focus();
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════ */
+function esc(s) {
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function nowStr() {
+  return new Date().toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" });
+}
+function scrollBottom() {
+  requestAnimationFrame(() => { chatWrap.scrollTop = chatWrap.scrollHeight; });
+}
+function hideWelcome() {
+  const w = document.getElementById("welcomeScreen");
+  if (w) w.style.display = "none";
+}
+function setStatus(state, label) {
+  const b = document.getElementById("statusBadge");
+  if (!b) return;
+  const cls = { run:"run", done:"done", err:"err" }[state] || "idle";
+  b.className = "status-badge status-" + cls;
+  b.innerHTML = `<span class="status-dot"></span>${esc(label)}`;
+}
+function updateStats() {
+  const si = document.getElementById("sImpl");
+  const sr = document.getElementById("sReview");
+  const sd = document.getElementById("sDebug");
+  if (si) si.textContent = implCount;
+  if (sr) sr.textContent = reviewCount;
+  if (sd) sd.textContent = debugCount;
+}
+
+/* ═══════════════════════════════════════════════
+   COPY HELPER
+═══════════════════════════════════════════════ */
+function copyText(text, btn, originalHTML) {
+  const success = () => {
+    btn.classList.add("copied");
+    btn.textContent = "✓ Copied";
+    setTimeout(() => { btn.classList.remove("copied"); btn.innerHTML = originalHTML; }, 2000);
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(success).catch(() => {
+      fallbackCopy(text); success();
+    });
+  } else { fallbackCopy(text); success(); }
+}
+function fallbackCopy(text) {
+  const el = document.createElement("textarea");
+  el.value = text;
+  el.style.cssText = "position:fixed;top:-9999px";
+  document.body.appendChild(el); el.select();
+  try { document.execCommand("copy"); } catch(e) {}
+  document.body.removeChild(el);
+}
+
+/* ═══════════════════════════════════════════════
+   ██████████████████████████████████████████████
+   CORE RENDERER — converts raw AI text → DOM
+   ██████████████████████████████████████████████
+═══════════════════════════════════════════════ */
+
+/**
+ * Apply inline markdown to a text string.
+ * Handles: **bold**, *italic*, `code`, and escapes HTML.
+ */
+function inlineMd(text) {
+  let s = esc(text);
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return s;
+}
+
+/**
+ * Detect if a line is a major ALL-CAPS section header from the AI.
+ * e.g. "CRITICAL ISSUES", "ROOT CAUSE ANALYSIS", "THE FIX"
+ */
+function isAISectionHead(line) {
+  const t = line.trim();
+  if (t.length < 3 || t.length > 70) return false;
+  if (!/^[A-Z][A-Z0-9\s&\/\-\.,:']+$/.test(t)) return false;
+  if (!t.includes(" ") && t.length < 6) return false;
+  return true;
+}
+
+function isMarkdownHeading(line) {
+  return /^#{1,4}\s+\S/.test(line.trim());
+}
+
+function isDivider(line) {
+  return /^[━─=\-─]{4,}$/.test(line.trim());
+}
+
+function isNumberedStep(line) {
+  return /^Step\s+\d+\s*[—–-]/.test(line.trim());
+}
+
+function isArrowItem(line) {
+  return /^[►▶•]\s+/.test(line.trim());
+}
+
+function isBulletItem(line) {
+  return /^[-*]\s+/.test(line.trim());
+}
+
+function isNumberedItem(line) {
+  return /^\d+[.)]\s+/.test(line.trim());
+}
+
+/**
+ * Split raw text by ``` fenced code blocks.
+ * Returns array of { type: "text"|"code", content, lang? }
+ */
+function splitByFences(text) {
+  const segments = [];
+  const re = /```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g;
+  let lastIndex = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastIndex) segments.push({ type:"text", content: text.slice(lastIndex, m.index) });
+    segments.push({ type:"code", lang: m[1] || "", content: m[2] });
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < text.length) segments.push({ type:"text", content: text.slice(lastIndex) });
+  return segments;
+}
+
+/**
+ * Build a styled code block DOM element.
+ */
+function buildCodeBlock(lang, code) {
+  const wrap = document.createElement("div");
+  wrap.className = "code-block";
+
+  const hd = document.createElement("div");
+  hd.className = "code-block-hd";
+
+  const langEl = document.createElement("span");
+  langEl.className = "code-lang";
+  langEl.textContent = lang || "code";
+  hd.appendChild(langEl);
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "code-copy-btn";
+  const copyIcon = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+  copyBtn.innerHTML = copyIcon;
+  copyBtn.addEventListener("click", () => copyText(code, copyBtn, copyIcon));
+  hd.appendChild(copyBtn);
+
+  wrap.appendChild(hd);
+
+  const pre = document.createElement("pre");
+  const codeEl = document.createElement("code");
+  if (lang) codeEl.className = "language-" + lang;
+  codeEl.textContent = code;
+  pre.appendChild(codeEl);
+  try { hljs.highlightElement(codeEl); } catch(e) {}
+  wrap.appendChild(pre);
+
+  return wrap;
+}
+
+/**
+ * Build prose DOM from a plain-text segment (no fenced code).
+ * Handles: section heads, markdown heads, dividers, bullets, numbered lists, steps, arrow items, paragraphs.
+ */
+function buildProseBlock(text) {
+  const container = document.createElement("div");
+  container.className = "prose";
+
+  const lines = text.split("\n");
+  let i = 0;
+  let currentUL = null;
+  let currentOL = null;
+
+  function flushLists() {
+    currentUL = null;
+    currentOL = null;
+  }
+
+  function appendToContainer(el) {
+    flushLists();
+    container.appendChild(el);
+  }
+
+  while (i < lines.length) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+    i++;
+
+    /* Skip blank lines between blocks */
+    if (trimmed === "") {
+      flushLists();
+      continue;
+    }
+
+    /* ── Divider ── */
+    if (isDivider(trimmed)) {
+      const hr = document.createElement("hr");
+      appendToContainer(hr);
+      continue;
+    }
+
+    /* ── AI section header (ALL CAPS) ── */
+    if (isAISectionHead(trimmed)) {
+      const span = document.createElement("span");
+      span.className = "sh";
+      span.textContent = trimmed;
+      appendToContainer(span);
+      continue;
+    }
+
+    /* ── Markdown heading ── */
+    if (isMarkdownHeading(trimmed)) {
+      const level = (trimmed.match(/^(#{1,4})\s/) || ["","#"])[1].length;
+      const text2 = trimmed.replace(/^#{1,4}\s+/, "");
+      const tag = level <= 2 ? "h2" : level === 3 ? "h3" : "h4";
+      const el = document.createElement(tag);
+      el.innerHTML = inlineMd(text2);
+      appendToContainer(el);
+      continue;
+    }
+
+    /* ── Step item ── */
+    if (isNumberedStep(trimmed)) {
+      const stepDiv = document.createElement("div");
+      stepDiv.className = "step-item";
+      const label = document.createElement("div");
+      label.className = "step-label";
+      // Extract "Step N — Title"
+      const sm = trimmed.match(/^(Step\s+\d+)\s*[—–-]\s*(.*)$/i);
+      if (sm) {
+        label.textContent = sm[1].toUpperCase();
+        const body = document.createElement("p");
+        body.innerHTML = inlineMd(sm[2]);
+        stepDiv.appendChild(label);
+        stepDiv.appendChild(body);
+      } else {
+        const body = document.createElement("p");
+        body.innerHTML = inlineMd(trimmed);
+        stepDiv.appendChild(body);
+      }
+      appendToContainer(stepDiv);
+      continue;
+    }
+
+    /* ── Arrow/bullet items (► ▶ •) ── */
+    if (isArrowItem(trimmed)) {
+      const bodyTxt = trimmed.replace(/^[►▶•]\s+/, "");
+      const itemEl = document.createElement("div");
+      itemEl.className = "arrow-item";
+      itemEl.innerHTML = `<span class="arrow">►</span><span class="arrow-body">${inlineMd(bodyTxt)}</span>`;
+      flushLists();
+      container.appendChild(itemEl);
+      continue;
+    }
+
+    /* ── Unordered list item (- or *) ── */
+    if (isBulletItem(trimmed)) {
+      if (!currentUL) {
+        currentUL = document.createElement("ul");
+        currentOL = null;
+        container.appendChild(currentUL);
+      }
+      const li = document.createElement("li");
+      li.innerHTML = inlineMd(trimmed.replace(/^[-*]\s+/, ""));
+      currentUL.appendChild(li);
+      continue;
+    }
+
+    /* ── Ordered list item ── */
+    if (isNumberedItem(trimmed)) {
+      if (!currentOL) {
+        currentOL = document.createElement("ol");
+        currentUL = null;
+        container.appendChild(currentOL);
+      }
+      const li = document.createElement("li");
+      li.innerHTML = inlineMd(trimmed.replace(/^\d+[.)]\s+/, ""));
+      currentOL.appendChild(li);
+      continue;
+    }
+
+    /* ── Blockquote ── */
+    if (trimmed.startsWith("> ")) {
+      const bq = document.createElement("blockquote");
+      bq.innerHTML = inlineMd(trimmed.slice(2));
+      appendToContainer(bq);
+      continue;
+    }
+
+    /* ── Normal paragraph line ── */
+    /* Collect consecutive non-special lines into one <p> */
+    flushLists();
+    let paraLines = [trimmed];
+    while (i < lines.length) {
+      const nextRaw = lines[i];
+      const nextTrim = nextRaw.trim();
+      if (
+        nextTrim === "" ||
+        isDivider(nextTrim) ||
+        isAISectionHead(nextTrim) ||
+        isMarkdownHeading(nextTrim) ||
+        isNumberedStep(nextTrim) ||
+        isArrowItem(nextTrim) ||
+        isBulletItem(nextTrim) ||
+        isNumberedItem(nextTrim) ||
+        nextTrim.startsWith("> ")
+      ) break;
+      paraLines.push(nextTrim);
+      i++;
+    }
+    const p = document.createElement("p");
+    p.innerHTML = inlineMd(paraLines.join(" "));
+    container.appendChild(p);
+  }
+
+  return container;
+}
+
+/**
+ * Main render function: converts raw AI output → DOM node tree.
+ */
+function renderContent(rawText) {
+  const root = document.createDocumentFragment();
+  const segments = splitByFences(rawText);
+  segments.forEach(seg => {
+    if (seg.type === "code") {
+      root.appendChild(buildCodeBlock(seg.lang, seg.content));
+    } else {
+      const prose = buildProseBlock(seg.content);
+      // Only append if there's actual visible content
+      if (prose.children.length > 0 || prose.textContent.trim()) {
+        root.appendChild(prose);
+      }
+    }
+  });
+  return root;
+}
+
+/* ═══════════════════════════════════════════════
+   FILE WIDGET HELPERS
+═══════════════════════════════════════════════ */
+function langFromExt(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  const m = {
+    dart:"dart",yaml:"yaml",yml:"yaml",json:"json",
+    js:"javascript",jsx:"javascript",ts:"typescript",tsx:"typescript",
+    py:"python",go:"go",rb:"ruby",kt:"kotlin",kts:"kotlin",
+    swift:"swift",rs:"rust",cpp:"cpp",cc:"cpp",c:"c",
+    cs:"csharp",java:"java",html:"html",css:"css",scss:"css",
+    md:"markdown",sh:"bash",bash:"bash",sql:"sql",php:"php",
+    xml:"xml",toml:"toml",gradle:"groovy",
+  };
+  return m[ext] || ext || "plaintext";
+}
+function iconClassFromExt(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  const m = {
+    dart:"dart",yaml:"yaml",yml:"yaml",json:"json",
+    js:"js",jsx:"js",ts:"ts",tsx:"ts",
+    py:"py",go:"go",rb:"rb",kt:"kt",kts:"kt",
+    swift:"swift",rs:"rs",cpp:"cpp",cc:"cpp",c:"cpp",
+    cs:"cs",html:"html",css:"css",scss:"css",
+  };
+  return "fi-" + (m[ext] || "default");
+}
+function iconLabelFromExt(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  const m = {
+    dart:"DRT",yaml:"YML",yml:"YML",json:"JSON",
+    js:"JS",jsx:"JSX",ts:"TS",tsx:"TSX",py:"PY",go:"GO",
+    rb:"RB",kt:"KT",swift:"SW",rs:"RS",cpp:"C++",c:"C",
+    cs:"C#",java:"JV",html:"HTM",css:"CSS",scss:"CSS",
+    sh:"SH",bash:"SH",sql:"SQL",md:"MD",
+  };
+  return m[ext] || (ext.slice(0,3).toUpperCase() || "?");
+}
+
+/**
+ * Parse multi-file output. Returns null if not multi-file.
+ * Files are delimited by "FILE: path/file.ext" lines.
+ */
+function parseFileBlocks(text) {
+  const lines = text.split("\n");
+  const starts = [];
+  lines.forEach((l, i) => {
+    const m = l.match(/^[ \t]*FILE:\s*(.+?)\s*$/);
+    if (m) starts.push({ lineIndex: i, filepath: m[1].trim() });
+  });
+  if (starts.length < 2) return null;
+
+  const preamble = lines.slice(0, starts[0].lineIndex).join("\n").trim();
+  const files = starts.map((s, idx) => {
+    const endLine = idx + 1 < starts.length ? starts[idx + 1].lineIndex : lines.length;
+    const bodyText = lines.slice(s.lineIndex + 1, endLine).join("\n").trim();
+    const fm = bodyText.match(/^```([a-zA-Z0-9]*)\n?([\s\S]*?)```/);
+    const lang = fm ? (fm[1] || langFromExt(s.filepath)) : langFromExt(s.filepath);
+    const code = (fm ? fm[2] : bodyText).trim();
+    return { filepath: s.filepath, filename: s.filepath.split("/").pop(), lang, code };
+  });
+  return { preamble, files };
+}
+
+function buildFileWidget(file, index) {
+  const widget = document.createElement("div");
+  widget.className = "file-widget";
+  if (index < 3) widget.classList.add("fw-open");
+
+  // Header
+  const hd = document.createElement("div");
+  hd.className = "file-widget-hd";
+
+  const left = document.createElement("div");
+  left.className = "fw-left";
+
+  const icon = document.createElement("div");
+  icon.className = "fw-icon " + iconClassFromExt(file.filename);
+  icon.textContent = iconLabelFromExt(file.filename);
+
+  const nameBlock = document.createElement("div");
+  const nameEl = document.createElement("div");
+  nameEl.className = "fw-name";
+  nameEl.textContent = file.filename;
+  nameBlock.appendChild(nameEl);
+  const dirPart = file.filepath.includes("/") ? file.filepath.split("/").slice(0,-1).join("/") + "/" : "";
+  if (dirPart) {
+    const pathEl = document.createElement("div");
+    pathEl.className = "fw-path";
+    pathEl.textContent = dirPart;
+    nameBlock.appendChild(pathEl);
+  }
+  left.appendChild(icon);
+  left.appendChild(nameBlock);
+
+  const right = document.createElement("div");
+  right.className = "fw-right";
+
+  const lineCount = file.code.split("\n").length;
+  const linesBadge = document.createElement("span");
+  linesBadge.className = "fw-lines";
+  linesBadge.textContent = lineCount + " lines";
+
+  const langBadge = document.createElement("span");
+  langBadge.className = "fw-lang";
+  langBadge.textContent = file.lang;
+
+  const copyIcon = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "fw-copy";
+  copyBtn.innerHTML = copyIcon;
+  copyBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    copyText(file.code, copyBtn, copyIcon);
+  });
+
+  const chevron = document.createElement("span");
+  chevron.className = "fw-chevron";
+  chevron.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+  right.appendChild(linesBadge);
+  right.appendChild(langBadge);
+  right.appendChild(copyBtn);
+  right.appendChild(chevron);
+  hd.appendChild(left);
+  hd.appendChild(right);
+
+  // Body
+  const body = document.createElement("div");
+  body.className = "file-widget-body";
+  const pre = document.createElement("pre");
+  const codeEl = document.createElement("code");
+  if (file.lang) codeEl.className = "language-" + file.lang;
+  codeEl.textContent = file.code;
+  pre.appendChild(codeEl);
+  try { hljs.highlightElement(codeEl); } catch(e) {}
+  body.appendChild(pre);
+  widget.appendChild(hd);
+  widget.appendChild(body);
+
+  hd.addEventListener("click", () => widget.classList.toggle("fw-open"));
+
+  return widget;
+}
+
+/* ═══════════════════════════════════════════════
+   BUILD FULL AGENT OUTPUT SLOT
+═══════════════════════════════════════════════ */
+function buildOutputDOM(rawContent, resultMode) {
+  const uid = "out_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  outputStore[uid] = rawContent;
+
+  const cfg = MODES[resultMode];
+  const wrap = document.createElement("div");
+
+  /* ── Try multi-file rendering for implement mode ── */
+  if (resultMode === "implement") {
+    const parsed = parseFileBlocks(rawContent);
+    if (parsed && parsed.files.length >= 2) {
+      // Preamble prose
+      if (parsed.preamble) {
+        wrap.appendChild(document.createTextNode("")); // force fragment
+        const preambleRoot = renderContent(parsed.preamble);
+        wrap.appendChild(preambleRoot);
+      }
+
+      // Files summary bar
+      const bar = document.createElement("div");
+      bar.className = "files-bar";
+      bar.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        <span><span class="files-bar-count">${parsed.files.length} files</span> generated</span>
+        <div class="files-bar-actions">
+          <button class="files-bar-btn" id="expandAll_${uid}">Expand all</button>
+          <button class="files-bar-btn" id="collapseAll_${uid}">Collapse all</button>
+        </div>`;
+      wrap.appendChild(bar);
+
+      // File widgets
+      const widgetsEl = document.createElement("div");
+      widgetsEl.className = "file-widgets";
+      widgetsEl.id = "widgets_" + uid;
+      parsed.files.forEach((f, idx) => widgetsEl.appendChild(buildFileWidget(f, idx)));
+      wrap.appendChild(widgetsEl);
+
+      // Wire expand/collapse
+      requestAnimationFrame(() => {
+        const expBtn = document.getElementById("expandAll_" + uid);
+        const colBtn = document.getElementById("collapseAll_" + uid);
+        const cont = document.getElementById("widgets_" + uid);
+        if (expBtn && cont) expBtn.addEventListener("click", () => cont.querySelectorAll(".file-widget").forEach(w => w.classList.add("fw-open")));
+        if (colBtn && cont) colBtn.addEventListener("click", () => cont.querySelectorAll(".file-widget").forEach(w => w.classList.remove("fw-open")));
+      });
+
+      // Download
+      const dlRow = document.createElement("div");
+      dlRow.className = "dl-row";
+
+      const dlBtn = document.createElement("button");
+      dlBtn.className = "dl-btn dl-dark";
+      dlBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download all (.txt)`;
+      dlBtn.addEventListener("click", () => {
+        const url = URL.createObjectURL(new Blob([rawContent], { type:"text/plain" }));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `stremini-implement-${Date.now()}.txt`;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+      });
+
+      dlRow.appendChild(dlBtn);
+      wrap.appendChild(dlRow);
+
+      return wrap;
+    }
+  }
+
+  /* ── Standard rich prose + code rendering ── */
+  const contentRoot = renderContent(rawContent);
+  wrap.appendChild(contentRoot);
+
+  // Download buttons
+  const dlRow = document.createElement("div");
+  dlRow.className = "dl-row";
+  const dlTxt = document.createElement("button");
+  dlTxt.className = "dl-btn dl-dark";
+  dlTxt.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download .txt`;
+  dlTxt.addEventListener("click", () => {
+    const url = URL.createObjectURL(new Blob([outputStore[uid] || ""], { type:"text/plain" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `stremini-${resultMode}-${Date.now()}.txt`;
+    a.style.display = "none"; document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  });
+  const dlMd = document.createElement("button");
+  dlMd.className = "dl-btn dl-blue";
+  dlMd.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Download .md`;
+  dlMd.addEventListener("click", () => {
+    const raw = outputStore[uid] || "";
+    const url = URL.createObjectURL(new Blob([`# Stremini — ${resultMode}\n\n${raw}`], { type:"text/markdown" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `stremini-${resultMode}-${Date.now()}.md`;
+    a.style.display = "none"; document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  });
+  dlRow.appendChild(dlTxt);
+  dlRow.appendChild(dlMd);
+  wrap.appendChild(dlRow);
+
+  return wrap;
+}
+
+/* ═══════════════════════════════════════════════
+   ADD MESSAGE ROWS
+═══════════════════════════════════════════════ */
+function agentAvEl() {
+  const av = document.createElement("div");
+  av.className = "av av-agent";
+  av.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
+  return av;
+}
+
+function addUserMsg(text) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+
+  const av = document.createElement("div");
+  av.className = "av av-user";
+  av.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+  const body = document.createElement("div");
+  body.className = "msg-body";
+
+  const who = document.createElement("div");
+  who.className = "msg-who";
+  who.innerHTML = `You <span class="msg-time">${nowStr()}</span>`;
+
+  const content = document.createElement("div");
+  content.className = "prose";
+  const p = document.createElement("p");
+  p.style.whiteSpace = "pre-wrap";
+  p.textContent = text;
+  content.appendChild(p);
+
+  body.appendChild(who);
+  body.appendChild(content);
+  row.appendChild(av);
+  row.appendChild(body);
+  chatEl.appendChild(row);
+  scrollBottom();
+}
+
+/** Creates the agent row and returns the contentSlot div */
+function addAgentRow() {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+
+  const body = document.createElement("div");
+  body.className = "msg-body";
+
+  const who = document.createElement("div");
+  who.className = "msg-who";
+  who.innerHTML = `Stremini <span class="msg-time">${nowStr()}</span>`;
+
+  const slot = document.createElement("div");
+
+  body.appendChild(who);
+  body.appendChild(slot);
+  row.appendChild(agentAvEl());
+  row.appendChild(body);
+  chatEl.appendChild(row);
+  scrollBottom();
+  return slot;
+}
+
+/* ═══════════════════════════════════════════════
+   THINKING INDICATOR
+═══════════════════════════════════════════════ */
+function showThinking() {
+  thinkingRow = document.createElement("div");
+  thinkingRow.className = "thinking-row";
+  const body = document.createElement("div");
+  body.className = "msg-body";
+  const who = document.createElement("div");
+  who.className = "msg-who";
+  who.innerHTML = `Stremini <span class="msg-time">${nowStr()}</span>`;
+  const dots = document.createElement("div");
+  dots.className = "thinking-dots";
+  dots.innerHTML = "<span></span><span></span><span></span>";
+  body.appendChild(who);
+  body.appendChild(dots);
+  thinkingRow.appendChild(agentAvEl());
+  thinkingRow.appendChild(body);
+  chatEl.appendChild(thinkingRow);
+  scrollBottom();
+}
+function hideThinking() {
+  if (thinkingRow) { thinkingRow.remove(); thinkingRow = null; }
+}
+
+/* ═══════════════════════════════════════════════
+   RECENT QUERIES
+═══════════════════════════════════════════════ */
+function addRecent(query, m) {
+  const list = document.getElementById("recentList");
+  if (!list) return;
+  const note = list.querySelector(".no-recent");
+  if (note) note.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  const label = query.length > 55 ? query.slice(0, 55) + "…" : query;
+  const dot = document.createElement("span");
+  dot.className = "ri-dot";
+  const txt = document.createElement("span");
+  txt.textContent = label;
+  item.appendChild(dot);
+  item.appendChild(txt);
+  item.addEventListener("click", () => hintClick(m, query));
+  list.insertBefore(item, list.firstChild);
+  if (list.children.length > 10) list.lastChild.remove();
+}
+
+/* ═══════════════════════════════════════════════
+   STATUS CHIP BUILDER
+═══════════════════════════════════════════════ */
+function makeChip(type, text) {
+  const chip = document.createElement("div");
+  chip.className = "status-chip chip-" + type;
+  const cfg = MODES[type];
+  chip.innerHTML = (cfg ? cfg.icon : "") + " " + esc(text);
+  return chip;
+}
+function makeErrChip(text) {
+  const chip = document.createElement("div");
+  chip.className = "status-chip chip-err";
+  chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ${esc(text)}`;
+  return chip;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN SEND HANDLER
+═══════════════════════════════════════════════ */
+async function handleSend() {
+  const query = ta.value.trim();
+  if (!query || running) return;
+
+  const m = currentMode;
+  const cfg = MODES[m];
+
+  addUserMsg(query);
+  addRecent(query, m);
+  chatHistory.push({ role:"user", content: query });
+
+  ta.value = "";
+  ta.style.height = "auto";
+  running = true;
+  sendBtn.disabled = true;
+  setStatus("run", cfg.statusLabel);
+  showThinking();
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        query,
+        mode: m,
+        history: chatHistory.slice(-10),
+        iteration: 0,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errText}`);
+    }
+    data = await res.json();
+  } catch(err) {
+    hideThinking();
+    const slot = addAgentRow();
+    slot.appendChild(makeErrChip("Network error: " + err.message));
+    setStatus("err", "Error");
+    running = false;
+    sendBtn.disabled = false;
+    return;
+  }
+
+  hideThinking();
+
+  const STATUS_MAP = { CODE:"implement", REVIEW:"review", DEBUG:"debug", EXPLANATION:"explain" };
+  const resultMode = STATUS_MAP[data.status];
+
+  if (resultMode) {
+    const rawContent = data.content || "";
+    const slot = addAgentRow();
+
+    // Subtle completion chip
+    slot.appendChild(makeChip(resultMode, cfg.doneLabel));
+
+    // Build and append the rendered output
+    slot.appendChild(buildOutputDOM(rawContent, resultMode));
+    scrollBottom();
+
+    if (resultMode === "implement") implCount++;
+    else if (resultMode === "review") reviewCount++;
+    else if (resultMode === "debug") debugCount++;
+    updateStats();
+
+    chatHistory.push({ role:"assistant", content:"[" + resultMode + " output delivered]" });
+    setStatus("done", "Done");
+
+  } else if (data.status === "COMPLETED") {
+    const slot = addAgentRow();
+    // Render plain AI text with full markdown
+    slot.appendChild(buildOutputDOM(data.solution || "", "explain"));
+    chatHistory.push({ role:"assistant", content: data.solution || "" });
+    setStatus("done", "Done");
+
+  } else if (data.status === "ERROR") {
+    const slot = addAgentRow();
+    slot.appendChild(makeErrChip(data.message || "Unknown error"));
+    setStatus("err", "Error");
+
+  } else {
+    const slot = addAgentRow();
+    slot.appendChild(makeErrChip("Unexpected response from server."));
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  sendBtn.disabled = false;
+}
+
+/* ═══════════════════════════════════════════════
+   CLEAR CHAT
+═══════════════════════════════════════════════ */
+function clearChat() {
+  while (chatEl.firstChild) chatEl.removeChild(chatEl.firstChild);
+  chatEl.appendChild(buildWelcome());
+  chatHistory = [];
+  outputStore = {};
+  implCount = 0; reviewCount = 0; debugCount = 0;
+  updateStats();
+  const rl = document.getElementById("recentList");
+  if (rl) rl.innerHTML = `<div class="no-recent">No queries yet</div>`;
+  setStatus("idle", "Ready");
+  running = false;
+  sendBtn.disabled = false;
+  thinkingRow = null;
+}
+</script>
+</body>
+</html>

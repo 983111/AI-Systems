@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stremini — Financial Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:             #f7f5f2;
+    --surface:        #ffffff;
+    --surface-2:      #f2f0ec;
+    --border:         #e4e0d8;
+    --border-subtle:  #ece9e2;
+    --text-primary:   #1a1814;
+    --text-secondary: #6b6459;
+    --text-muted:     #9e9589;
+    --accent:         #d97706;
+    --accent-light:   #fef3c7;
+    --accent-hover:   #b45309;
+    --code-bg:        #f0ede6;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-lg:  0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.05);
+    --radius:    16px;
+    --radius-sm: 10px;
+    --radius-xs:  6px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--text-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 18px; height: 18px; }
+
+  .logo-name {
+    font-family: 'Lora', serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+  .logo-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 42px;
+    margin-top: 2px;
+    margin-bottom: 20px;
+  }
+
+  /* ── Mode toggle ── */
+  .mode-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mode-btn {
+    padding: 9px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface-2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.4;
+    transition: all 0.15s;
+  }
+  .mode-btn:hover { border-color: var(--accent); color: var(--accent); background: #fffbf5; }
+  .mode-btn.active { border-color: var(--accent); background: var(--accent-light); color: #92400e; font-weight: 600; }
+
+  .mode-note {
+    margin-top: 8px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .sidebar-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .sidebar-section:last-child { border-bottom: none; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], textarea {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs);
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    resize: none;
+  }
+  input[type="text"]:focus, textarea:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(217,119,6,0.1);
+  }
+  input[type="text"]::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    position: relative;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface-2);
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: #fffbf5;
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon { font-size: 24px; margin-bottom: 6px; }
+  .upload-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .upload-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+
+  .file-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #d1fae5;
+    border: 1px solid #a7f3d0;
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    font-weight: 500;
+    color: #065f46;
+    margin-top: 8px;
+    animation: slideIn 0.2s ease;
+  }
+
+  .start-btn {
+    width: 100%;
+    padding: 11px 16px;
+    background: var(--text-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-xs);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    transition: all 0.15s;
+  }
+  .start-btn:hover:not(:disabled) { background: #2d2a26; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── Status ── */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .status-badge.idle    { background: var(--surface-2); color: var(--text-muted); }
+  .status-badge.running { background: #fef3c7; color: #92400e; }
+  .status-badge.done    { background: #d1fae5; color: #065f46; }
+  .status-badge.error   { background: #fee2e2; color: #991b1b; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .status-badge.running .status-dot { animation: pulse 1.2s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── Stats mini-cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .stat-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xs);
+    padding: 9px 10px;
+  }
+  .stat-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+  .stat-value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: 'DM Mono', monospace; }
+  .stat-value.green { color: #059669; }
+  .stat-value.red   { color: #dc2626; }
+  .stat-value.amber { color: var(--accent); }
+
+  .insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    animation: slideIn 0.2s ease;
+  }
+  .insight-item:last-child { border-bottom: none; }
+  .insight-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
+
+  .new-session {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-xs);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .new-session:hover { border-color: var(--accent); color: var(--accent); background: #fffbf5; }
+
+  @keyframes slideIn {
+    from { opacity:0; transform:translateY(-4px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── Main ── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* ── Topbar ── */
+  .topbar {
+    padding: 16px 32px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+
+  .context-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .context-pill svg { color: var(--text-secondary); }
+  .context-pill span { color: var(--text-secondary); font-weight: 400; }
+
+  .topbar-right { display: flex; gap: 10px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: var(--radius-xs);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    outline: none;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface); border-color: var(--text-muted); }
+
+  /* ── Messages ── */
+  .messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 0;
+    scroll-behavior: smooth;
+  }
+  .messages-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Welcome */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 420px;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+  }
+  .welcome-icon {
+    width: 64px; height: 64px;
+    background: var(--text-primary);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+  }
+  .welcome-icon svg { width: 34px; height: 34px; }
+  .welcome h2 {
+    font-family: 'Lora', serif;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    letter-spacing: -0.4px;
+  }
+  .welcome p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 430px;
+    margin-bottom: 28px;
+  }
+  .welcome-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 450px;
+  }
+  .hint-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-sm);
+  }
+  .hint-card:hover { border-color: var(--accent); background: #fffbf5; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .hint-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .hint-card strong { display: block; font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
+  .hint-card small { font-size: 12px; color: var(--text-muted); }
+
+  /* Messages */
+  .message {
+    display: flex;
+    gap: 14px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    animation: fadeIn 0.3s ease;
+  }
+  .message:last-child { border-bottom: none; }
+
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .avatar-agent { background: var(--text-primary); color: #fff; }
+  .avatar-user  { background: var(--accent);        color: #fff; }
+
+  .msg-body { flex: 1; min-width: 0; }
+  .msg-sender {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .msg-time { font-weight: 400; font-size: 11.5px; color: var(--text-muted); }
+  .msg-content {
+    font-size: 14.5px;
+    line-height: 1.72;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg-content p  { margin-bottom: 8px; }
+  .msg-content p:last-child { margin-bottom: 0; }
+  .msg-content ul, .msg-content ol { padding-left: 20px; margin: 6px 0; }
+  .msg-content li { margin-bottom: 4px; }
+  .msg-content strong { font-weight: 600; }
+  .msg-content h3 { font-size: 15px; font-weight: 600; margin: 12px 0 5px; }
+
+  /* Action cards */
+  .action-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    margin: 6px 0;
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+  .action-info    { background: #eff6ff;        color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .action-success { background: #f0fdf4;        color: #166534; border: 1px solid #bbf7d0; }
+  .action-error   { background: #fef2f2;        color: #991b1b; border: 1px solid #fecaca; }
+  .action-warn    { background: var(--accent-light); color: #92400e; border: 1px solid #fde68a; }
+
+  /* Structured response (aligned with Growth/Data report sections) */
+  .report-shell { border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--surface); }
+  .report-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-2); }
+  .report-title { font-size:12px; font-weight:600; letter-spacing:.35px; text-transform:uppercase; color:var(--text-muted); }
+  .report-copy { border:none; background:transparent; color:var(--text-secondary); font-size:12px; cursor:pointer; padding:4px 8px; border-radius:6px; }
+  .report-copy:hover { background:#ece9e2; color:var(--text-primary); }
+  .report-body { padding:10px 12px; display:flex; flex-direction:column; gap:10px; }
+  .report-section { border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#fff; }
+  .report-sec-head { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 11px; background:var(--surface-2); cursor:pointer; }
+  .report-sec-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .report-chevron { width:14px; height:14px; transition:transform .15s; color:var(--text-muted); }
+  .report-chevron.open { transform:rotate(90deg); }
+  .report-sec-content { padding:10px 11px; display:block; }
+  .report-sec-content.closed { display:none; }
+  .report-sec-content p { margin:0 0 8px 0; font-size:13px; line-height:1.6; color:var(--text-primary); }
+  .report-sec-content p:last-child { margin-bottom:0; }
+  .report-sec-content ul { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px; }
+  .report-sec-content li { font-size:13px; line-height:1.5; color:var(--text-primary); }
+
+  /* Code block */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin: 10px 0;
+    overflow: hidden;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .code-lang {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: var(--border); color: var(--text-primary); }
+  .code-body {
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    white-space: pre;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  /* Thinking */
+  .thinking {
+    display: flex;
+    gap: 14px;
+    padding: 20px 0;
+    animation: fadeIn 0.3s ease;
+  }
+  .thinking-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .thinking-dots span {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.30s; }
+  @keyframes bounce {
+    0%,60%,100% { transform:translateY(0); }
+    30%         { transform:translateY(-4px); }
+  }
+
+  /* ── Input bar ── */
+  .input-bar {
+    padding: 20px 32px 24px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .input-inner { max-width: 780px; margin: 0 auto; }
+
+  .input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(217,119,6,0.1), var(--shadow-sm);
+  }
+
+  .task-input {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    padding: 4px 4px !important;
+    box-shadow: none !important;
+    font-size: 14.5px;
+    line-height: 1.6;
+    min-height: 24px;
+    max-height: 180px;
+    resize: none;
+    overflow-y: auto;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    outline: none;
+  }
+  .task-input::placeholder { color: var(--text-muted); }
+
+  .send-btn {
+    width: 36px; height: 36px;
+    background: var(--text-primary);
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover:not(:disabled) { background: #2d2a26; transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 16px; height: 16px; }
+
+  .input-hint {
+    margin-top: 8px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px; right: 20px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease;
+    max-width: 320px;
+    box-shadow: var(--shadow-md);
+  }
+  .toast.error   { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+  .toast.success { background: #d1fae5; border: 1px solid #a7f3d0; color: #065f46; }
+  .toast.info    { background: var(--accent-light); border: 1px solid #fde68a; color: #92400e; }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+          </svg>
+        </div>
+        <div class="logo-name">Stremini</div>
+      </div>
+      <div class="logo-tag">Financial Agent</div>
+
+      <!-- Mode toggle -->
+      <div class="section-title" style="margin-bottom:8px;">Analysis Mode</div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="modeBudget" onclick="selectMode('budget')">💰 Budget<br/>Planner</button>
+        <button class="mode-btn"        id="modeGeneric" onclick="selectMode('generic')">📊 Generic<br/>CSV Analyzer</button>
+      </div>
+      <div class="mode-note" id="modeNote">Requires: Date, Description, Amount columns</div>
+    </div>
+
+    <!-- Upload -->
+    <div class="sidebar-section">
+      <div class="section-title">Upload Data</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="csvFile" accept=".csv" />
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Drop CSV or click to browse</div>
+        <div class="upload-hint">CSV files only · max 300 rows sent to AI</div>
+      </div>
+      <div id="fileBadge" style="display:none;"></div>
+      <button class="start-btn" id="startBtn" onclick="startAgent()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Start Agent
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="sidebar-section">
+      <div class="section-title">Session Status</div>
+      <div id="statusBadge" class="status-badge idle">
+        <div class="status-dot"></div><span>Ready</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="sidebar-section" id="statsSection" style="display:none;">
+      <div class="section-title">Financial Snapshot</div>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <!-- Insights -->
+    <div class="sidebar-section" id="insightsSection" style="display:none; flex:1;">
+      <div class="section-title">Key Insights</div>
+      <div class="insights-list" id="insightsList"></div>
+    </div>
+
+    <!-- New session -->
+    <div class="sidebar-section">
+      <button class="new-session" onclick="clearChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New session
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="context-pill" id="contextPill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+          </svg>
+          <span id="contextPillText">No data loaded</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost" onclick="clearChat()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          </svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-container" id="messagesContainer">
+      <div class="messages-inner" id="messagesInner">
+
+        <div class="welcome" id="welcomeScreen">
+          <div class="welcome-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          </div>
+          <h2>Your AI financial advisor</h2>
+          <p>Upload a CSV with your transactions, choose a mode in the sidebar, then click <strong>Start Agent</strong> — I'll analyse your data and give personalised advice.</p>
+          <div class="welcome-hints">
+            <div class="hint-card" onclick="setHint('What is my savings rate and how can I improve it?')">
+              <div class="hint-icon">💰</div>
+              <div><strong>Savings analysis</strong><small>Understand your savings rate and grow it</small></div>
+            </div>
+            <div class="hint-card" onclick="setHint('Which spending categories should I cut to save more each month?')">
+              <div class="hint-icon">✂️</div>
+              <div><strong>Spending optimisation</strong><small>Find where to trim and how to budget better</small></div>
+            </div>
+            <div class="hint-card" onclick="setHint('Create a realistic monthly budget plan based on my transactions')">
+              <div class="hint-icon">📋</div>
+              <div><strong>Budget planning</strong><small>Get a personalised optimised budget breakdown</small></div>
+            </div>
+            <div class="hint-card" onclick="setHint('If I cut dining out by 30%, how much extra can I save in a year?')">
+              <div class="hint-icon">🎯</div>
+              <div><strong>What-if scenarios</strong><small>Simulate financial decisions and their impact</small></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-wrapper">
+          <textarea
+            id="taskInput"
+            class="task-input"
+            placeholder="Ask about your finances… (start agent first)"
+            rows="1"
+          ></textarea>
+          <button class="send-btn" id="sendBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">Enter to send · Shift+Enter for new line · Powered by K2Think AI (MBZUAI)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── !! CONFIGURE THIS !! ──────────────────────────────────────────────────────
+const BACKEND = "https://agentic-finance.vishwajeetadkine705.workers.dev";
+// Replace with your deployed Cloudflare Worker URL, e.g.:
+// const BACKEND = "https://agentic-finance.vishwajeetadkine705.workers.dev";
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── State ──
+let state = {
+  running:  false,
+  ready:    false,
+  mode:     "budget",
+  history:  [],
+  filename: "",
+  csvText:  "",
+};
+
+// ── DOM refs ──
+const messagesInner = document.getElementById("messagesInner");
+const welcomeScreen = document.getElementById("welcomeScreen");
+const taskInput     = document.getElementById("taskInput");
+const sendBtn       = document.getElementById("sendBtn");
+const statusBadge   = document.getElementById("statusBadge");
+const contextPillText = document.getElementById("contextPillText");
+
+// ── Textarea auto-resize ──
+taskInput.addEventListener("input", () => {
+  taskInput.style.height = "auto";
+  taskInput.style.height = Math.min(taskInput.scrollHeight, 180) + "px";
+});
+taskInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+sendBtn.addEventListener("click", handleSend);
+
+// ── Mode select ──
+function selectMode(mode) {
+  state.mode = mode;
+  document.getElementById("modeBudget").classList.toggle("active",  mode === "budget");
+  document.getElementById("modeGeneric").classList.toggle("active", mode === "generic");
+  document.getElementById("modeNote").textContent = mode === "budget"
+    ? "Requires: Date, Description, Amount columns"
+    : "Works with any tabular CSV data";
+}
+
+// ── File upload ──
+const uploadZone = document.getElementById("uploadZone");
+uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
+uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
+uploadZone.addEventListener("drop", e => {
+  e.preventDefault();
+  uploadZone.classList.remove("drag-over");
+  const f = e.dataTransfer.files[0];
+  if (f) handleFileSelect(f);
+});
+document.getElementById("csvFile").addEventListener("change", e => {
+  if (e.target.files[0]) handleFileSelect(e.target.files[0]);
+});
+
+function handleFileSelect(file) {
+  if (!file.name.toLowerCase().endsWith(".csv")) { showToast("Please upload a CSV file.", "error"); return; }
+  const reader = new FileReader();
+  reader.onload = evt => {
+    state.csvText  = evt.target.result;
+    state.filename = file.name;
+    const badge    = document.getElementById("fileBadge");
+    badge.style.display = "flex";
+    badge.className = "file-badge";
+    badge.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      ${escapeHtml(file.name)}`;
+  };
+  reader.readAsText(file);
+}
+
+// ── Start Agent ──
+async function startAgent() {
+  if (!state.csvText) { showToast("Please upload a CSV file first.", "error"); return; }
+  if (!BACKEND || BACKEND.includes("YOUR_WORKER")) { showToast("Configure BACKEND URL in the HTML script.", "error"); return; }
+
+  document.getElementById("startBtn").disabled = true;
+  setStatus("running", "Initialising…");
+
+  try {
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action:   "initialize",
+        mode:     state.mode,
+        csvData:  state.csvText,
+        filename: state.filename,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.status !== "INITIALIZED") {
+      setStatus("error", "Error");
+      showToast("Init error: " + (data.message || "Unknown error"), "error");
+      document.getElementById("startBtn").disabled = false;
+      return;
+    }
+
+    state.history  = data.history;
+    state.ready    = true;
+    state.filename = data.filename;
+
+    contextPillText.innerHTML = `<span>${escapeHtml(data.filename)}</span> · ${data.rowsLoaded} rows`;
+    setStatus("done", "Ready");
+
+    // Populate sidebar stats & insights
+    if (data.summary && data.summary.mode === "budget") {
+      renderStats(data.summary);
+      renderInsights(data.summary.insights || []);
+    }
+
+    // Show init message in chat
+    clearMessages();
+    const modeLabel = state.mode === "budget" ? "Budget Planner" : "Generic CSV Analyzer";
+    addMessage("agent",
+      buildActionCard("success",
+        `Agent ready in <strong>${escapeHtml(modeLabel)}</strong> mode — <strong>${data.rowsLoaded}</strong> rows loaded from <em>${escapeHtml(data.filename)}</em>`
+      )
+    );
+    taskInput.placeholder = "Ask about your finances…";
+    document.getElementById("startBtn").disabled = false;
+
+  } catch (err) {
+    setStatus("error", "Error");
+    showToast("Network error: " + err.message, "error");
+    document.getElementById("startBtn").disabled = false;
+  }
+}
+
+// ── Send message ──
+async function handleSend() {
+  const task = taskInput.value.trim();
+  if (!task) { taskInput.focus(); return; }
+  if (state.running) return;
+
+  if (!state.ready) {
+    showToast("Please start the agent first by uploading a CSV and clicking Start Agent.", "info");
+    return;
+  }
+
+  addMessage("user", escapeHtml(task));
+  taskInput.value = "";
+  taskInput.style.height = "auto";
+  state.running = true;
+  sendBtn.disabled = true;
+  setStatus("running", "Thinking…");
+
+  addThinking();
+
+  try {
+    const structuredResponseGuide = [
+      "Respond like a structured Growth/Data report, not long-form prose.",
+      "Use markdown headings and this exact layout:",
+      "## Summary (3-5 bullets)",
+      "## Key Numbers (bullets or mini-table)",
+      "## Recommendations (prioritised action list)",
+      "## Risks & Assumptions (short bullets)",
+      "## Next 7 Days (execution checklist)",
+      "Keep every bullet concise and execution-focused."
+    ].join("\n");
+
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action:  "chat",
+        message: `${task}\n\n${structuredResponseGuide}`,
+        history: state.history,
+        responseFormat: "structured_actionable",
+      }),
+    });
+
+    const data = await res.json();
+    removeThinking();
+
+    if (data.status === "REPLY") {
+      state.history = data.history;   // stay in sync with server-trimmed history
+      addMessage("agent", buildActionCard("success", `Report ready — <strong>${parseIntoSections(data.reply || "").length}</strong> sections`));
+      addMessage("agent", renderStructuredReply(data.reply || ""));
+      setStatus("done", "Done");
+    } else {
+      addMessage("agent", buildActionCard("error", escapeHtml(data.message || "Unexpected error")));
+      setStatus("error", "Error");
+    }
+
+  } catch (err) {
+    removeThinking();
+    addMessage("agent", buildActionCard("error", "Network error: " + escapeHtml(err.message)));
+    setStatus("error", "Error");
+  }
+
+  state.running = false;
+  sendBtn.disabled = false;
+}
+
+function parseIntoSections(content) {
+  const lines = String(content || "").split(/\r?\n/);
+  const sections = [];
+  let currentTitle = "";
+  let buf = [];
+
+  const flush = () => {
+    const body = buf.join("\n").trim();
+    if (body || currentTitle) sections.push({ title: currentTitle || "Section", body });
+    buf = [];
+  };
+
+  lines.forEach((raw, idx) => {
+    const line = raw.trim();
+    const heading = line.match(/^(?:#{1,3}\s+)?(?:\d+\)\s*|\d+[\.:]\s*)?([A-Z][\w\s/&-]{2,60}):?$/);
+    const looksLikeHeading = heading && (line.endsWith(":") || /^#{1,3}\s+/.test(line) || /^\d+[\).:]/.test(line));
+    if (looksLikeHeading) {
+      if (idx !== 0) flush();
+      currentTitle = heading[1].trim();
+      return;
+    }
+    buf.push(raw);
+  });
+  flush();
+  return sections.length ? sections : [{ title: "Response", body: String(content || "") }];
+}
+
+function renderSectionBody(text) {
+  const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return "<p>No additional details provided.</p>";
+  const bullets = lines.filter(l => /^[-*•]|^\d+[\).]/.test(l));
+  const allBulletLike = bullets.length >= Math.max(2, lines.length - 1);
+  if (allBulletLike) {
+    return `<ul>${bullets.map(l => `<li>${escapeHtml(l.replace(/^[-*•]\s*|^\d+[\).]\s*/, ""))}</li>`).join("")}</ul>`;
+  }
+  return lines.map(l => {
+    if (/^[-*•]|^\d+[\).]/.test(l)) {
+      return `<ul><li>${escapeHtml(l.replace(/^[-*•]\s*|^\d+[\).]\s*/, ""))}</li></ul>`;
+    }
+    return `<p>${escapeHtml(l).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>`;
+  }).join("");
+}
+
+function renderStructuredReply(text) {
+  const sections = parseIntoSections(text);
+  const pid = "finrep-" + Date.now();
+  const bodyHtml = sections.map((sec, i) => `
+    <div class="report-section">
+      <div class="report-sec-head" data-target="${pid}-sec-${i}">
+        <div class="report-sec-title">${escapeHtml(sec.title || `Section ${i + 1}`)}</div>
+        <svg class="report-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="report-sec-content" id="${pid}-sec-${i}">${renderSectionBody(sec.body)}</div>
+    </div>`).join("");
+
+  setTimeout(() => {
+    document.querySelectorAll(`.report-sec-head[data-target^='${pid}-sec-']`).forEach(head => {
+      head.addEventListener("click", () => {
+        const id = head.getAttribute("data-target");
+        const content = document.getElementById(id);
+        const chev = head.querySelector(".report-chevron");
+        const closed = content.classList.toggle("closed");
+        chev.classList.toggle("open", !closed);
+      });
+    });
+    const copyBtn = document.getElementById(pid + "-copy");
+    if (copyBtn) {
+      copyBtn.onclick = () => navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = "✓ Copied";
+        setTimeout(() => copyBtn.textContent = "Copy", 1500);
+      }).catch(() => {});
+    }
+  }, 0);
+
+  return `
+    <div class="report-shell">
+      <div class="report-toolbar">
+        <div class="report-title">Finance Agent Report</div>
+        <button class="report-copy" id="${pid}-copy">Copy</button>
+      </div>
+      <div class="report-body">${bodyHtml}</div>
+    </div>`;
+}
+
+// ── UI helpers ──
+function hideWelcome() {
+  if (welcomeScreen) welcomeScreen.style.display = "none";
+}
+
+function clearMessages() {
+  hideWelcome();
+  Array.from(messagesInner.children).forEach(c => {
+    if (c.id !== "welcomeScreen") c.remove();
+  });
+}
+
+function addMessage(role, content) {
+  hideWelcome();
+  const isAgent = role === "agent";
+  const time    = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const msg     = document.createElement("div");
+  msg.className = "message";
+  msg.innerHTML = `
+    <div class="avatar ${isAgent ? "avatar-agent" : "avatar-user"}">
+      ${isAgent
+        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`
+        : "Y"}
+    </div>
+    <div class="msg-body">
+      <div class="msg-sender">${isAgent ? "Stremini Agent" : "You"} <span class="msg-time">${time}</span></div>
+      <div class="msg-content">${content}</div>
+    </div>
+  `;
+  messagesInner.appendChild(msg);
+  scrollToBottom();
+}
+
+function addThinking() {
+  hideWelcome();
+  const div = document.createElement("div");
+  div.className = "thinking";
+  div.id = "thinkingIndicator";
+  div.innerHTML = `
+    <div class="avatar avatar-agent">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-sender">Stremini Agent</div>
+      <div class="thinking-dots"><span></span><span></span><span></span></div>
+    </div>
+  `;
+  messagesInner.appendChild(div);
+  scrollToBottom();
+}
+
+function removeThinking() {
+  const t = document.getElementById("thinkingIndicator");
+  if (t) t.remove();
+}
+
+function scrollToBottom() {
+  document.getElementById("messagesContainer").scrollTop = 99999;
+}
+
+function buildActionCard(type, html) {
+  const icons = {
+    info:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+    success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    error:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    warn:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  };
+  return `<div class="action-card action-${type}">${icons[type] || ""} ${html}</div>`;
+}
+
+function setStatus(type, label) {
+  statusBadge.className = `status-badge ${type}`;
+  statusBadge.innerHTML = `<div class="status-dot"></div><span>${label}</span>`;
+}
+
+function setHint(text) {
+  taskInput.value = text;
+  taskInput.style.height = "auto";
+  taskInput.style.height = Math.min(taskInput.scrollHeight, 180) + "px";
+  taskInput.focus();
+}
+
+function escapeHtml(t) {
+  return String(t)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function showToast(msg, type = "info") {
+  const div = document.createElement("div");
+  div.className = `toast ${type}`;
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 3500);
+}
+
+// ── Sidebar stats ──
+function renderStats(summary) {
+  const section = document.getElementById("statsSection");
+  const grid    = document.getElementById("statGrid");
+  section.style.display = "";
+
+  const savingsClass = summary.savings_rate >= 20 ? "green" : summary.savings_rate >= 10 ? "amber" : "red";
+
+  grid.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Monthly Income</div>
+      <div class="stat-value">₹${fmtNum(summary.monthly_income)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Monthly Expenses</div>
+      <div class="stat-value red">₹${fmtNum(summary.monthly_expenses)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Net Savings</div>
+      <div class="stat-value ${summary.monthly_savings >= 0 ? "green" : "red"}">₹${fmtNum(summary.monthly_savings)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Savings Rate</div>
+      <div class="stat-value ${savingsClass}">${summary.savings_rate}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Emergency Fund</div>
+      <div class="stat-value ${summary.emergency_fund_months >= 3 ? "green" : "amber"}">${summary.emergency_fund_months}mo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Risk Profile</div>
+      <div class="stat-value">${capitalize(summary.risk_tolerance)}</div>
+    </div>
+  `;
+}
+
+function renderInsights(insights) {
+  const section = document.getElementById("insightsSection");
+  const list    = document.getElementById("insightsList");
+  if (!insights.length) return;
+  section.style.display = "";
+  list.innerHTML = insights.map(i => `
+    <div class="insight-item">
+      <div class="insight-dot"></div>
+      <span>${escapeHtml(i)}</span>
+    </div>
+  `).join("");
+}
+
+function fmtNum(n) {
+  if (n === undefined || n === null) return "—";
+  return Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
+
+function capitalize(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
+
+// ── Clear chat ──
+function clearChat() {
+  welcomeScreen.style.display = "";
+  Array.from(messagesInner.children).forEach(c => { if (c.id !== "welcomeScreen") c.remove(); });
+  state = { running: false, ready: false, mode: state.mode, history: [], filename: "", csvText: state.csvText };
+  setStatus("idle", "Ready");
+  contextPillText.textContent = "No data loaded";
+  taskInput.placeholder = "Ask about your finances… (start agent first)";
+  document.getElementById("statsSection").style.display    = "none";
+  document.getElementById("insightsSection").style.display = "none";
+  sendBtn.disabled = false;
+}
+</script>
+</body>
+</html>

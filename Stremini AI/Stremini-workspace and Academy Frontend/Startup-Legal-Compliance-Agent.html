@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Strategy & Legal Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber2:#b45309;--amber-bg:#fffbf5;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;
+  --green:#059669;--green-bg:#d1fae5;
+  --red:#991b1b;--red-bg:#fee2e2;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+  --teal:#0f766e;--teal-bg:#f0fdfa;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.agent-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.agent-tab{padding:8px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:center}
+.agent-tab:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.agent-tab.active-strategy{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.agent-tab.active-legal{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:center;line-height:1.3}
+.mode-btn svg{width:16px;height:16px;flex-shrink:0}
+.mode-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+/* Strategy modes */
+.mode-btn.on-business_model{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-revenue      {border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.mode-btn.on-market       {border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.mode-btn.on-pitch        {border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.on-swot         {border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+/* Legal modes */
+.mode-btn.on-contract     {border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-tnc          {border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.mode-btn.on-privacy      {border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.on-compliance   {border-color:var(--green);color:var(--green);background:var(--green-bg)}
+
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--amber-bg);color:var(--amber)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.mode-pill.strategy{color:var(--amber);border-color:#fde68a;background:var(--amber-bg)}
+.mode-pill.legal{color:var(--violet);border-color:#ddd6fe;background:var(--violet-bg)}
+
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* Workspace */
+.workspace{flex:1;overflow-y:auto;padding:28px;scroll-behavior:smooth}
+.workspace-inner{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:380px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:32px;height:32px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:500px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;max-width:640px}
+.hint{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.h-amber:hover {border-color:var(--amber);background:var(--amber-bg)}
+.hint.h-green:hover {border-color:var(--green);background:var(--green-bg)}
+.hint.h-blue:hover  {border-color:var(--blue);background:var(--blue-bg)}
+.hint.h-violet:hover{border-color:var(--violet);background:var(--violet-bg)}
+.hint.h-red:hover   {border-color:var(--red);background:var(--red-bg)}
+.hint.h-teal:hover  {border-color:var(--teal);background:var(--teal-bg)}
+.hint-em{font-size:20px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* Input Panel */
+.input-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.panel-hd{padding:13px 16px;border-bottom:1px solid var(--border2);background:var(--surface2);display:flex;align-items:center;gap:9px}
+.panel-hd-icon{color:var(--txt2)}
+.panel-title{font-size:13px;font-weight:600;color:var(--txt2)}
+.panel-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+
+.field-label{font-size:11.5px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.field-label span{font-size:10px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+.ta-field{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13.5px;line-height:1.6;color:var(--txt);background:var(--surface);resize:vertical;outline:none;transition:border-color .15s}
+.ta-field:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.1)}
+.ta-field::placeholder{color:var(--muted)}
+.ta-sm{min-height:70px}
+.ta-md{min-height:120px}
+.ta-lg{min-height:180px}
+.input-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.input-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+select.sel-field{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--txt);background:var(--surface);outline:none;cursor:pointer}
+select.sel-field:focus{border-color:var(--amber)}
+
+.run-row{display:flex;align-items:center;gap:10px;padding-top:14px;border-top:1px solid var(--border2)}
+.run-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:var(--txt);border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;transition:all .15s}
+.run-btn:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.run-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.run-hint{font-size:12px;color:var(--muted)}
+
+/* Result */
+.result-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.result-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.result-hd-left{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--amber)}
+.result-hd-left.violet{color:var(--violet)}
+.result-hd-left.green {color:var(--green)}
+.result-hd-left.blue  {color:var(--blue)}
+.result-hd-left.red   {color:var(--red)}
+.result-hd-left.teal  {color:var(--teal)}
+.copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover{background:var(--border);color:var(--txt)}
+
+.result-bd{padding:24px 28px;font-family:'DM Mono','Courier New',monospace;font-size:12.5px;line-height:1.9;color:#1a1814;max-height:620px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;background:#fafaf9}
+.result-body{max-height:620px;overflow-y:auto;background:#fafaf9}
+.result-sec{border-bottom:1px solid var(--border)}
+.result-sec:last-child{border-bottom:none}
+.result-sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;cursor:pointer;background:#fff;transition:background .12s}
+.result-sec-head:hover{background:var(--surface2)}
+.result-sec-title{font-size:12.5px;font-weight:600;color:var(--txt)}
+.result-chevron{width:14px;height:14px;color:var(--muted);transition:transform .2s}
+.result-chevron.open{transform:rotate(90deg)}
+.result-sec-content{padding:12px 18px 14px;background:#fafaf9;font-family:'DM Mono','Courier New',monospace;font-size:12.5px;line-height:1.8;color:#1a1814}
+.result-sec-content.closed{display:none}
+.result-sec-content p{margin:0 0 8px}
+.result-sec-content p:last-child{margin-bottom:0}
+.result-sec-content ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-txt{background:var(--txt);color:#fff}
+.dl-txt:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-ok  {background:var(--green-bg);color:#065f46;border:1px solid #a7f3d0}
+.card-work{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.card-err {background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+
+.thinking-card{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.dots{display:flex;gap:4px;align-items:center}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.hint-grid{grid-template-columns:1fr 1fr}.input-row-2,.input-row-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Strategy &amp; Legal</div>
+        </div>
+      </div>
+      <div class="sb-label" style="margin-bottom:6px">Agent</div>
+      <div class="agent-tabs">
+        <button class="agent-tab active-strategy" id="tab-strategy" onclick="switchAgent('strategy')">📈 Strategy</button>
+        <button class="agent-tab" id="tab-legal" onclick="switchAgent('legal')">⚖️ Legal</button>
+      </div>
+      <div class="sb-label">Mode</div>
+      <div class="mode-grid" id="modeGrid"></div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="modeNote">Select a mode to begin</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sDocs">0</div><div class="stat-l">Docs</div></div>
+        <div class="stat-box"><div class="stat-n" id="sPlans">0</div><div class="stat-l">Plans</div></div>
+        <div class="stat-box"><div class="stat-n" id="sFlags">0</div><div class="stat-l">Flags</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent</div>
+      <div class="recent-list" id="recentList"><div class="muted-note">No queries yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill strategy" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span id="pillTxt">Strategy Agent</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearAll()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        </svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="workspace" id="workspace">
+      <div class="workspace-inner" id="workspaceInner">
+        <div class="welcome" id="welcome">
+          <div class="w-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+            </svg>
+          </div>
+          <h2>Strategy &amp; Legal Agent</h2>
+          <p>Build business models, revenue projections, market maps, and pitch decks — or analyse contracts, flag legal risks, and get compliance checklists for India, UAE, and US.</p>
+          <div class="hint-grid" id="hintGrid"></div>
+        </div>
+        <div class="input-panel" id="inputPanel" style="display:none">
+          <div class="panel-hd">
+            <svg class="panel-hd-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="panelIcon">
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+            </svg>
+            <span class="panel-title" id="panelTitle">Input</span>
+          </div>
+          <div class="panel-body" id="panelBody"></div>
+        </div>
+        <div id="resultZone"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────
+const STRATEGY_BACKEND = "https://startup-strategy.vishwajeetadkine705.workers.dev";
+const LEGAL_BACKEND    = "https://legal-compliance.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let agent = "strategy";
+let mode  = "business_model";
+let running = false;
+let stats = { docs: 0, plans: 0, flags: 0 };
+
+// ─────────────────────────────────────────
+// Agent & Mode Configs
+// ─────────────────────────────────────────
+const STRATEGY_MODES = {
+  business_model: {
+    label:"Business Model", note:"Business model canvas & strategy",
+    color:"amber", runLabel:"Generate Business Model", runHint:"Full canvas · 20-40 seconds",
+    svg:`<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/><path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/><path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>`,
+  },
+  revenue: {
+    label:"Revenue Projection", note:"Financial projections & unit economics",
+    color:"green", runLabel:"Build Projection", runHint:"3-year model · 20-35 seconds",
+    svg:`<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>`,
+  },
+  market: {
+    label:"Market Sizing", note:"TAM/SAM/SOM & competitive landscape",
+    color:"blue", runLabel:"Analyse Market", runHint:"Full sizing analysis · 20-35 seconds",
+    svg:`<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>`,
+  },
+  pitch: {
+    label:"Pitch Deck", note:"12-slide investor pitch narrative",
+    color:"violet", runLabel:"Write Pitch Deck", runHint:"Full 12-slide deck · 25-45 seconds",
+    svg:`<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>`,
+  },
+  swot: {
+    label:"SWOT Analysis", note:"Strategic SWOT + TOWS matrix",
+    color:"teal", runLabel:"Run SWOT Analysis", runHint:"Full strategic analysis · 15-30 seconds",
+    svg:`<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/>`,
+  },
+};
+
+const LEGAL_MODES = {
+  contract: {
+    label:"Contract Review", note:"Contract summariser & red flag analysis",
+    color:"amber", runLabel:"Analyse Contract", runHint:"Full review · 20-40 seconds",
+    svg:`<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>`,
+  },
+  tnc: {
+    label:"T&C Risk Flagger", note:"Terms & conditions risk analysis",
+    color:"red", runLabel:"Flag Risks", runHint:"T&C audit · 15-30 seconds",
+    svg:`<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+  },
+  privacy: {
+    label:"Privacy Analysis", note:"Privacy policy compliance analysis",
+    color:"violet", runLabel:"Analyse Privacy Policy", runHint:"DPDP/GDPR/CCPA analysis · 15-30 seconds",
+    svg:`<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+  },
+  compliance: {
+    label:"Compliance Checklist", note:"India, UAE, US startup compliance",
+    color:"green", runLabel:"Generate Checklist", runHint:"Jurisdiction checklist · 15-30 seconds",
+    svg:`<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>`,
+  },
+};
+
+// Color mapping
+const COLOR_MAP = {
+  amber:  { pill:"strategy", rdClass:"",       modeClass:"on-X" },
+  green:  { rdClass:"green"  },
+  blue:   { rdClass:"blue"   },
+  violet: { rdClass:"violet" },
+  red:    { rdClass:"red"    },
+  teal:   { rdClass:"teal"   },
+};
+
+// ─────────────────────────────────────────
+// Agent switching
+// ─────────────────────────────────────────
+function switchAgent(a) {
+  agent = a;
+  document.getElementById("tab-strategy").className = "agent-tab" + (a === "strategy" ? " active-strategy" : "");
+  document.getElementById("tab-legal").className    = "agent-tab" + (a === "legal"    ? " active-legal"    : "");
+
+  const pill = document.getElementById("modePill");
+  if (a === "strategy") {
+    pill.className = "mode-pill strategy";
+    pill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Strategy Agent</span>`;
+    renderModeButtons(STRATEGY_MODES);
+    setMode("business_model");
+  } else {
+    pill.className = "mode-pill legal";
+    pill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6l9-4 9 4v6c0 5.25-3.75 10.15-9 11.5C6.75 22.15 3 17.25 3 12V6z"/></svg><span>Legal Agent</span>`;
+    renderModeButtons(LEGAL_MODES);
+    setMode("contract");
+  }
+
+  // Update welcome hints
+  renderHints();
+  clearAll(true);
+}
+
+function renderModeButtons(modes) {
+  const grid = document.getElementById("modeGrid");
+  grid.innerHTML = "";
+  Object.entries(modes).forEach(([key, cfg]) => {
+    const btn = document.createElement("button");
+    btn.id = "btn-" + key;
+    btn.className = "mode-btn";
+    btn.onclick = () => setMode(key);
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${cfg.svg}</svg>${cfg.label}`;
+    grid.appendChild(btn);
+  });
+}
+
+// ─────────────────────────────────────────
+// Mode switching
+// ─────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  const modes = agent === "strategy" ? STRATEGY_MODES : LEGAL_MODES;
+  const cfg = modes[m];
+  if (!cfg) return;
+
+  // Sidebar buttons
+  Object.keys(modes).forEach(k => {
+    const btn = document.getElementById("btn-" + k);
+    if (btn) btn.className = "mode-btn" + (k === m ? " on-" + k : "");
+  });
+
+  document.getElementById("modeNote").textContent = cfg.note;
+  buildPanel(m, cfg);
+  showPanel();
+  document.getElementById("resultZone").innerHTML = "";
+}
+
+function buildStructuredPrompt(baseText, selectedMode, selectedAgent) {
+  const modeLabel = selectedMode.replace(/_/g, " ");
+  const agentLabel = selectedAgent === "strategy" ? "startup strategy" : "legal compliance";
+
+  const guide = [
+    `You are a ${agentLabel} specialist.`,
+    `Return a structured operational brief for ${modeLabel}.`,
+    "Do not use research-paper style prose.",
+    "Use markdown headings with short bullets only:",
+    "## Executive Summary",
+    "## Findings",
+    "## Action Plan (prioritised)",
+    "## Risks & Mitigations",
+    "## Next 7-Day Checklist",
+  ].join("\n");
+
+  return [baseText || "", guide].filter(Boolean).join("\n\n");
+}
+
+// ─────────────────────────────────────────
+// Build input panel
+// ─────────────────────────────────────────
+function buildPanel(m, cfg) {
+  document.getElementById("panelTitle").textContent = cfg.label;
+  const body = document.getElementById("panelBody");
+  body.innerHTML = "";
+
+  // Strategy panels
+  if (agent === "strategy") {
+    if (m === "business_model") {
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Describe your business idea <span>(be specific)</span></div>
+          <textarea id="f-query" class="ta-field ta-md" placeholder="e.g. A SaaS platform that helps Indian freelancers manage their client contracts, invoices, and payments in one place — targeting designers and developers earning ₹3-20 lakh/year…"></textarea>
+        </div>
+        <div class="input-row-3">
+          <div>
+            <div class="field-label">Industry</div>
+            <select id="f-industry" class="sel-field"><option>SaaS</option><option>Marketplace</option><option>D2C</option><option>Fintech</option><option>Edtech</option><option>Healthtech</option><option>Services</option><option>E-commerce</option><option>AI/ML</option><option>Hardware</option><option>Other</option></select>
+          </div>
+          <div>
+            <div class="field-label">Stage</div>
+            <select id="f-stage" class="sel-field"><option>Idea</option><option>MVP</option><option>Pre-revenue</option><option>Revenue</option><option>Growth</option></select>
+          </div>
+          <div>
+            <div class="field-label">Primary Market</div>
+            <select id="f-location" class="sel-field"><option>India</option><option>UAE</option><option>US</option><option>India + UAE</option><option>Global</option></select>
+          </div>
+        </div>`;
+    } else if (m === "revenue") {
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Business description & revenue model</div>
+          <textarea id="f-query" class="ta-field ta-md" placeholder="e.g. SaaS tool for freelancers, ₹499/mo basic and ₹1499/mo pro, starting with 10 beta users, targeting Indian market…"></textarea>
+        </div>
+        <div class="input-row-2">
+          <div>
+            <div class="field-label">Market</div>
+            <select id="f-location" class="sel-field"><option>India (₹)</option><option>UAE (AED)</option><option>US ($)</option><option>Global ($)</option></select>
+          </div>
+          <div>
+            <div class="field-label">Stage</div>
+            <select id="f-stage" class="sel-field"><option>Pre-revenue</option><option>Early revenue</option><option>Growing</option></select>
+          </div>
+        </div>`;
+    } else if (m === "market") {
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Business / product to size the market for</div>
+          <textarea id="f-query" class="ta-field ta-md" placeholder="e.g. AI-powered legal document tool for small businesses and freelancers in India…"></textarea>
+        </div>
+        <div class="input-row-2">
+          <div>
+            <div class="field-label">Primary Geography</div>
+            <select id="f-location" class="sel-field"><option>India</option><option>UAE</option><option>US</option><option>India + UAE</option><option>Global</option></select>
+          </div>
+          <div>
+            <div class="field-label">Industry</div>
+            <select id="f-industry" class="sel-field"><option>SaaS</option><option>Marketplace</option><option>Fintech</option><option>Edtech</option><option>Healthtech</option><option>D2C</option><option>Services</option><option>Other</option></select>
+          </div>
+        </div>`;
+    } else if (m === "pitch") {
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Describe your startup <span>(the more detail, the better the deck)</span></div>
+          <textarea id="f-query" class="ta-field ta-lg" placeholder="e.g. We are building an AI contracts platform for Indian freelancers. Problem: 90% of Indian freelancers face payment disputes. Our solution automates contract creation, sends reminders, and generates legal-grade invoices. We have 200 beta users, ₹45K MRR, growing 30% MoM. Raising ₹2 crore pre-seed…"></textarea>
+        </div>
+        <div class="input-row-3">
+          <div>
+            <div class="field-label">Raise Amount</div>
+            <textarea id="f-targetMarket" class="ta-field ta-sm" placeholder="e.g. ₹2 crore / $500K"></textarea>
+          </div>
+          <div>
+            <div class="field-label">Stage</div>
+            <select id="f-stage" class="sel-field"><option>Pre-seed</option><option>Seed</option><option>Series A</option></select>
+          </div>
+          <div>
+            <div class="field-label">Market</div>
+            <select id="f-location" class="sel-field"><option>India</option><option>UAE</option><option>US</option><option>Global</option></select>
+          </div>
+        </div>`;
+    } else if (m === "swot") {
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Describe your business for SWOT analysis</div>
+          <textarea id="f-query" class="ta-field ta-md" placeholder="e.g. A 6-month-old EdTech startup offering live coding bootcamps to college students in Tier 2 Indian cities. ₹15,000/cohort. Currently 3 cohorts of 30 students each. Growing but facing competition from free YouTube content…"></textarea>
+        </div>
+        <div class="input-row-2">
+          <div>
+            <div class="field-label">Industry</div>
+            <select id="f-industry" class="sel-field"><option>SaaS</option><option>Edtech</option><option>Fintech</option><option>D2C</option><option>Marketplace</option><option>Healthtech</option><option>Services</option><option>Other</option></select>
+          </div>
+          <div>
+            <div class="field-label">Market</div>
+            <select id="f-location" class="sel-field"><option>India</option><option>UAE</option><option>US</option><option>Global</option></select>
+          </div>
+        </div>`;
+    }
+  }
+
+  // Legal panels
+  else {
+    const docFields = ["contract","tnc","privacy"].includes(m);
+    if (m === "compliance") {
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Describe your business <span>(type, activities, team location)</span></div>
+          <textarea id="f-query" class="ta-field ta-md" placeholder="e.g. A SaaS startup building a payment tool, registered as Pvt Ltd, 3 founders, based in Bangalore, planning to onboard users across India and UAE…"></textarea>
+        </div>
+        <div class="input-row-2">
+          <div>
+            <div class="field-label">Jurisdiction</div>
+            <select id="f-jurisdiction" class="sel-field"><option>India</option><option>UAE</option><option>US</option><option>General</option></select>
+          </div>
+          <div>
+            <div class="field-label">Entity Type</div>
+            <select id="f-entityType" class="sel-field"><option value="startup">Startup</option><option value="freelancer">Freelancer</option><option value="enterprise">Enterprise</option></select>
+          </div>
+        </div>`;
+    } else {
+      const labels = { contract: "Paste your contract or agreement text", tnc: "Paste the Terms & Conditions text", privacy: "Paste the Privacy Policy text" };
+      const ph = { contract: "Paste the full contract text here…", tnc: "Paste the full Terms of Service / EULA text here…", privacy: "Paste the full Privacy Policy text here…" };
+      body.innerHTML = `
+        <div>
+          <div class="field-label">Context / specific concern <span>(optional but helps)</span></div>
+          <textarea id="f-query" class="ta-field ta-sm" placeholder="e.g. I'm a freelancer about to sign this client contract. Focus on payment terms and IP clauses…"></textarea>
+        </div>
+        <div>
+          <div class="field-label">${labels[m]}</div>
+          <textarea id="f-document" class="ta-field ta-lg" placeholder="${ph[m]}"></textarea>
+        </div>
+        <div class="input-row-2">
+          <div>
+            <div class="field-label">Jurisdiction</div>
+            <select id="f-jurisdiction" class="sel-field"><option>India</option><option>UAE</option><option>US</option><option>General</option></select>
+          </div>
+          <div>
+            <div class="field-label">Entity Type</div>
+            <select id="f-entityType" class="sel-field"><option value="startup">Startup</option><option value="freelancer">Freelancer</option><option value="enterprise">Enterprise</option></select>
+          </div>
+        </div>`;
+    }
+  }
+
+  // Run row
+  const runRow = document.createElement("div");
+  runRow.className = "run-row";
+  runRow.innerHTML = `
+    <button class="run-btn" id="runBtn" onclick="handleRun()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      ${cfg.runLabel}
+    </button>
+    <span class="run-hint">${cfg.runHint}</span>`;
+  body.appendChild(runRow);
+}
+
+// ─────────────────────────────────────────
+// Render welcome hints
+// ─────────────────────────────────────────
+function renderHints() {
+  const grid = document.getElementById("hintGrid");
+  const strategyHints = [
+    { m:"business_model", agent:"strategy", em:"🏗️", title:"Business Model", sub:"Canvas, revenue model & GTM", cls:"h-amber", q:"A B2B SaaS tool that helps Indian SMEs manage their vendor payments and reconciliation automatically" },
+    { m:"revenue",        agent:"strategy", em:"📈", title:"Revenue Projection", sub:"3-year MRR & unit economics", cls:"h-green", q:"SaaS for freelancers, ₹499/mo basic, ₹1499/mo pro, Indian market, starting with beta users" },
+    { m:"market",         agent:"strategy", em:"🌏", title:"Market Sizing", sub:"TAM/SAM/SOM analysis", cls:"h-blue", q:"AI-powered legal document tool for freelancers and small businesses in India" },
+    { m:"pitch",          agent:"strategy", em:"🎤", title:"Pitch Deck", sub:"12-slide investor narrative", cls:"h-violet", q:"EdTech platform for coding bootcamps targeting Tier 2 Indian cities, ₹15K per cohort, 3 cohorts running" },
+    { m:"swot",           agent:"strategy", em:"🔲", title:"SWOT Analysis", sub:"Strategic + TOWS matrix", cls:"h-teal", q:"A freelance marketplace specifically for Indian UI/UX designers competing with Toptal and Upwork" },
+    { m:"contract",       agent:"legal",    em:"📄", title:"Contract Review", sub:"Red flags & risk analysis", cls:"h-amber", q:"I'm a freelancer about to sign this client contract, please review the payment and IP clauses" },
+  ];
+  grid.innerHTML = strategyHints.map(h => `
+    <div class="hint ${h.cls}" onclick="loadHint('${h.agent}','${h.m}',\`${h.q}\`)">
+      <div class="hint-em">${h.em}</div>
+      <div><strong>${h.title}</strong><small>${h.sub}</small></div>
+    </div>`).join("");
+}
+
+function loadHint(a, m, q) {
+  if (a !== agent) switchAgent(a);
+  setMode(m);
+  setTimeout(() => {
+    const el = document.getElementById("f-query");
+    if (el) el.value = q;
+  }, 50);
+}
+
+// ─────────────────────────────────────────
+// Show/hide panel
+// ─────────────────────────────────────────
+function showPanel() {
+  document.getElementById("welcome").style.display = "none";
+  document.getElementById("inputPanel").style.display = "block";
+}
+
+// ─────────────────────────────────────────
+// Status badge
+// ─────────────────────────────────────────
+function setStatus(type, label) {
+  const cls = { idle:"badge-idle", run:"badge-run", done:"badge-done", err:"badge-err" };
+  const el = document.getElementById("statusBadge");
+  el.className = "badge " + (cls[type] || "badge-idle");
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+
+function updateStats() {
+  document.getElementById("sDocs").textContent  = stats.docs;
+  document.getElementById("sPlans").textContent = stats.plans;
+  document.getElementById("sFlags").textContent = stats.flags;
+}
+
+// ─────────────────────────────────────────
+// Recent
+// ─────────────────────────────────────────
+function addRecent(text, a, m) {
+  const list = document.getElementById("recentList");
+  const empty = list.querySelector(".muted-note");
+  if (empty) empty.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<div class="ri-dot"></div>${esc(text.slice(0,52))}${text.length>52?"…":""}`;
+  item.onclick = () => loadHint(a, m, text);
+  list.prepend(item);
+  while (list.children.length > 6) list.lastChild.remove();
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ""; }
+function scrollBottom() { const ws = document.getElementById("workspace"); ws.scrollTop = ws.scrollHeight; }
+
+function parseIntoSections(content) {
+  const lines = String(content || "").split(/\r?\n/);
+  const sections = [];
+  let currentTitle = "";
+  let buf = [];
+
+  const flush = () => {
+    const body = buf.join("\n").trim();
+    if (body || currentTitle) sections.push({ title: currentTitle || "Section", body });
+    buf = [];
+  };
+
+  lines.forEach((raw, idx) => {
+    const line = raw.trim();
+    const heading = line.match(/^(?:#{1,3}\s+)?(?:\d+\)\s*|\d+[\.:]\s*)?([A-Z][\w\s/&-]{2,60}):?$/);
+    const looksLikeHeading = heading && (line.endsWith(":") || /^#{1,3}\s+/.test(line) || /^\d+[\).:]/.test(line));
+    if (looksLikeHeading) {
+      if (idx !== 0) flush();
+      currentTitle = heading[1].trim();
+      return;
+    }
+    buf.push(raw);
+  });
+  flush();
+  return sections.length ? sections : [{ title: "Response", body: String(content || "") }];
+}
+
+function renderSectionBody(text) {
+  const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return "<p>No additional details provided.</p>";
+  const bullets = lines.filter(l => /^[-*•]|^\d+[\).]/.test(l));
+  const allBulletLike = bullets.length >= Math.max(2, lines.length - 1);
+  if (allBulletLike) {
+    return `<ul>${bullets.map(l => `<li>${esc(l.replace(/^[-*•]\s*|^\d+[\).]\s*/, ""))}</li>`).join("")}</ul>`;
+  }
+  return lines.map(l => {
+    if (/^[-*•]|^\d+[\).]/.test(l)) {
+      return `<ul><li>${esc(l.replace(/^[-*•]\s*|^\d+[\).]\s*/, ""))}</li></ul>`;
+    }
+    return `<p>${esc(l).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>`;
+  }).join("");
+}
+
+// ─────────────────────────────────────────
+// Render result
+// ─────────────────────────────────────────
+function renderResult(content, status, cfg) {
+  const pid = "r" + Date.now();
+  const colorMap = { amber:"", green:"green", blue:"blue", violet:"violet", red:"red", teal:"teal" };
+  const rdClass = colorMap[cfg.color] || "";
+
+  const outer = document.createElement("div");
+  const block = document.createElement("div");
+  block.className = "result-block";
+  const sections = parseIntoSections(content);
+  const sectionHtml = sections.map((sec, i) => `
+    <div class="result-sec">
+      <div class="result-sec-head" data-target="${pid}-sec-${i}">
+        <div class="result-sec-title">${esc(sec.title || `Section ${i + 1}`)}</div>
+        <svg class="result-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="result-sec-content" id="${pid}-sec-${i}">${renderSectionBody(sec.body)}</div>
+    </div>`).join("");
+
+  block.innerHTML = `
+    <div class="result-hd">
+      <div class="result-hd-left ${rdClass}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${cfg.svg}</svg>
+        ${cfg.label}
+      </div>
+      <button class="copy-btn" id="cpbtn-${pid}">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <div class="result-body" id="${pid}">${sectionHtml}</div>`;
+  outer.appendChild(block);
+
+  const dlRow = document.createElement("div");
+  dlRow.className = "dl-row";
+  const dlBtn = document.createElement("button");
+  dlBtn.className = "dl-btn dl-txt";
+  dlBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download .txt`;
+  dlBtn.onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([content], {type:"text/plain"}));
+    a.download = `stremini-${cfg.label.toLowerCase().replace(/\s+/g,"-")}-${Date.now()}.txt`;
+    a.click();
+  };
+  dlRow.appendChild(dlBtn);
+  outer.appendChild(dlRow);
+
+  setTimeout(() => {
+    document.querySelectorAll(`.result-sec-head[data-target^='${pid}-sec-']`).forEach(head => {
+      head.addEventListener("click", () => {
+        const id = head.getAttribute("data-target");
+        const contentEl = document.getElementById(id);
+        const chev = head.querySelector(".result-chevron");
+        const closed = contentEl.classList.toggle("closed");
+        chev.classList.toggle("open", !closed);
+      });
+    });
+    const btn = document.getElementById("cpbtn-" + pid);
+    if (btn) btn.onclick = () => {
+      navigator.clipboard.writeText(content)
+        .then(() => { btn.textContent = "✓ Copied"; setTimeout(() => { btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`; }, 2000); })
+        .catch(() => {});
+    };
+  }, 50);
+
+  return outer;
+}
+
+// ─────────────────────────────────────────
+// Main run handler
+// ─────────────────────────────────────────
+async function handleRun() {
+  if (running) return;
+  const query    = val("f-query");
+  const document_ = val("f-document");
+  const industry = val("f-industry");
+  const stage    = val("f-stage");
+  const location = val("f-location");
+  const targetMarket = val("f-targetMarket");
+  const jurisdiction = val("f-jurisdiction") || "India";
+  const entityType   = val("f-entityType")   || "startup";
+
+  if (!query && !document_) { alert("Please fill in the description."); return; }
+  if (["contract","tnc","privacy"].includes(mode) && !document_) { alert("Please paste the document text to analyse."); return; }
+
+  running = true;
+  const runBtn = document.getElementById("runBtn");
+  if (runBtn) runBtn.disabled = true;
+
+  const statusLabels = {
+    business_model:"Generating business model…", revenue:"Building projections…",
+    market:"Sizing market…", pitch:"Writing pitch deck…", swot:"Running SWOT analysis…",
+    contract:"Reviewing contract…", tnc:"Flagging risks…", privacy:"Analysing privacy policy…",
+    compliance:"Generating checklist…",
+  };
+  setStatus("run", statusLabels[mode] || "Processing…");
+
+  const rz = document.getElementById("resultZone");
+  rz.innerHTML = `<div class="thinking-card">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--muted)">
+      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+    </svg>
+    <span style="font-size:13px;color:var(--txt2)">Stremini is working…</span>
+    <div class="dots" style="margin-left:auto"><span></span><span></span><span></span></div>
+  </div>`;
+  scrollBottom();
+
+  addRecent(query || document_.slice(0,60), agent, mode);
+
+  let body, backend;
+  if (agent === "strategy") {
+    backend = STRATEGY_BACKEND;
+    body = JSON.stringify({
+      mode,
+      query: buildStructuredPrompt(query, mode, agent),
+      context: { industry, stage, location, targetMarket },
+      responseFormat: "structured_actionable"
+    });
+  } else {
+    backend = LEGAL_BACKEND;
+    body = JSON.stringify({
+      mode,
+      query: buildStructuredPrompt(query, mode, agent),
+      documentText: document_,
+      jurisdiction,
+      entityType,
+      responseFormat: "structured_actionable"
+    });
+  }
+
+  let data;
+  try {
+    const res = await fetch(backend, { method:"POST", headers:{"Content-Type":"application/json"}, body });
+    data = await res.json();
+  } catch (err) {
+    rz.innerHTML = `<div class="card card-err"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Network error: ${esc(err.message)}</div>`;
+    setStatus("err","Error"); running = false; if (runBtn) runBtn.disabled = false; return;
+  }
+
+  const STRUCTURED = ["BUSINESS_MODEL","REVENUE","MARKET","PITCH","SWOT","CONTRACT","TNC","PRIVACY","COMPLIANCE","COMPLETED"];
+  const modes = agent === "strategy" ? STRATEGY_MODES : LEGAL_MODES;
+  const cfg = modes[mode];
+
+  if (STRUCTURED.includes(data.status)) {
+    rz.innerHTML = card("ok", `Report ready — ${parseIntoSections(data.content || "").length} sections`);
+    rz.appendChild(renderResult(data.content || "", data.status, cfg));
+    scrollBottom();
+
+    if (agent === "strategy") { stats.plans++; }
+    else if (["contract","tnc","privacy"].includes(mode)) { stats.flags++; stats.docs++; }
+    else { stats.docs++; }
+    updateStats();
+    setStatus("done","Complete");
+  } else if (data.status === "ERROR") {
+    rz.innerHTML = `<div class="card card-err">${esc(data.message || "Unknown error")}</div>`;
+    setStatus("err","Error");
+  } else {
+    rz.innerHTML = `<div class="card card-err">Unexpected response.</div>`;
+    setStatus("err","Error");
+  }
+
+  running = false;
+  if (runBtn) runBtn.disabled = false;
+}
+
+// ─────────────────────────────────────────
+// Clear all
+// ─────────────────────────────────────────
+function clearAll(keepPanel) {
+  document.getElementById("resultZone").innerHTML = "";
+  if (!keepPanel) {
+    document.getElementById("welcome").style.display = "";
+    document.getElementById("inputPanel").style.display = "none";
+  }
+  stats = { docs:0, plans:0, flags:0 };
+  updateStats();
+  document.getElementById("recentList").innerHTML = `<div class="muted-note">No queries yet</div>`;
+  setStatus("idle","Ready");
+  running = false;
+  const rb = document.getElementById("runBtn");
+  if (rb) rb.disabled = false;
+}
+
+// ─────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────
+renderModeButtons(STRATEGY_MODES);
+renderHints();
+setMode("business_model");
+</script>
+</body>
+</html>

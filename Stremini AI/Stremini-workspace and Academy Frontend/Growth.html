@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Growth Intelligence Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber2:#b45309;--amber-bg:#fffbf5;
+  --green:#059669;--green-bg:#d1fae5;
+  --red:#991b1b;--red-bg:#fee2e2;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;
+  --teal:#0d9488;--teal-bg:#f0fdfa;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:center;line-height:1.2}
+.mode-btn svg{width:16px;height:16px;flex-shrink:0}
+.mode-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.active-gtm{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.active-competitor{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.mode-btn.active-viral{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.mode-btn.active-ads{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.active-funnel{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--amber-bg);color:var(--amber)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.pill-gtm{color:var(--amber);border-color:#fde68a;background:var(--amber-bg)}
+.pill-competitor{color:var(--blue);border-color:#bfdbfe;background:var(--blue-bg)}
+.pill-viral{color:var(--green);border-color:#a7f3d0;background:var(--green-bg)}
+.pill-ads{color:var(--violet);border-color:#ddd6fe;background:var(--violet-bg)}
+.pill-funnel{color:var(--teal);border-color:#99f6e4;background:var(--teal-bg)}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* ── Messages ── */
+.msgs-wrap{flex:1;overflow-y:auto;padding:28px 0;scroll-behavior:smooth}
+.msgs{max-width:900px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column}
+
+/* ── Welcome ── */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:30px;height:30px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:480px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;max-width:640px}
+.hint{display:flex;align-items:flex-start;gap:9px;padding:12px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.h-gtm:hover{border-color:var(--amber);background:var(--amber-bg)}
+.hint.h-comp:hover{border-color:var(--blue);background:var(--blue-bg)}
+.hint.h-viral:hover{border-color:var(--green);background:var(--green-bg)}
+.hint.h-ads:hover{border-color:var(--violet);background:var(--violet-bg)}
+.hint.h-funnel:hover{border-color:var(--teal);background:var(--teal-bg)}
+.hint-em{font-size:18px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12px;font-weight:600;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* ── Message rows ── */
+.msg-row{display:flex;gap:12px;padding:18px 0;border-bottom:1px solid var(--border2);animation:fadein .3s ease}
+.msg-row:last-child{border-bottom:none}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-top:2px}
+.av-agent{background:var(--txt);color:#fff}
+.av-user{background:var(--amber);color:#fff}
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.msg-time{font-weight:400;font-size:11px;color:var(--muted)}
+.msg-content{font-size:14px;line-height:1.7;color:var(--txt)}
+.thinking-row{display:flex;gap:12px;padding:18px 0}
+.dots{display:flex;gap:4px;align-items:center}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-ok{background:var(--green-bg);color:#065f46;border:1px solid #a7f3d0}
+.card-work{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.card-err{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+
+/* ── Report Block ── */
+.report-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:8px 0 6px;box-shadow:var(--shadow)}
+.report-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.report-hd-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;min-width:0}
+.report-hd-left span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.report-hd-actions{display:flex;gap:6px;flex-shrink:0}
+.copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover{background:var(--border);color:var(--txt)}
+.report-body{padding:0;max-height:620px;overflow-y:auto}
+
+/* ── Report sections ── */
+.r-section{border-bottom:1px solid var(--border2)}
+.r-section:last-child{border-bottom:none}
+.r-sec-hd{display:flex;align-items:center;gap:9px;padding:13px 18px;cursor:pointer;user-select:none;transition:background .12s}
+.r-sec-hd:hover{background:var(--surface2)}
+.r-sec-hd-left{display:flex;align-items:center;gap:9px;flex:1}
+.r-sec-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.r-sec-icon svg{width:14px;height:14px}
+.r-sec-label{font-size:13px;font-weight:600}
+.r-sec-desc{font-size:11.5px;color:var(--muted);margin-left:37px;padding-bottom:10px;line-height:1.5;display:none}
+.r-sec-desc.open{display:block}
+.r-chevron{width:14px;height:14px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.r-chevron.open{transform:rotate(180deg)}
+.r-items{padding:0 18px 14px 55px;display:none}
+.r-items.open{display:block}
+.r-item{padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:10px;font-size:13px;line-height:1.5}
+.r-item:last-child{border-bottom:none}
+.r-item-label{font-weight:600;color:var(--txt2);min-width:160px;flex-shrink:0;font-size:12px;padding-top:1px}
+.r-item-value{color:var(--txt);flex:1}
+/* Competitor cards */
+.competitors-grid{display:flex;flex-direction:column;gap:10px;padding:0 18px 14px 18px}
+.comp-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:13px 15px}
+.comp-name{font-weight:600;font-size:13.5px;margin-bottom:8px;color:var(--txt)}
+.comp-rows{display:flex;flex-direction:column;gap:5px}
+.comp-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.comp-row-label{font-weight:600;color:var(--txt2);min-width:100px;flex-shrink:0}
+.comp-row-val{color:var(--txt);flex:1}
+/* Loop cards */
+.loops-grid{display:flex;flex-direction:column;gap:10px;padding:0 18px 14px 18px}
+.loop-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:13px 15px}
+.loop-name{font-weight:600;font-size:13px;margin-bottom:4px}
+.loop-type{font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic}
+.loop-rows{display:flex;flex-direction:column;gap:5px}
+.loop-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.loop-row-label{font-weight:600;color:var(--txt2);min-width:120px;flex-shrink:0}
+.loop-row-val{color:var(--txt);flex:1}
+/* Creative cards */
+.creatives-grid{display:flex;flex-direction:column;gap:10px;padding:0 18px 14px 18px}
+.creative-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:13px 15px}
+.creative-format{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--txt2);margin-bottom:7px}
+.creative-angle{font-weight:600;font-size:13px;margin-bottom:8px}
+.creative-rows{display:flex;flex-direction:column;gap:5px}
+.creative-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.creative-row-label{font-weight:600;color:var(--txt2);min-width:90px;flex-shrink:0}
+.creative-row-val{color:var(--txt);flex:1}
+/* Funnel stages */
+.stages-grid{display:flex;flex-direction:column;gap:8px;padding:0 18px 14px 18px}
+.stage-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:11px 14px}
+.stage-name{font-weight:600;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.stage-cr{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--txt2)}
+.stage-rows{display:flex;flex-direction:column;gap:4px}
+.stage-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.stage-row-label{font-weight:600;color:var(--txt2);min-width:100px;flex-shrink:0}
+.stage-row-val{color:var(--txt);flex:1}
+
+/* ── Download row ── */
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-txt{background:var(--txt);color:#fff}
+.dl-txt:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+
+/* ── Input bar ── */
+.input-bar{padding:16px 28px 20px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+.input-inner{max-width:900px;margin:0 auto}
+.input-wrap{display:flex;align-items:flex-end;gap:9px;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:9px 11px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+.input-wrap:focus-within{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.1),var(--shadow)}
+.task-ta{flex:1;border:none!important;background:transparent!important;padding:3px!important;box-shadow:none!important;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:22px;max-height:160px;resize:none;overflow-y:auto;outline:none;color:var(--txt)}
+.task-ta::placeholder{color:var(--muted)}
+.send-btn{width:34px;height:34px;background:var(--txt);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.send-btn:hover{background:#2d2a26;transform:scale(1.05)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.send-btn svg{width:15px;height:15px}
+.input-hint{margin-top:7px;font-size:11px;color:var(--muted);text-align:center}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.hint-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Growth Intelligence</div>
+        </div>
+      </div>
+      <div class="sb-label" style="margin-bottom:10px">Agent Mode</div>
+      <div class="mode-grid">
+        <button class="mode-btn active-gtm" id="btn-gtm" onclick="setMode('gtm')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          GTM Strategy
+        </button>
+        <button class="mode-btn" id="btn-competitor" onclick="setMode('competitor')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Competitor
+        </button>
+        <button class="mode-btn" id="btn-viral" onclick="setMode('viral')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Viral Loops
+        </button>
+        <button class="mode-btn" id="btn-ads" onclick="setMode('ads')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Ad Creative
+        </button>
+        <button class="mode-btn" id="btn-funnel" onclick="setMode('funnel')" style="grid-column:span 2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Funnel Analytics
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="modeNote">GTM — builds go-to-market strategy</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sReports">0</div><div class="stat-l">Reports</div></div>
+        <div class="stat-box"><div class="stat-n" id="sQueries">0</div><div class="stat-l">Queries</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent</div>
+      <div class="recent-list" id="recentList"><div class="muted-note">No queries yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearChat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill pill-gtm" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span id="pillTxt">GTM Strategy</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="msgs-wrap" id="msgsWrap">
+      <div class="msgs" id="msgs">
+        <div class="welcome" id="welcome">
+          <div class="w-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <h2>Growth Intelligence Agent</h2>
+          <p>Your AI-powered growth strategist. Describe your product or business, and get a structured, actionable growth intelligence report — ready to execute.</p>
+          <div class="hint-grid">
+            <div class="hint h-gtm" onclick="hint('gtm','We are building a B2B SaaS tool for HR teams to automate employee onboarding workflows. Build us a complete GTM strategy.')">
+              <span class="hint-em">🚀</span>
+              <div><strong>GTM Strategy</strong><small>Full go-to-market plan with ICP, channels & experiments</small></div>
+            </div>
+            <div class="hint h-comp" onclick="hint('competitor','We are entering the project management software market competing with Asana, Monday.com, and Linear. Run a competitor analysis.')">
+              <span class="hint-em">🔍</span>
+              <div><strong>Competitor Intel</strong><small>Competitive breakdown with battlecards and gaps</small></div>
+            </div>
+            <div class="hint h-viral" onclick="hint('viral','We have a consumer app for language learning with 5,000 users. Design viral growth loops to reach 100k users organically.')">
+              <span class="hint-em">📈</span>
+              <div><strong>Viral Loops</strong><small>Growth loop design with viral mechanics & K-factor</small></div>
+            </div>
+            <div class="hint h-ads" onclick="hint('ads','We sell an AI writing assistant for marketers at $49/month. Create a complete paid acquisition strategy with ad creatives.')">
+              <span class="hint-em">🎯</span>
+              <div><strong>Ad Creative</strong><small>Campaign strategy with ready-to-launch ad copy</small></div>
+            </div>
+            <div class="hint h-funnel" onclick="hint('funnel','Our SaaS has a 2% landing page conversion and 40% trial-to-paid rate. Help us identify and fix the biggest funnel leaks.')">
+              <span class="hint-em">⚡</span>
+              <div><strong>Funnel Audit</strong><small>CRO quick wins and analytics instrumentation</small></div>
+            </div>
+            <div class="hint h-gtm" onclick="hint('gtm','We are launching a marketplace for freelance designers. We have 0 customers. Build our growth strategy from scratch.')">
+              <span class="hint-em">🌱</span>
+              <div><strong>Zero to One</strong><small>Early-stage growth strategy for new products</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-wrap">
+          <textarea class="task-ta" id="ta" rows="1" placeholder="Describe your product, market, and what you need — e.g. 'We make X for Y. Build our GTM strategy.'"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG — set your worker URL here
+// ─────────────────────────────────────────
+const BACKEND = "https://growth-agent.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let mode = "gtm";
+let running = false;
+let history = [];
+let reports = 0;
+let queries = 0;
+const ta = document.getElementById("ta");
+const sendBtn = document.getElementById("sendBtn");
+const msgsWrap = document.getElementById("msgsWrap");
+const msgs = document.getElementById("msgs");
+const welcome = document.getElementById("welcome");
+
+// ─────────────────────────────────────────
+// Textarea auto-resize + keyboard
+// ─────────────────────────────────────────
+ta.addEventListener("input", () => {
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+});
+ta.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+// ─────────────────────────────────────────
+// Mode definitions
+// ─────────────────────────────────────────
+const MODES = {
+  gtm:        { label:"GTM Strategy",       note:"GTM — builds go-to-market strategy",        pill:"pill-gtm",        ph:"Describe your product & market — e.g. 'We make X for Y. Build our GTM.'" },
+  competitor: { label:"Competitor Intel",    note:"Competitor — intelligence & battlecards",   pill:"pill-competitor", ph:"Name your market and key competitors to analyse — e.g. 'We compete with A, B, C in X market.'" },
+  viral:      { label:"Viral Loops",         note:"Viral — growth loop & retention design",    pill:"pill-viral",      ph:"Describe your product and current user base — e.g. 'We have X with Y users. Design viral loops.'" },
+  ads:        { label:"Ad Creative",         note:"Ads — campaign strategy & creative briefs", pill:"pill-ads",        ph:"Describe your product and target customer — e.g. 'We sell X to Y at $Z/mo. Build ad strategy.'" },
+  funnel:     { label:"Funnel Analytics",    note:"Funnel — CRO audit & analytics setup",     pill:"pill-funnel",     ph:"Share your funnel metrics — e.g. 'Landing page CVR is X%, trial-to-paid is Y%. Find the leaks.'" },
+};
+
+function setMode(m) {
+  mode = m;
+  Object.keys(MODES).forEach(k => {
+    const btn = document.getElementById("btn-" + k);
+    btn.className = "mode-btn" + (k === m ? " active-" + k : "");
+  });
+  const md = MODES[m];
+  const pill = document.getElementById("modePill");
+  pill.className = "mode-pill " + md.pill;
+  document.getElementById("pillTxt").textContent = md.label;
+  document.getElementById("modeNote").textContent = md.note;
+  ta.placeholder = md.ph;
+}
+
+function hint(m, text) {
+  setMode(m);
+  ta.value = text;
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+  ta.focus();
+}
+
+// ─────────────────────────────────────────
+// Status
+// ─────────────────────────────────────────
+function setStatus(type, label) {
+  const cls = { idle:"badge-idle", run:"badge-run", done:"badge-done", err:"badge-err" };
+  const el = document.getElementById("statusBadge");
+  el.className = "badge " + (cls[type] || "badge-idle");
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+function updateStats() {
+  document.getElementById("sReports").textContent = reports;
+  document.getElementById("sQueries").textContent = queries;
+}
+function addRecent(text, m) {
+  const list = document.getElementById("recentList");
+  const empty = list.querySelector(".muted-note");
+  if (empty) empty.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<div class="ri-dot"></div>${text.slice(0,55)}${text.length>55?"…":""}`;
+  item.onclick = () => { hint(m, text); };
+  list.prepend(item);
+  while (list.children.length > 6) list.lastChild.remove();
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function scrollBottom() { msgsWrap.scrollTop = msgsWrap.scrollHeight; }
+function hideWelcome() { if (welcome) welcome.style.display = "none"; }
+function now() { return new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }); }
+
+function addMsg(role, htmlContent) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  const isAgent = role === "agent";
+  row.innerHTML = `
+    <div class="av ${isAgent ? "av-agent" : "av-user"}">
+      ${isAgent ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>` : "Y"}
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">${isAgent ? "Growth Agent" : "You"} <span class="msg-time">${now()}</span></div>
+      <div class="msg-content">${htmlContent}</div>
+    </div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function addThinking(label) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "thinking-row";
+  row.id = "thinking";
+  row.innerHTML = `
+    <div class="av av-agent">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">Growth Agent</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span style="font-size:12px;color:var(--muted)">${label || "Analysing…"}</span>
+      </div>
+    </div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+}
+function removeThinking() { const t = document.getElementById("thinking"); if (t) t.remove(); }
+
+function cardHtml(type, text) {
+  const cls = { ok:"card-ok", work:"card-work", err:"card-err" };
+  const icons = {
+    ok:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    work: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    err:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  };
+  return `<div class="card ${cls[type]||"card-ok"}">${icons[type]||""} ${text}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Icon SVGs by key
+// ─────────────────────────────────────────
+const ICONS = {
+  target:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  user:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  zap:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  message:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
+  search:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  grid:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+  flask:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3h6v11l4 7H5l4-7z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>`,
+  pie:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>`,
+  map:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>`,
+  users:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
+  refresh:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>`,
+  anchor:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0020 0h-3"/></svg>`,
+  heart:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  "bar-chart":`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  image:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+  filter:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+};
+
+// ─────────────────────────────────────────
+// Section icon colour by mode
+// ─────────────────────────────────────────
+const MODE_COLOURS = {
+  gtm:        { bg:"var(--amber-bg)", color:"var(--amber)" },
+  competitor: { bg:"var(--blue-bg)",  color:"var(--blue)" },
+  viral:      { bg:"var(--green-bg)", color:"var(--green)" },
+  ads:        { bg:"var(--violet-bg)",color:"var(--violet)" },
+  funnel:     { bg:"var(--teal-bg)",  color:"var(--teal)" },
+};
+
+// ─────────────────────────────────────────
+// Render report from parsed JSON
+// ─────────────────────────────────────────
+function renderReport(data, reportMode) {
+  const col = MODE_COLOURS[reportMode] || MODE_COLOURS.gtm;
+  const block = document.createElement("div");
+  block.className = "report-block";
+
+  // Header
+  const hdDiv = document.createElement("div");
+  hdDiv.className = "report-hd";
+  hdDiv.innerHTML = `
+    <div class="report-hd-left" style="color:${col.color}">
+      ${ICONS.zap || ""}
+      <span title="${esc(data.title || "Report")}">${esc(data.title || "Growth Report")}</span>
+    </div>
+    <div class="report-hd-actions">
+      <button class="copy-btn" onclick="downloadReportPdf(this)">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download PDF
+      </button>
+      <button class="copy-btn" id="rcp-${Date.now()}" onclick="copyReport(this)">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>`;
+  block.appendChild(hdDiv);
+
+  const body = document.createElement("div");
+  body.className = "report-body";
+
+  if (!data.sections || !data.sections.length) {
+    body.innerHTML = `<div style="padding:20px;color:var(--txt2);font-size:13px">No sections found in report.</div>`;
+    block.appendChild(body);
+    return block;
+  }
+
+  data.sections.forEach((sec, si) => {
+    const secId = "rsec-" + si + "-" + Date.now();
+    const iconKey = sec.icon || "target";
+    const iconSvg = ICONS[iconKey] || ICONS.target;
+
+    const secDiv = document.createElement("div");
+    secDiv.className = "r-section";
+
+    // Section header (always visible)
+    const secHd = document.createElement("div");
+    secHd.className = "r-sec-hd";
+    secHd.innerHTML = `
+      <div class="r-sec-hd-left">
+        <div class="r-sec-icon" style="background:${col.bg};color:${col.color}">${iconSvg}</div>
+        <div class="r-sec-label">${esc(sec.label || "Section")}</div>
+      </div>
+      <svg class="r-chevron open" id="chev-${secId}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    secDiv.appendChild(secHd);
+
+    // Section description
+    if (sec.content) {
+      const descDiv = document.createElement("div");
+      descDiv.className = "r-sec-desc open";
+      descDiv.id = "desc-" + secId;
+      descDiv.textContent = sec.content;
+      secDiv.appendChild(descDiv);
+    }
+
+    // Content area
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "r-items open";
+    contentDiv.id = "content-" + secId;
+
+    // Competitors grid
+    if (sec.competitors) {
+      const grid = document.createElement("div");
+      grid.className = "competitors-grid";
+      sec.competitors.forEach(comp => {
+        const c = document.createElement("div");
+        c.className = "comp-card";
+        c.innerHTML = `<div class="comp-name">${esc(comp.name || "Competitor")}</div>
+          <div class="comp-rows">
+            ${comp.positioning ? `<div class="comp-row"><span class="comp-row-label">Positioning</span><span class="comp-row-val">${esc(comp.positioning)}</span></div>` : ""}
+            ${comp.strengths   ? `<div class="comp-row"><span class="comp-row-label">Strengths</span><span class="comp-row-val">${esc(comp.strengths)}</span></div>` : ""}
+            ${comp.weaknesses  ? `<div class="comp-row"><span class="comp-row-label">Weaknesses</span><span class="comp-row-val">${esc(comp.weaknesses)}</span></div>` : ""}
+            ${comp.pricing     ? `<div class="comp-row"><span class="comp-row-label">Pricing</span><span class="comp-row-val">${esc(comp.pricing)}</span></div>` : ""}
+            ${comp.verdict     ? `<div class="comp-row"><span class="comp-row-label">Verdict</span><span class="comp-row-val">${esc(comp.verdict)}</span></div>` : ""}
+          </div>`;
+        grid.appendChild(c);
+      });
+      contentDiv.appendChild(grid);
+    }
+
+    // Growth loops
+    else if (sec.loops) {
+      const grid = document.createElement("div");
+      grid.className = "loops-grid";
+      sec.loops.forEach(loop => {
+        const c = document.createElement("div");
+        c.className = "loop-card";
+        c.innerHTML = `<div class="loop-name">${esc(loop.name || "Loop")}</div>
+          <div class="loop-type">${esc(loop.type || "")}</div>
+          <div class="loop-rows">
+            ${loop.mechanism           ? `<div class="loop-row"><span class="loop-row-label">Mechanism</span><span class="loop-row-val">${esc(loop.mechanism)}</span></div>` : ""}
+            ${loop.trigger             ? `<div class="loop-row"><span class="loop-row-label">Trigger</span><span class="loop-row-val">${esc(loop.trigger)}</span></div>` : ""}
+            ${loop.viral_coefficient   ? `<div class="loop-row"><span class="loop-row-label">K-Factor</span><span class="loop-row-val">${esc(loop.viral_coefficient)}</span></div>` : ""}
+            ${loop.implementation      ? `<div class="loop-row"><span class="loop-row-label">How to Build</span><span class="loop-row-val">${esc(loop.implementation)}</span></div>` : ""}
+          </div>`;
+        grid.appendChild(c);
+      });
+      contentDiv.appendChild(grid);
+    }
+
+    // Ad creatives
+    else if (sec.creatives) {
+      const grid = document.createElement("div");
+      grid.className = "creatives-grid";
+      sec.creatives.forEach((cr, ci) => {
+        const c = document.createElement("div");
+        c.className = "creative-card";
+        c.innerHTML = `<div class="creative-format">${esc(cr.format || "")}</div>
+          <div class="creative-angle">${esc(cr.angle || "Creative " + (ci + 1))}</div>
+          <div class="creative-rows">
+            ${cr.hook       ? `<div class="creative-row"><span class="creative-row-label">Hook</span><span class="creative-row-val">${esc(cr.hook)}</span></div>` : ""}
+            ${cr.body       ? `<div class="creative-row"><span class="creative-row-label">Body</span><span class="creative-row-val">${esc(cr.body)}</span></div>` : ""}
+            ${cr.cta        ? `<div class="creative-row"><span class="creative-row-label">CTA</span><span class="creative-row-val">${esc(cr.cta)}</span></div>` : ""}
+            ${cr.hypothesis ? `<div class="creative-row"><span class="creative-row-label">Hypothesis</span><span class="creative-row-val">${esc(cr.hypothesis)}</span></div>` : ""}
+            ${cr.audience   ? `<div class="creative-row"><span class="creative-row-label">Audience</span><span class="creative-row-val">${esc(cr.audience)}</span></div>` : ""}
+          </div>`;
+        grid.appendChild(c);
+      });
+      contentDiv.appendChild(grid);
+    }
+
+    // Funnel stages
+    else if (sec.stages) {
+      const grid = document.createElement("div");
+      grid.className = "stages-grid";
+      sec.stages.forEach(st => {
+        const c = document.createElement("div");
+        c.className = "stage-card";
+        c.innerHTML = `<div class="stage-name">${esc(st.name || "Stage")} <span class="stage-cr">${esc(st.benchmark_cr || "")}</span></div>
+          <div class="stage-rows">
+            ${st.drop_off_cause ? `<div class="stage-row"><span class="stage-row-label">Drop-off Cause</span><span class="stage-row-val">${esc(st.drop_off_cause)}</span></div>` : ""}
+            ${st.fix            ? `<div class="stage-row"><span class="stage-row-label">Fix</span><span class="stage-row-val">${esc(st.fix)}</span></div>` : ""}
+          </div>`;
+        grid.appendChild(c);
+      });
+      contentDiv.appendChild(grid);
+    }
+
+    // Standard key-value items
+    else if (sec.items) {
+      sec.items.forEach(item => {
+        const d = document.createElement("div");
+        d.className = "r-item";
+        d.innerHTML = `<span class="r-item-label">${esc(item.label || "")}</span><span class="r-item-value">${esc(item.value || "")}</span>`;
+        contentDiv.appendChild(d);
+      });
+    }
+
+    secDiv.appendChild(contentDiv);
+
+    // Toggle on click
+    secHd.addEventListener("click", () => {
+      const desc = secDiv.querySelector(".r-sec-desc");
+      const content = secDiv.querySelector(".r-items");
+      const chev = secDiv.querySelector(".r-chevron");
+      const isOpen = content && content.classList.contains("open");
+      if (desc) desc.classList.toggle("open", !isOpen);
+      if (content) content.classList.toggle("open", !isOpen);
+      if (chev) chev.classList.toggle("open", !isOpen);
+    });
+
+    body.appendChild(secDiv);
+  });
+
+  block.appendChild(body);
+  block.reportData = data; // store for copy
+  return block;
+}
+
+function copyReport(btn) {
+  const block = btn.closest(".report-block");
+  if (!block || !block.reportData) return;
+  const text = reportToText(block.reportData);
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`; }, 1800);
+  });
+}
+
+function downloadReportPdf(btn) {
+  const block = btn.closest(".report-block");
+  if (!block || !block.reportData) return;
+
+  const reportText = reportToText(block.reportData);
+  const rawTitle = block.reportData?.title || "Growth Report";
+  const safeTitle = esc(rawTitle);
+  const safeBody = esc(reportText);
+
+  const printWin = window.open("", "_blank", "width=960,height=760");
+  if (!printWin) return;
+
+  printWin.document.open();
+  printWin.document.write(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>${safeTitle}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:32px;color:#1a1814;line-height:1.6;background:#fff}
+    h1{font-size:24px;margin-bottom:18px}
+    pre{white-space:pre-wrap;word-break:break-word;font-family:Arial,sans-serif;font-size:13px}
+    @media print { body{padding:18px} }
+  </style>
+</head>
+<body>
+  <h1>${safeTitle}</h1>
+  <pre>${safeBody}</pre>
+</body>
+</html>`);
+  printWin.document.close();
+
+  printWin.onload = () => {
+    printWin.focus();
+    setTimeout(() => printWin.print(), 120);
+  };
+}
+
+function shouldIgnoreRenderError(message) {
+  const msg = (message || "").toLowerCase();
+  return msg.includes("diagram") || msg.includes("digram");
+}
+
+function reportToText(data) {
+  let out = data.title + "\n" + "=".repeat(data.title.length) + "\n\n";
+  (data.sections || []).forEach(sec => {
+    out += sec.label + "\n" + "-".repeat(sec.label.length) + "\n";
+    if (sec.content) out += sec.content + "\n\n";
+    const lists = [sec.competitors, sec.loops, sec.creatives, sec.stages].find(Boolean);
+    if (lists) {
+      lists.forEach(item => {
+        out += "  • " + (item.name || item.format || item.name || "") + "\n";
+        Object.entries(item).forEach(([k, v]) => {
+          if (k !== "name" && k !== "format") out += "    " + k + ": " + v + "\n";
+        });
+        out += "\n";
+      });
+    }
+    (sec.items || []).forEach(item => {
+      out += "  " + (item.label || "") + ": " + (item.value || "") + "\n";
+    });
+    out += "\n";
+  });
+  return out;
+}
+
+// ─────────────────────────────────────────
+// Main send handler
+// ─────────────────────────────────────────
+async function handleSend() {
+  const query = ta.value.trim();
+  if (!query || running) return;
+
+  addMsg("user", esc(query));
+  addRecent(query, mode);
+  history.push({ role:"user", content: query });
+  queries++;
+
+  ta.value = "";
+  ta.style.height = "auto";
+  running = true;
+  sendBtn.disabled = true;
+
+  const thinkingLabels = {
+    gtm:        "Building your go-to-market strategy…",
+    competitor: "Running competitive intelligence analysis…",
+    viral:      "Designing viral growth loops…",
+    ads:        "Crafting ad strategy & creative briefs…",
+    funnel:     "Auditing your funnel…",
+  };
+  setStatus("run", "Analysing…");
+  addThinking(thinkingLabels[mode] || "Analysing…");
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, mode, history: history.slice(-10), iteration: 0 }),
+    });
+    data = await res.json();
+  } catch (err) {
+    removeThinking();
+    addMsg("agent", cardHtml("err", "Network error: " + esc(err.message)));
+    setStatus("err", "Error");
+    running = false;
+    sendBtn.disabled = false;
+    updateStats();
+    return;
+  }
+
+  removeThinking();
+
+  if (data.status === "REPORT" && data.data) {
+    hideWelcome();
+    const row = document.createElement("div");
+    row.className = "msg-row";
+    row.innerHTML = `
+      <div class="av av-agent">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="msg-body">
+        <div class="msg-who">Growth Agent <span class="msg-time">${now()}</span></div>
+        <div class="msg-content" id="agentSlot-${Date.now()}"></div>
+      </div>`;
+    msgs.appendChild(row);
+    const slot = row.querySelector(".msg-content");
+
+    const sectionCount = (data.data.sections || []).length;
+    slot.innerHTML = cardHtml("ok", `Report ready — ${sectionCount} sections`);
+
+    const reportEl = renderReport(data.data, data.mode || mode);
+    slot.appendChild(reportEl);
+    scrollBottom();
+
+    reports++;
+    history.push({ role:"assistant", content:"Generated " + MODES[mode].label + " report for: " + query.slice(0, 80) });
+    setStatus("done", "Report Ready");
+
+  } else if (data.status === "RAW") {
+    // JSON parse failed — show raw content nicely
+    addMsg("agent", `<div style="font-family:'DM Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;max-height:400px;overflow-y:auto">${esc(data.content)}</div>`);
+    history.push({ role:"assistant", content: data.content });
+    setStatus("done", "Done");
+
+  } else if (data.status === "COMPLETED") {
+    addMsg("agent", `<p style="line-height:1.7">${esc(data.solution || "")}</p>`);
+    history.push({ role:"assistant", content: data.solution || "" });
+    setStatus("done", "Done");
+
+  } else if (data.status === "ERROR") {
+    if (!shouldIgnoreRenderError(data.message)) {
+      addMsg("agent", cardHtml("err", esc(data.message || "Unknown error")));
+      setStatus("err", "Error");
+    } else {
+      setStatus("done", "Done");
+    }
+
+  } else {
+    addMsg("agent", cardHtml("err", "Unexpected response. Please try again."));
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  sendBtn.disabled = false;
+  updateStats();
+}
+
+// ─────────────────────────────────────────
+// Clear chat
+// ─────────────────────────────────────────
+function clearChat() {
+  msgs.innerHTML = "";
+  msgs.appendChild(welcome);
+  welcome.style.display = "";
+  history = [];
+  reports = 0;
+  queries = 0;
+  updateStats();
+  document.getElementById("recentList").innerHTML = `<div class="muted-note">No queries yet</div>`;
+  setStatus("idle", "Ready");
+  running = false;
+  sendBtn.disabled = false;
+}
+</script>
+</body>
+</html>

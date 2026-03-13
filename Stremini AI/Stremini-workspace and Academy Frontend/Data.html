@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Data Intelligence Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber2:#b45309;--amber-bg:#fffbf5;
+  --green:#059669;--green-bg:#d1fae5;--green-border:#a7f3d0;
+  --red:#dc2626;--red-dark:#991b1b;--red-bg:#fee2e2;--red-border:#fecaca;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;--violet-border:#ddd6fe;
+  --teal:#0d9488;--teal-bg:#f0fdfa;--teal-border:#99f6e4;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:center;line-height:1.2}
+.mode-btn svg{width:16px;height:16px;flex-shrink:0}
+.mode-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.mode-btn.active-diagnose{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.mode-btn.active-cohort{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.active-conversion{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.active-anomaly{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.mode-btn.active-forecast{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.mode-btn.active-csv{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red-dark)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--blue-bg);color:var(--blue)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.pill-diagnose{color:var(--blue);border-color:var(--blue-border);background:var(--blue-bg)}
+.pill-cohort{color:var(--violet);border-color:var(--violet-border);background:var(--violet-bg)}
+.pill-conversion{color:var(--amber);border-color:#fde68a;background:var(--amber-bg)}
+.pill-anomaly{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
+.pill-forecast{color:var(--green);border-color:var(--green-border);background:var(--green-bg)}
+.pill-csv{color:var(--teal);border-color:var(--teal-border);background:var(--teal-bg)}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* ── Messages ── */
+.msgs-wrap{flex:1;overflow-y:auto;padding:28px 0;scroll-behavior:smooth}
+.msgs{max-width:940px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column}
+
+/* ── Welcome ── */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:30px;height:30px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:500px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:680px}
+.hint{display:flex;align-items:flex-start;gap:9px;padding:12px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.h-diagnose:hover{border-color:var(--blue);background:var(--blue-bg)}
+.hint.h-cohort:hover{border-color:var(--violet);background:var(--violet-bg)}
+.hint.h-conversion:hover{border-color:var(--amber);background:var(--amber-bg)}
+.hint.h-anomaly:hover{border-color:var(--red);background:var(--red-bg)}
+.hint.h-forecast:hover{border-color:var(--green);background:var(--green-bg)}
+.hint.h-csv:hover{border-color:var(--teal);background:var(--teal-bg)}
+.hint-em{font-size:18px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12px;font-weight:600;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* ── Message rows ── */
+.msg-row{display:flex;gap:12px;padding:18px 0;border-bottom:1px solid var(--border2);animation:fadein .3s ease}
+.msg-row:last-child{border-bottom:none}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-top:2px}
+.av-agent{background:var(--txt);color:#fff}
+.av-user{background:var(--blue);color:#fff}
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.msg-time{font-weight:400;font-size:11px;color:var(--muted)}
+.msg-content{font-size:14px;line-height:1.7;color:var(--txt)}
+.thinking-row{display:flex;gap:12px;padding:18px 0}
+.dots{display:flex;gap:4px;align-items:center}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-ok{background:var(--green-bg);color:#065f46;border:1px solid var(--green-border)}
+.card-work{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.card-err{background:var(--red-bg);color:var(--red-dark);border:1px solid var(--red-border)}
+
+/* ── Report Block ── */
+.report-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:8px 0 6px;box-shadow:var(--shadow)}
+.report-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);gap:12px}
+.report-hd-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.report-hd-title{display:flex;flex-direction:column;gap:2px;min-width:0}
+.report-hd-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.report-hd-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover{background:var(--border);color:var(--txt)}
+
+/* ── Health Score Badge ── */
+.health-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;flex-shrink:0}
+.health-critical{background:var(--red-bg);color:var(--red-dark);border:1px solid var(--red-border)}
+.health-risk{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.health-attention{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.health-healthy{background:var(--green-bg);color:#065f46;border:1px solid var(--green-border)}
+.health-excellent{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
+.health-score-num{font-family:'Lora',serif;font-size:13px}
+
+/* ── Summary Banner ── */
+.report-summary{padding:13px 18px;background:#fafaf8;border-bottom:1px solid var(--border2);font-size:13px;line-height:1.65;color:var(--txt2);font-style:italic}
+
+/* ── Report body ── */
+.report-body{padding:0;max-height:640px;overflow-y:auto}
+.r-section{border-bottom:1px solid var(--border2)}
+.r-section:last-child{border-bottom:none}
+.r-sec-hd{display:flex;align-items:center;gap:9px;padding:13px 18px;cursor:pointer;user-select:none;transition:background .12s}
+.r-sec-hd:hover{background:var(--surface2)}
+.r-sec-hd-left{display:flex;align-items:center;gap:9px;flex:1}
+.r-sec-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.r-sec-icon svg{width:14px;height:14px}
+.r-sec-label{font-size:13px;font-weight:600}
+.r-chevron{width:14px;height:14px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.r-chevron.open{transform:rotate(180deg)}
+.r-sec-desc{font-size:11.5px;color:var(--muted);margin-left:37px;padding-bottom:10px;padding-right:18px;line-height:1.5;display:none}
+.r-sec-desc.open{display:block}
+
+/* standard items */
+.r-items{padding:0 18px 14px 55px;display:none}
+.r-items.open{display:block}
+.r-item{padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:12px;font-size:13px;line-height:1.55}
+.r-item:last-child{border-bottom:none}
+.r-item-label{font-weight:600;color:var(--txt2);min-width:170px;flex-shrink:0;font-size:12px;padding-top:1px}
+.r-item-value{color:var(--txt);flex:1}
+
+/* ── Insights list ── */
+.insights-list{padding:0 18px 14px 18px;display:none}
+.insights-list.open{display:flex;flex-direction:column;gap:8px}
+.insight-card{display:flex;gap:12px;padding:12px 14px;border-radius:var(--r2);border:1px solid}
+.insight-positive{background:#f0fdf4;border-color:var(--green-border)}
+.insight-negative{background:#fff5f5;border-color:var(--red-border)}
+.insight-neutral{background:var(--surface2);border-color:var(--border)}
+.insight-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.insight-positive .insight-dot{background:var(--green)}
+.insight-negative .insight-dot{background:var(--red)}
+.insight-neutral .insight-dot{background:var(--muted)}
+.insight-body{flex:1}
+.insight-title{font-weight:600;font-size:12.5px;margin-bottom:3px}
+.insight-detail{font-size:12.5px;color:var(--txt2);line-height:1.55}
+
+/* ── Risk Flags ── */
+.flags-list{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:6px}
+.flags-list.open{display:flex}
+.flag-card{display:flex;gap:10px;padding:11px 13px;border-radius:var(--r2);border-left:3px solid}
+.flag-high{background:var(--red-bg);border-color:var(--red)}
+.flag-medium{background:var(--orange-bg);border-color:var(--orange)}
+.flag-low{background:#fef9c3;border-color:#ca8a04}
+.flag-severity{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:3px;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.flag-high .flag-severity{background:var(--red);color:#fff}
+.flag-medium .flag-severity{background:var(--orange);color:#fff}
+.flag-low .flag-severity{background:#ca8a04;color:#fff}
+.flag-body{flex:1}
+.flag-metric{font-weight:600;font-size:12.5px;margin-bottom:3px}
+.flag-obs{font-size:12.5px;color:var(--txt2);margin-bottom:3px;line-height:1.45}
+.flag-consequence{font-size:11.5px;color:var(--muted);font-style:italic;line-height:1.4}
+
+/* ── Benchmark table ── */
+.benchmarks-wrap{padding:0 18px 14px 18px;display:none}
+.benchmarks-wrap.open{display:block}
+.bench-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.bench-table th{text-align:left;padding:7px 10px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.bench-table td{padding:9px 10px;border-bottom:1px solid var(--border2);line-height:1.4;vertical-align:top}
+.bench-table tr:last-child td{border-bottom:none}
+.bench-table tr:hover td{background:var(--surface2)}
+.verdict-above{color:var(--green);font-weight:600}
+.verdict-below{color:var(--red);font-weight:600}
+.verdict-at{color:var(--amber);font-weight:600}
+.verdict-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:10px;font-size:10.5px;font-weight:600}
+.verdict-tag.above{background:var(--green-bg);color:var(--green)}
+.verdict-tag.below{background:var(--red-bg);color:var(--red)}
+.verdict-tag.at{background:#fef3c7;color:#92400e}
+
+/* ── Experiments ── */
+.experiments-list{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:8px}
+.experiments-list.open{display:flex}
+.exp-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:13px 14px}
+.exp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.exp-name{font-weight:600;font-size:13px}
+.exp-tags{display:flex;gap:5px;flex-shrink:0}
+.exp-tag{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.effort-low{background:var(--green-bg);color:#065f46;border:1px solid var(--green-border)}
+.effort-medium{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.effort-high{background:var(--red-bg);color:var(--red-dark);border:1px solid var(--red-border)}
+.exp-timeline{background:var(--surface);border:1px solid var(--border);color:var(--txt2);padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:500}
+.exp-rows{display:flex;flex-direction:column;gap:5px}
+.exp-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.exp-row-label{font-weight:600;color:var(--txt2);min-width:90px;flex-shrink:0}
+.exp-row-val{color:var(--txt);flex:1}
+
+/* ── Scenario cards ── */
+.scenarios-list{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:8px}
+.scenarios-list.open{display:flex}
+.scenario-card{border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.scenario-hd{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.scenario-name{font-weight:600;font-size:13px}
+.scenario-prob{font-size:12px;color:var(--txt2)}
+.scenario-bear .scenario-hd{background:var(--red-bg)}
+.scenario-base .scenario-hd{background:var(--blue-bg)}
+.scenario-bull .scenario-hd{background:var(--green-bg)}
+.scenario-body{padding:10px 14px;background:var(--surface2)}
+.scenario-projections{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.scenario-proj{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:8px 10px;text-align:center}
+.scenario-proj-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.scenario-proj-val{font-family:'Lora',serif;font-size:14px;font-weight:500}
+.scenario-rows{display:flex;flex-direction:column;gap:4px}
+.scenario-row{display:flex;gap:9px;font-size:12px;line-height:1.45}
+.scenario-row-label{font-weight:600;color:var(--txt2);min-width:110px;flex-shrink:0}
+.scenario-row-val{color:var(--txt);flex:1}
+
+/* ── Anomaly cards ── */
+.anomalies-list{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:8px}
+.anomalies-list.open{display:flex}
+.anomaly-card{border:1px solid;border-radius:var(--r2);padding:12px 14px}
+.anomaly-card.sev-high{background:var(--red-bg);border-color:var(--red-border)}
+.anomaly-card.sev-medium{background:var(--orange-bg);border-color:var(--orange-border)}
+.anomaly-card.sev-low{background:#fef9c3;border-color:#fde047}
+.anomaly-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px}
+.anomaly-name{font-weight:600;font-size:13px}
+.anomaly-pattern{font-size:10.5px;padding:2px 8px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--txt2);font-weight:500}
+.anomaly-rows{display:flex;flex-direction:column;gap:4px}
+.anomaly-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.anomaly-row-label{font-weight:600;color:var(--txt2);min-width:100px;flex-shrink:0}
+.anomaly-row-val{color:var(--txt);flex:1}
+
+/* ── Root Cause list ── */
+.causes-list{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:6px}
+.causes-list.open{display:flex}
+.cause-card{display:flex;gap:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 14px}
+.cause-rank{width:26px;height:26px;background:var(--txt);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.cause-body{flex:1}
+.cause-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.cause-name{font-weight:600;font-size:13px}
+.cause-prob{font-size:11.5px;padding:2px 8px;border-radius:10px;background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber2);font-weight:600}
+.cause-rows{display:flex;flex-direction:column;gap:4px}
+.cause-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.cause-row-label{font-weight:600;color:var(--txt2);min-width:80px;flex-shrink:0}
+.cause-row-val{color:var(--txt);flex:1}
+
+/* ── Funnel steps ── */
+.funnel-steps{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:6px}
+.funnel-steps.open{display:flex}
+.funnel-step{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border-radius:var(--r2);border:1px solid}
+.funnel-step.good{background:#f0fdf4;border-color:var(--green-border)}
+.funnel-step.warn{background:var(--orange-bg);border-color:var(--orange-border)}
+.funnel-step.bad{background:var(--red-bg);border-color:var(--red-border)}
+.funnel-step-indicator{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.funnel-step.good .funnel-step-indicator{background:var(--green);color:#fff}
+.funnel-step.warn .funnel-step-indicator{background:var(--orange);color:#fff}
+.funnel-step.bad .funnel-step-indicator{background:var(--red);color:#fff}
+.funnel-step-body{flex:1}
+.funnel-step-top{display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.funnel-step-name{font-weight:600;font-size:13px}
+.funnel-step-cr{font-family:'Lora',serif;font-size:14px;font-weight:600}
+.funnel-step-benchmark{font-size:11px;color:var(--muted)}
+.funnel-step-diagnosis{font-size:12.5px;color:var(--txt2);line-height:1.5}
+
+/* ── Milestone cards ── */
+.milestones-list{padding:0 18px 14px 18px;display:none;flex-direction:column;gap:8px}
+.milestones-list.open{display:flex}
+.milestone-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 14px}
+.milestone-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+.milestone-target{font-weight:600;font-size:13px}
+.milestone-tags{display:flex;gap:6px}
+.pace-on-track{background:var(--green-bg);color:#065f46;border:1px solid var(--green-border);padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.pace-behind{background:var(--red-bg);color:var(--red-dark);border:1px solid var(--red-border);padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.pace-ahead{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border);padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.milestone-deadline{background:var(--surface);border:1px solid var(--border);color:var(--txt2);padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:500}
+.milestone-rows{display:flex;flex-direction:column;gap:4px}
+.milestone-row{display:flex;gap:9px;font-size:12.5px;line-height:1.45}
+.milestone-row-label{font-weight:600;color:var(--txt2);min-width:120px;flex-shrink:0}
+.milestone-row-val{color:var(--txt);flex:1}
+
+/* ── Input bar ── */
+.input-bar{padding:16px 28px 20px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+.input-inner{max-width:940px;margin:0 auto}
+.input-wrap{display:flex;align-items:flex-end;gap:9px;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:9px 11px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+.input-wrap:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1),var(--shadow)}
+.task-ta{flex:1;border:none!important;background:transparent!important;padding:3px!important;box-shadow:none!important;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:22px;max-height:160px;resize:none;overflow-y:auto;outline:none;color:var(--txt)}
+.task-ta::placeholder{color:var(--muted)}
+.send-btn{width:34px;height:34px;background:var(--txt);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.send-btn:hover{background:#2d2a26;transform:scale(1.05)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.send-btn svg{width:15px;height:15px}
+.input-hint{margin-top:7px;font-size:11px;color:var(--muted);text-align:center}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.hint-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Data Intelligence</div>
+        </div>
+      </div>
+      <div class="sb-label" style="margin-bottom:10px">Analysis Mode</div>
+      <div class="mode-grid">
+        <button class="mode-btn active-diagnose" id="btn-diagnose" onclick="setMode('diagnose')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Diagnose
+        </button>
+        <button class="mode-btn" id="btn-cohort" onclick="setMode('cohort')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Cohort
+        </button>
+        <button class="mode-btn" id="btn-conversion" onclick="setMode('conversion')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Conversion
+        </button>
+        <button class="mode-btn" id="btn-anomaly" onclick="setMode('anomaly')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Anomaly
+        </button>
+        <button class="mode-btn" id="btn-forecast" onclick="setMode('forecast')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Forecast
+        </button>
+        <button class="mode-btn" id="btn-csv" onclick="setMode('csv')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+          CSV / Data
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="modeNote">Diagnose — interprets business metrics</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sReports">0</div><div class="stat-l">Reports</div></div>
+        <div class="stat-box"><div class="stat-n" id="sQueries">0</div><div class="stat-l">Queries</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent</div>
+      <div class="recent-list" id="recentList"><div class="muted-note">No queries yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearChat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill pill-diagnose" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span id="pillTxt">Metric Diagnosis</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="msgs-wrap" id="msgsWrap">
+      <div class="msgs" id="msgs">
+        <div class="welcome" id="welcome">
+          <div class="w-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <h2>Data Intelligence Agent</h2>
+          <p>Your AI Chief Data Officer. Paste metrics, describe trends, or share raw data — get structured insights, risk flags, hypotheses, and experiments ready to act on.</p>
+          <div class="hint-grid">
+            <div class="hint h-diagnose" onclick="hint('diagnose','Our SaaS has: MRR $85k, MoM growth 4%, churn 8%, CAC $420, LTV $1,200, NPS 28, DAU/MAU 18%. We\'re burning $60k/month. Diagnose our metrics.')">
+              <span class="hint-em">🔬</span>
+              <div><strong>Metric Diagnosis</strong><small>Full health check on your business metrics</small></div>
+            </div>
+            <div class="hint h-cohort" onclick="hint('cohort','D1 retention 38%, D7 22%, D30 11%, D60 8%, D90 7%. Mobile gaming app, 50k MAU. New cohorts performing worse than 6-month-old cohorts. Analyse our retention.')">
+              <span class="hint-em">👥</span>
+              <div><strong>Cohort Analysis</strong><small>Retention curves, LTV implications, churn diagnosis</small></div>
+            </div>
+            <div class="hint h-conversion" onclick="hint('conversion','Landing page: 100k visitors, 3.2% to signup. Signup to trial: 61%. Trial to paid: 14%. Paid to annual: 22%. Mobile converts at 1.1% vs desktop 4.8%. Find the leaks.')">
+              <span class="hint-em">⚡</span>
+              <div><strong>Conversion Breakdown</strong><small>Funnel leak analysis with CRO experiments</small></div>
+            </div>
+            <div class="hint h-anomaly" onclick="hint('anomaly','Our daily signups dropped 43% over 5 days starting Monday. Revenue flat. Existing users active. No product changes deployed. Traffic from paid ads down 38%, organic flat. Detect root cause.')">
+              <span class="hint-em">🚨</span>
+              <div><strong>Anomaly Detection</strong><small>Root cause analysis and investigation playbook</small></div>
+            </div>
+            <div class="hint h-forecast" onclick="hint('forecast','Current ARR $1.2M, growing 6% MoM. Churn 2.5% monthly. CAC $800, LTV $3,200. We need to hit $5M ARR in 18 months. Model our scenarios and the path to get there.')">
+              <span class="hint-em">📈</span>
+              <div><strong>Forecast Model</strong><small>Bear / base / bull scenarios with milestone tracking</small></div>
+            </div>
+            <div class="hint h-csv" onclick="hint('csv','date,signups,revenue,churn_count,active_users\n2024-01,1200,45000,85,8400\n2024-02,1380,51200,91,9100\n2024-03,1150,48900,130,8800\n2024-04,980,44200,178,7900\n2024-05,870,39800,210,7200\nAnalyse this data and tell me what is happening.')">
+              <span class="hint-em">📊</span>
+              <div><strong>CSV / Data Analysis</strong><small>Paste raw data for instant structured analysis</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-wrap">
+          <textarea class="task-ta" id="ta" rows="1" placeholder="Describe your metrics, paste data, or ask a data question…"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">Press Enter to send · Shift+Enter for new line · Paste CSV data directly</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────
+const BACKEND = "https://data-agent.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let mode = "diagnose";
+let running = false;
+let history = [];
+let reports = 0;
+let queries = 0;
+const ta = document.getElementById("ta");
+const sendBtn = document.getElementById("sendBtn");
+const msgsWrap = document.getElementById("msgsWrap");
+const msgs = document.getElementById("msgs");
+const welcome = document.getElementById("welcome");
+
+// ─────────────────────────────────────────
+// Textarea
+// ─────────────────────────────────────────
+ta.addEventListener("input", () => {
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+});
+ta.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+// ─────────────────────────────────────────
+// Mode config
+// ─────────────────────────────────────────
+const MODES = {
+  diagnose:   { label:"Metric Diagnosis",      note:"Diagnose — interprets business metrics",          pill:"pill-diagnose",   thinking:"Diagnosing your metrics…" },
+  cohort:     { label:"Cohort Analysis",       note:"Cohort — retention curves & LTV implications",    pill:"pill-cohort",     thinking:"Analysing cohort & retention data…" },
+  conversion: { label:"Conversion Breakdown",  note:"Conversion — funnel leak analysis & CRO",         pill:"pill-conversion", thinking:"Breaking down your conversion funnel…" },
+  anomaly:    { label:"Anomaly Detection",     note:"Anomaly — root cause analysis & investigation",   pill:"pill-anomaly",    thinking:"Detecting anomalies and tracing root causes…" },
+  forecast:   { label:"Forecast Model",        note:"Forecast — scenario modelling & milestones",      pill:"pill-forecast",   thinking:"Building your forecast scenarios…" },
+  csv:        { label:"CSV / Data Analysis",   note:"CSV — paste raw data for instant analysis",       pill:"pill-csv",        thinking:"Analysing your data…" },
+};
+
+function setMode(m) {
+  mode = m;
+  Object.keys(MODES).forEach(k => {
+    document.getElementById("btn-" + k).className = "mode-btn" + (k === m ? " active-" + k : "");
+  });
+  const md = MODES[m];
+  const pill = document.getElementById("modePill");
+  pill.className = "mode-pill " + md.pill;
+  document.getElementById("pillTxt").textContent = md.label;
+  document.getElementById("modeNote").textContent = md.note;
+}
+
+function hint(m, text) {
+  setMode(m);
+  ta.value = text;
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+  ta.focus();
+}
+
+// ─────────────────────────────────────────
+// Status & stats
+// ─────────────────────────────────────────
+function setStatus(type, label) {
+  const cls = { idle:"badge-idle", run:"badge-run", done:"badge-done", err:"badge-err" };
+  const el = document.getElementById("statusBadge");
+  el.className = "badge " + (cls[type] || "badge-idle");
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+function updateStats() {
+  document.getElementById("sReports").textContent = reports;
+  document.getElementById("sQueries").textContent = queries;
+}
+function addRecent(text, m) {
+  const list = document.getElementById("recentList");
+  const empty = list.querySelector(".muted-note");
+  if (empty) empty.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<div class="ri-dot"></div>${text.slice(0,55)}${text.length>55?"…":""}`;
+  item.onclick = () => { hint(m, text); };
+  list.prepend(item);
+  while (list.children.length > 6) list.lastChild.remove();
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function scrollBottom() { msgsWrap.scrollTop = msgsWrap.scrollHeight; }
+function hideWelcome() { if (welcome) welcome.style.display = "none"; }
+function now() { return new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }); }
+
+function agentAvSvg() {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`;
+}
+
+function addMsg(role, htmlContent) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  const isAgent = role === "agent";
+  row.innerHTML = `
+    <div class="av ${isAgent ? "av-agent" : "av-user"}">${isAgent ? agentAvSvg() : "Y"}</div>
+    <div class="msg-body">
+      <div class="msg-who">${isAgent ? "Data Agent" : "You"} <span class="msg-time">${now()}</span></div>
+      <div class="msg-content">${htmlContent}</div>
+    </div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function addThinking(label) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "thinking-row";
+  row.id = "thinking";
+  row.innerHTML = `
+    <div class="av av-agent">${agentAvSvg()}</div>
+    <div class="msg-body">
+      <div class="msg-who">Data Agent</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span style="font-size:12px;color:var(--muted)">${esc(label)}</span>
+      </div>
+    </div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+}
+function removeThinking() { const t = document.getElementById("thinking"); if (t) t.remove(); }
+
+function cardHtml(type, text) {
+  const cls = { ok:"card-ok", work:"card-work", err:"card-err" };
+  const icons = {
+    ok:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    work: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    err:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  };
+  return `<div class="card ${cls[type]||"card-ok"}">${icons[type]||""} ${text}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Icon map
+// ─────────────────────────────────────────
+const ICONS = {
+  lightbulb:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="21" x2="15" y2="21"/><line x1="12" y1="17" x2="12" y2="23"/><path d="M12 3a6 6 0 110 12 6 6 0 010-12z"/></svg>`,
+  alert:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  "bar-chart":`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  flask:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3h6v11l4 7H5l4-7z"/></svg>`,
+  zap:        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  target:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  trending:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+  grid:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+  dollar:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+  filter:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  users:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`,
+  "git-branch":`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg>`,
+  search:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  shield:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  flag:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+  table:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>`,
+};
+
+// ─────────────────────────────────────────
+// Health score renderer
+// ─────────────────────────────────────────
+function healthBadgeHtml(score, label) {
+  const scoreNum = parseInt(score) || 0;
+  let cls = "health-attention";
+  if (scoreNum <= 40) cls = "health-critical";
+  else if (scoreNum <= 60) cls = "health-risk";
+  else if (scoreNum <= 75) cls = "health-attention";
+  else if (scoreNum <= 89) cls = "health-healthy";
+  else cls = "health-excellent";
+  return `<div class="health-badge ${cls}"><span class="health-score-num">${scoreNum}</span>${esc(label || "")}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Mode accent colours
+// ─────────────────────────────────────────
+const MODE_COL = {
+  diagnose:   { bg:"var(--blue-bg)",   color:"var(--blue)" },
+  cohort:     { bg:"var(--violet-bg)", color:"var(--violet)" },
+  conversion: { bg:"var(--amber-bg)",  color:"var(--amber)" },
+  anomaly:    { bg:"var(--red-bg)",    color:"var(--red)" },
+  forecast:   { bg:"var(--green-bg)",  color:"var(--green)" },
+  csv:        { bg:"var(--teal-bg)",   color:"var(--teal)" },
+};
+
+// ─────────────────────────────────────────
+// Render report
+// ─────────────────────────────────────────
+function renderReport(data, reportMode) {
+  const col = MODE_COL[reportMode] || MODE_COL.diagnose;
+  const block = document.createElement("div");
+  block.className = "report-block";
+  block.reportData = data;
+
+  // Header
+  const hdDiv = document.createElement("div");
+  hdDiv.className = "report-hd";
+  hdDiv.innerHTML = `
+    <div class="report-hd-left">
+      <div style="width:32px;height:32px;border-radius:8px;background:${col.bg};color:${col.color};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${ICONS["bar-chart"]}
+      </div>
+      <div class="report-hd-title">
+        <div class="report-hd-name" style="color:${col.color}" title="${esc(data.title||"")}">${esc(data.title || "Analysis Report")}</div>
+      </div>
+    </div>
+    <div class="report-hd-actions">
+      ${healthBadgeHtml(data.health_score, data.health_label)}
+      <button class="copy-btn" onclick="downloadReportPdf(this)">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download PDF
+      </button>
+      <button class="copy-btn" onclick="copyReport(this)">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>`;
+  block.appendChild(hdDiv);
+
+  // Summary
+  if (data.summary) {
+    const sumDiv = document.createElement("div");
+    sumDiv.className = "report-summary";
+    sumDiv.textContent = data.summary;
+    block.appendChild(sumDiv);
+  }
+
+  // Sections
+  const body = document.createElement("div");
+  body.className = "report-body";
+
+  (data.sections || []).forEach((sec, si) => {
+    const secId = `sec-${si}-${Date.now()}`;
+    const iconKey = sec.icon || "target";
+    const iconSvg = ICONS[iconKey] || ICONS.target;
+
+    const secDiv = document.createElement("div");
+    secDiv.className = "r-section";
+
+    // Section header
+    const secHd = document.createElement("div");
+    secHd.className = "r-sec-hd";
+    secHd.innerHTML = `
+      <div class="r-sec-hd-left">
+        <div class="r-sec-icon" style="background:${col.bg};color:${col.color}">${iconSvg}</div>
+        <div class="r-sec-label">${esc(sec.label || "")}</div>
+      </div>
+      <svg class="r-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    secDiv.appendChild(secHd);
+
+    // Description
+    if (sec.content) {
+      const desc = document.createElement("div");
+      desc.className = "r-sec-desc open";
+      desc.textContent = sec.content;
+      secDiv.appendChild(desc);
+    }
+
+    // Content — pick the right renderer
+    let contentEl;
+
+    if (sec.insights) {
+      contentEl = document.createElement("div");
+      contentEl.className = "insights-list open";
+      sec.insights.forEach(ins => {
+        const sig = (ins.signal || "neutral").toLowerCase();
+        const c = document.createElement("div");
+        c.className = `insight-card insight-${sig}`;
+        c.innerHTML = `<div class="insight-dot"></div>
+          <div class="insight-body">
+            <div class="insight-title">${esc(ins.title)}</div>
+            <div class="insight-detail">${esc(ins.detail)}</div>
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.flags) {
+      contentEl = document.createElement("div");
+      contentEl.className = "flags-list open";
+      sec.flags.forEach(f => {
+        const sev = (f.severity || "medium").toLowerCase();
+        const c = document.createElement("div");
+        c.className = `flag-card flag-${sev}`;
+        c.innerHTML = `<div class="flag-severity">${sev}</div>
+          <div class="flag-body">
+            <div class="flag-metric">${esc(f.metric || "")}</div>
+            <div class="flag-obs">${esc(f.observation || "")}</div>
+            <div class="flag-consequence">${esc(f.consequence || "")}</div>
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.benchmarks) {
+      contentEl = document.createElement("div");
+      contentEl.className = "benchmarks-wrap open";
+      const tbl = document.createElement("table");
+      tbl.className = "bench-table";
+      tbl.innerHTML = `<thead><tr><th>Metric</th><th>Your Value</th><th>Industry Avg</th><th>Best-in-Class</th><th>Status</th></tr></thead>`;
+      const tbody = document.createElement("tbody");
+      sec.benchmarks.forEach(b => {
+        const v = (b.verdict || "at").toLowerCase();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:600">${esc(b.metric)}</td>
+          <td style="font-weight:600">${esc(b.your_value)}</td>
+          <td>${esc(b.industry_avg)}</td>
+          <td>${esc(b.best_in_class)}</td>
+          <td><span class="verdict-tag ${v}">${v === "above" ? "▲ Above" : v === "below" ? "▼ Below" : "● At Avg"}</span></td>`;
+        tbody.appendChild(tr);
+      });
+      tbl.appendChild(tbody);
+      contentEl.appendChild(tbl);
+
+    } else if (sec.experiments) {
+      contentEl = document.createElement("div");
+      contentEl.className = "experiments-list open";
+      sec.experiments.forEach(exp => {
+        const eff = (exp.effort || "medium").toLowerCase();
+        const c = document.createElement("div");
+        c.className = "exp-card";
+        c.innerHTML = `
+          <div class="exp-top">
+            <div class="exp-name">${esc(exp.name || "")}</div>
+            <div class="exp-tags">
+              <span class="exp-tag effort-${eff}">${eff} effort</span>
+              <span class="exp-timeline">${esc(exp.timeline || "")}</span>
+            </div>
+          </div>
+          <div class="exp-rows">
+            ${exp.hypothesis ? `<div class="exp-row"><span class="exp-row-label">Hypothesis</span><span class="exp-row-val">${esc(exp.hypothesis)}</span></div>` : ""}
+            ${exp.method     ? `<div class="exp-row"><span class="exp-row-label">Method</span><span class="exp-row-val">${esc(exp.method)}</span></div>` : ""}
+            ${exp.metric     ? `<div class="exp-row"><span class="exp-row-label">Success Metric</span><span class="exp-row-val">${esc(exp.metric)}</span></div>` : ""}
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.scenarios) {
+      contentEl = document.createElement("div");
+      contentEl.className = "scenarios-list open";
+      sec.scenarios.forEach(sc => {
+        const nameLC = (sc.name || "").toLowerCase();
+        const scClass = nameLC.includes("bear") ? "scenario-bear" : nameLC.includes("bull") ? "scenario-bull" : "scenario-base";
+        const c = document.createElement("div");
+        c.className = `scenario-card ${scClass}`;
+        c.innerHTML = `
+          <div class="scenario-hd">
+            <div class="scenario-name">${esc(sc.name || "")}</div>
+            <div class="scenario-prob">${esc(sc.probability || "")}</div>
+          </div>
+          <div class="scenario-body">
+            <div class="scenario-projections">
+              <div class="scenario-proj"><div class="scenario-proj-label">3 months</div><div class="scenario-proj-val">${esc(sc.month3 || "—")}</div></div>
+              <div class="scenario-proj"><div class="scenario-proj-label">6 months</div><div class="scenario-proj-val">${esc(sc.month6 || "—")}</div></div>
+              <div class="scenario-proj"><div class="scenario-proj-label">12 months</div><div class="scenario-proj-val">${esc(sc.month12 || "—")}</div></div>
+            </div>
+            <div class="scenario-rows">
+              ${sc.key_assumption ? `<div class="scenario-row"><span class="scenario-row-label">Key Assumption</span><span class="scenario-row-val">${esc(sc.key_assumption)}</span></div>` : ""}
+              ${sc.trigger        ? `<div class="scenario-row"><span class="scenario-row-label">Trigger</span><span class="scenario-row-val">${esc(sc.trigger)}</span></div>` : ""}
+            </div>
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.anomalies) {
+      contentEl = document.createElement("div");
+      contentEl.className = "anomalies-list open";
+      sec.anomalies.forEach(an => {
+        const sev = (an.severity || "medium").toLowerCase();
+        const c = document.createElement("div");
+        c.className = `anomaly-card sev-${sev}`;
+        c.innerHTML = `
+          <div class="anomaly-top">
+            <div class="anomaly-name">${esc(an.name || an.metric || "")}</div>
+            <span class="anomaly-pattern">${esc(an.pattern || "")}</span>
+          </div>
+          <div class="anomaly-rows">
+            ${an.metric        ? `<div class="anomaly-row"><span class="anomaly-row-label">Metric</span><span class="anomaly-row-val">${esc(an.metric)}</span></div>` : ""}
+            ${an.magnitude     ? `<div class="anomaly-row"><span class="anomaly-row-label">Magnitude</span><span class="anomaly-row-val">${esc(an.magnitude)}</span></div>` : ""}
+            ${an.first_seen    ? `<div class="anomaly-row"><span class="anomaly-row-label">First Seen</span><span class="anomaly-row-val">${esc(an.first_seen)}</span></div>` : ""}
+            ${an.likely_cause  ? `<div class="anomaly-row"><span class="anomaly-row-label">Likely Cause</span><span class="anomaly-row-val">${esc(an.likely_cause)}</span></div>` : ""}
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.causes) {
+      contentEl = document.createElement("div");
+      contentEl.className = "causes-list open";
+      sec.causes.forEach(ca => {
+        const c = document.createElement("div");
+        c.className = "cause-card";
+        c.innerHTML = `
+          <div class="cause-rank">${ca.rank || "?"}</div>
+          <div class="cause-body">
+            <div class="cause-top">
+              <div class="cause-name">${esc(ca.cause || "")}</div>
+              <span class="cause-prob">${esc(ca.probability || "")}</span>
+            </div>
+            <div class="cause-rows">
+              ${ca.evidence  ? `<div class="cause-row"><span class="cause-row-label">Evidence</span><span class="cause-row-val">${esc(ca.evidence)}</span></div>` : ""}
+              ${ca.rule_out  ? `<div class="cause-row"><span class="cause-row-label">Rule Out</span><span class="cause-row-val">${esc(ca.rule_out)}</span></div>` : ""}
+            </div>
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.funnel_steps) {
+      contentEl = document.createElement("div");
+      contentEl.className = "funnel-steps open";
+      const statusIcons = {
+        good: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        warn: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        bad:  `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+      };
+      sec.funnel_steps.forEach(fs => {
+        const status = (fs.status || "warn").toLowerCase();
+        const c = document.createElement("div");
+        c.className = `funnel-step ${status}`;
+        c.innerHTML = `
+          <div class="funnel-step-indicator">${statusIcons[status] || statusIcons.warn}</div>
+          <div class="funnel-step-body">
+            <div class="funnel-step-top">
+              <span class="funnel-step-name">${esc(fs.step || "")}</span>
+              <span class="funnel-step-cr">${esc(fs.conversion_rate || "")}</span>
+              <span class="funnel-step-benchmark">Benchmark: ${esc(fs.benchmark || "")}</span>
+            </div>
+            <div class="funnel-step-diagnosis">${esc(fs.diagnosis || "")}</div>
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.milestones) {
+      contentEl = document.createElement("div");
+      contentEl.className = "milestones-list open";
+      sec.milestones.forEach(ml => {
+        const pace = (ml.current_pace || "on-track").replace(/ /g,"-").toLowerCase();
+        const paceLbl = { "on-track":"✓ On Track", "behind":"⚠ Behind", "ahead":"↑ Ahead" }[pace] || pace;
+        const c = document.createElement("div");
+        c.className = "milestone-card";
+        c.innerHTML = `
+          <div class="milestone-top">
+            <div class="milestone-target">${esc(ml.target || "")}</div>
+            <div class="milestone-tags">
+              <span class="pace-${pace.replace("-","")}">${paceLbl}</span>
+              <span class="milestone-deadline">${esc(ml.deadline || "")}</span>
+            </div>
+          </div>
+          <div class="milestone-rows">
+            ${ml.leading_indicator ? `<div class="milestone-row"><span class="milestone-row-label">Leading Indicator</span><span class="milestone-row-val">${esc(ml.leading_indicator)}</span></div>` : ""}
+            ${ml.gap               ? `<div class="milestone-row"><span class="milestone-row-label">Gap / Action</span><span class="milestone-row-val">${esc(ml.gap)}</span></div>` : ""}
+          </div>`;
+        contentEl.appendChild(c);
+      });
+
+    } else if (sec.items) {
+      // Standard key-value list
+      contentEl = document.createElement("div");
+      contentEl.className = "r-items open";
+      sec.items.forEach(item => {
+        const d = document.createElement("div");
+        d.className = "r-item";
+        d.innerHTML = `<span class="r-item-label">${esc(item.label || "")}</span><span class="r-item-value">${esc(item.value || "")}</span>`;
+        contentEl.appendChild(d);
+      });
+    }
+
+    if (contentEl) secDiv.appendChild(contentEl);
+
+    // Toggle
+    secHd.addEventListener("click", () => {
+      const desc = secDiv.querySelector(".r-sec-desc");
+      const content = secDiv.querySelector(".insights-list,.flags-list,.benchmarks-wrap,.experiments-list,.scenarios-list,.anomalies-list,.causes-list,.funnel-steps,.milestones-list,.r-items");
+      const chev = secDiv.querySelector(".r-chevron");
+      const isOpen = chev && chev.classList.contains("open");
+      if (desc) desc.classList.toggle("open", !isOpen);
+      if (content) content.classList.toggle("open", !isOpen);
+      if (chev) chev.classList.toggle("open", !isOpen);
+    });
+
+    body.appendChild(secDiv);
+  });
+
+  block.appendChild(body);
+  return block;
+}
+
+function copyReport(btn) {
+  const block = btn.closest(".report-block");
+  if (!block || !block.reportData) return;
+  const d = block.reportData;
+  let text = d.title + " (Health: " + d.health_score + "/100 — " + d.health_label + ")\n\n";
+  if (d.summary) text += "SUMMARY\n" + d.summary + "\n\n";
+  (d.sections || []).forEach(sec => {
+    text += sec.label.toUpperCase() + "\n" + "─".repeat(sec.label.length) + "\n";
+    if (sec.content) text += sec.content + "\n\n";
+    const arr = sec.insights || sec.flags || sec.benchmarks || sec.experiments || sec.scenarios || sec.anomalies || sec.causes || sec.funnel_steps || sec.milestones || sec.items || [];
+    arr.forEach(item => {
+      const name = item.title || item.metric || item.name || item.cause || item.step || item.target || item.label || "";
+      const detail = item.detail || item.consequence || item.body || item.diagnosis || item.key_assumption || item.value || "";
+      if (name) text += "  • " + name + (detail ? ": " + detail : "") + "\n";
+    });
+    text += "\n";
+  });
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`; }, 1800);
+  });
+}
+
+function reportToText(data) {
+  let text = (data.title || "Analysis Report") + " (Health: " + (data.health_score || "-") + "/100 — " + (data.health_label || "") + ")\n\n";
+  if (data.summary) text += "SUMMARY\n" + data.summary + "\n\n";
+  (data.sections || []).forEach(sec => {
+    const label = sec.label || "Section";
+    text += label.toUpperCase() + "\n" + "─".repeat(label.length) + "\n";
+    if (sec.content) text += sec.content + "\n\n";
+    const arr = sec.insights || sec.flags || sec.benchmarks || sec.experiments || sec.scenarios || sec.anomalies || sec.causes || sec.funnel_steps || sec.milestones || sec.items || [];
+    arr.forEach(item => {
+      const name = item.title || item.metric || item.name || item.cause || item.step || item.target || item.label || "";
+      const detail = item.detail || item.consequence || item.body || item.diagnosis || item.key_assumption || item.value || "";
+      if (name) text += "  • " + name + (detail ? ": " + detail : "") + "\n";
+    });
+    text += "\n";
+  });
+  return text;
+}
+
+function downloadReportPdf(btn) {
+  const block = btn.closest(".report-block");
+  if (!block || !block.reportData) return;
+
+  const reportText = reportToText(block.reportData);
+  const rawTitle = block.reportData?.title || "Data Analysis Report";
+  const safeTitle = esc(rawTitle);
+  const safeBody = esc(reportText);
+
+  const printWin = window.open("", "_blank", "width=960,height=760");
+  if (!printWin) return;
+
+  printWin.document.open();
+  printWin.document.write(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>${safeTitle}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:32px;color:#1a1814;line-height:1.6;background:#fff}
+    h1{font-size:24px;margin-bottom:18px}
+    pre{white-space:pre-wrap;word-break:break-word;font-family:Arial,sans-serif;font-size:13px}
+    @media print { body{padding:18px} }
+  </style>
+</head>
+<body>
+  <h1>${safeTitle}</h1>
+  <pre>${safeBody}</pre>
+</body>
+</html>`);
+  printWin.document.close();
+
+  printWin.onload = () => {
+    printWin.focus();
+    setTimeout(() => printWin.print(), 120);
+  };
+}
+
+function shouldIgnoreRenderError(message) {
+  const msg = (message || "").toLowerCase();
+  return msg.includes("diagram") || msg.includes("digram");
+}
+
+// ─────────────────────────────────────────
+// Main send handler
+// ─────────────────────────────────────────
+async function handleSend() {
+  const query = ta.value.trim();
+  if (!query || running) return;
+
+  addMsg("user", esc(query));
+  addRecent(query, mode);
+  history.push({ role:"user", content: query });
+  queries++;
+
+  ta.value = "";
+  ta.style.height = "auto";
+  running = true;
+  sendBtn.disabled = true;
+  setStatus("run", "Analysing…");
+  addThinking(MODES[mode]?.thinking || "Analysing your data…");
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, mode, history: history.slice(-10), iteration: 0 }),
+    });
+    data = await res.json();
+  } catch (err) {
+    removeThinking();
+    addMsg("agent", cardHtml("err", "Network error: " + esc(err.message)));
+    setStatus("err", "Error");
+    running = false;
+    sendBtn.disabled = false;
+    updateStats();
+    return;
+  }
+
+  removeThinking();
+
+  if (data.status === "REPORT" && data.data) {
+    hideWelcome();
+    const row = document.createElement("div");
+    row.className = "msg-row";
+    const slotId = "slot-" + Date.now();
+    row.innerHTML = `
+      <div class="av av-agent">${agentAvSvg()}</div>
+      <div class="msg-body">
+        <div class="msg-who">Data Agent <span class="msg-time">${now()}</span></div>
+        <div class="msg-content" id="${slotId}"></div>
+      </div>`;
+    msgs.appendChild(row);
+    scrollBottom();
+
+    const slot = document.getElementById(slotId);
+    const secCount = (data.data.sections || []).length;
+    const score = data.data.health_score || 0;
+    slot.innerHTML = cardHtml("ok", `Report ready — ${secCount} sections · Health ${score}/100`);
+
+    const reportEl = renderReport(data.data, data.mode || mode);
+    slot.appendChild(reportEl);
+    scrollBottom();
+
+    reports++;
+    history.push({ role:"assistant", content: "Generated " + MODES[mode].label + " report for: " + query.slice(0, 80) });
+    setStatus("done", "Report Ready");
+
+  } else if (data.status === "RAW") {
+    addMsg("agent", `<div style="font-family:'DM Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;max-height:400px;overflow-y:auto">${esc(data.content)}</div>`);
+    history.push({ role:"assistant", content: data.content });
+    setStatus("done", "Done");
+
+  } else if (data.status === "COMPLETED") {
+    addMsg("agent", `<p style="line-height:1.7">${esc(data.solution || "")}</p>`);
+    history.push({ role:"assistant", content: data.solution || "" });
+    setStatus("done", "Done");
+
+  } else if (data.status === "ERROR") {
+    if (!shouldIgnoreRenderError(data.message)) {
+      addMsg("agent", cardHtml("err", esc(data.message || "Unknown error")));
+      setStatus("err", "Error");
+    } else {
+      setStatus("done", "Done");
+    }
+
+  } else {
+    addMsg("agent", cardHtml("err", "Unexpected response from agent."));
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  sendBtn.disabled = false;
+  updateStats();
+}
+
+// ─────────────────────────────────────────
+// Clear
+// ─────────────────────────────────────────
+function clearChat() {
+  msgs.innerHTML = "";
+  msgs.appendChild(welcome);
+  welcome.style.display = "";
+  history = [];
+  reports = 0;
+  queries = 0;
+  updateStats();
+  document.getElementById("recentList").innerHTML = `<div class="muted-note">No queries yet</div>`;
+  setStatus("idle", "Ready");
+  running = false;
+  sendBtn.disabled = false;
+}
+</script>
+</body>
+</html>

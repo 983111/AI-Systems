@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stremini Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f9f8f7;
+      --surface-3: #f3f1ee;
+      --text: #0e0d0c;
+      --text-2: #3d3a36;
+      --muted: #7a7570;
+      --subtle: #b0aaa4;
+      --line: #e6e2dc;
+      --line-2: #d4cfc8;
+      --accent: #c96518;
+      --accent-light: #fdf0e6;
+      --accent-mid: #e8a070;
+      --blue: #1c5fa8;
+      --blue-bg: #eef4fd;
+      --blue-border: #c2d8f5;
+      --green: #1a7a4a;
+      --green-bg: #eef8f2;
+      --green-border: #b8e4ca;
+      --purple: #5a38a8;
+      --purple-bg: #f2eefb;
+      --purple-border: #cfc2f0;
+      --amber: #a06010;
+      --amber-bg: #fdf4e3;
+      --amber-border: #f0d898;
+      --teal: #1a6a7a;
+      --teal-bg: #eef6f8;
+      --teal-border: #b8dce4;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface-2); }
+    ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════
+       TOPBAR
+    ══════════════════════════════ */
+    .topbar {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+      padding: 0 40px;
+      height: 58px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .brand-icon {
+      width: 30px; height: 30px;
+      background: var(--text);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .brand-icon svg { width: 14px; height: 14px; fill: white; }
+
+    .brand-text h1 {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 13.5px; font-weight: 700;
+      letter-spacing: -0.01em; line-height: 1.2;
+    }
+    .brand-text p {
+      font-size: 9.5px; color: var(--subtle);
+      text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .count-pill {
+      font-size: 11.5px; color: var(--muted); font-weight: 600;
+      padding: 5px 14px;
+      background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--green); font-weight: 600;
+      padding: 5px 12px;
+      background: var(--green-bg); border: 1px solid var(--green-border);
+      border-radius: 999px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      background: var(--green); border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .academy-banner-wrap {
+      padding: 14px 40px;
+      background: linear-gradient(90deg, #fff9f3 0%, #fff 45%, #f2f7ff 100%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .academy-banner {
+      max-width: 1080px;
+      margin: 0 auto;
+      border: 1px solid #f0dcc8;
+      border-radius: 18px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 30px rgba(14, 13, 12, 0.06);
+    }
+
+    .academy-copy h2 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(26px, 2.9vw, 34px);
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .academy-copy p {
+      font-size: 13.5px;
+      color: var(--text-2);
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .academy-link {
+      flex-shrink: 0;
+      text-decoration: none;
+      color: white;
+      background: linear-gradient(135deg, #0e0d0c 0%, #34302c 100%);
+      border-radius: 999px;
+      border: 1px solid #2e2a26;
+      padding: 11px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      transition: transform .2s ease, box-shadow .2s ease;
+      box-shadow: 0 6px 18px rgba(14, 13, 12, 0.18);
+    }
+
+    .academy-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(14, 13, 12, 0.2);
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ══════════════════════════════
+       HERO
+    ══════════════════════════════ */
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    /* Dot grid background */
+    .hero-wrap::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, #c8c2b8 1px, transparent 1px);
+      background-size: 26px 26px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* Vignette to fade dots */
+    .hero-wrap::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 72% 85% at 50% 45%,
+        rgba(255,255,255,0.98) 0%,
+        rgba(255,255,255,0.85) 45%,
+        rgba(255,255,255,0.3) 75%,
+        transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Decorative arcs */
+    .hero-arc {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .hero-arc-tl { top: -60px; left: -60px; opacity: 0.06; }
+    .hero-arc-br { bottom: -60px; right: -60px; opacity: 0.06; transform: rotate(180deg); }
+
+    .hero-inner {
+      position: relative; z-index: 2;
+      max-width: 1080px; margin: 0 auto;
+      padding: 80px 40px 76px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--accent);
+      padding: 6px 16px;
+      border: 1px solid #f0d4bc; background: var(--accent-light);
+      border-radius: 999px;
+      margin-bottom: 28px;
+      animation: fadeUp 0.55s ease both;
+    }
+    .eyebrow-dot {
+      width: 5px; height: 5px;
+      background: var(--accent); border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .hero h2 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(44px, 6.5vw, 76px);
+      font-weight: 600;
+      line-height: 0.92;
+      letter-spacing: -2px;
+      color: var(--text);
+      margin-bottom: 8px;
+      animation: fadeUp 0.55s 0.07s ease both;
+    }
+
+    .italic-line {
+      display: block;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(44px, 6.5vw, 76px);
+      font-weight: 500; font-style: italic;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 30px;
+      animation: fadeUp 0.55s 0.13s ease both;
+    }
+
+    .specialist-word {
+      display: inline-block;
+      position: relative;
+      color: var(--accent);
+    }
+    .specialist-word::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-mid) 35%, var(--accent) 65%, transparent);
+      border-radius: 2px;
+      animation: underlineGrow 0.9s 0.75s ease both;
+      transform-origin: left;
+    }
+    @keyframes underlineGrow {
+      from { transform: scaleX(0); opacity: 0; }
+      to { transform: scaleX(1); opacity: 1; }
+    }
+
+    .hero-desc {
+      max-width: 500px; margin: 0 auto 36px;
+      color: var(--muted); font-size: 14px; line-height: 1.72; font-weight: 400;
+      animation: fadeUp 0.55s 0.19s ease both;
+    }
+
+    .hero-stats {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 14px; overflow: hidden;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+      animation: fadeUp 0.55s 0.26s ease both;
+    }
+    .stat-item {
+      padding: 14px 28px;
+      text-align: center;
+      position: relative;
+    }
+    .stat-item + .stat-item::before {
+      content: '';
+      position: absolute; left: 0; top: 22%; bottom: 22%;
+      width: 1px; background: var(--line);
+    }
+    .stat-num {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 30px; font-weight: 600;
+      color: var(--text); line-height: 1;
+      display: block;
+    }
+    .stat-lbl {
+      font-size: 9.5px; font-weight: 700;
+      color: var(--subtle); text-transform: uppercase;
+      letter-spacing: 0.14em; display: block; margin-top: 4px;
+    }
+
+    /* Decorative corner nodes */
+    .hero-nodes {
+      position: absolute; pointer-events: none; z-index: 1;
+      opacity: 0.1;
+    }
+    .hero-nodes-l { left: 20px; top: 50%; transform: translateY(-50%); }
+    .hero-nodes-r { right: 20px; top: 50%; transform: translateY(-50%) scaleX(-1); }
+
+    /* ══════════════════════════════
+       MAIN
+    ══════════════════════════════ */
+    main {
+      max-width: 1080px; margin: 0 auto;
+      padding: 60px 40px 100px;
+    }
+
+    /* ══════════════════════════════
+       LAYER
+    ══════════════════════════════ */
+    .layer {
+      margin-bottom: 58px;
+      opacity: 0; transform: translateY(22px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .layer.in { opacity: 1; transform: none; }
+
+    .layer-header {
+      display: flex; align-items: center;
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    .ghost-num {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 80px; font-weight: 700;
+      color: var(--text); opacity: 0.035;
+      line-height: 1; letter-spacing: -4px;
+      position: absolute; left: -8px; top: -30px;
+      user-select: none; pointer-events: none;
+    }
+
+    .layer-num {
+      font-size: 10.5px; color: var(--subtle);
+      font-weight: 700; letter-spacing: 0.1em;
+      min-width: 24px; padding-right: 14px;
+    }
+
+    .h-line {
+      flex: 1; height: 1px;
+      background: var(--line);
+    }
+
+    .layer-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 15px;
+      border: 1px solid var(--line-2); border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin: 0 14px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    }
+    .pill-icon { width: 13px; height: 13px; opacity: 0.45; }
+
+    /* ══════════════════════════════
+       CARDS
+    ══════════════════════════════ */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px 20px 18px;
+      text-decoration: none; color: inherit;
+      transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
+      min-height: 172px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Top bar reveal */
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--c-a), var(--c-b));
+      border-radius: 14px 14px 0 0;
+      opacity: 0; transition: opacity 0.22s ease;
+    }
+    .card:hover::before { opacity: 1; }
+
+    /* Inner glow */
+    .card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(var(--c-rgb), 0.055) 0%, transparent 70%);
+      opacity: 0; transition: opacity 0.22s ease;
+      pointer-events: none; border-radius: 14px;
+    }
+    .card:hover::after { opacity: 1; }
+
+    .card:hover {
+      border-color: var(--line-2);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* Per-layer card colors */
+    .l1 .card { --c-a: #1c5fa8; --c-b: #5090d8; --c-rgb: 28,95,168; }
+    .l2 .card { --c-a: #1a7a4a; --c-b: #40b070; --c-rgb: 26,122,74; }
+    .l3 .card { --c-a: #c96518; --c-b: #e89050; --c-rgb: 201,101,24; }
+    .l4 .card { --c-a: #5a38a8; --c-b: #8860d0; --c-rgb: 90,56,168; }
+    .l5 .card { --c-a: #1a6a7a; --c-b: #40a0b8; --c-rgb: 26,106,122; }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+
+    .c-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .c-icon svg {
+      width: 15px; height: 15px;
+      stroke: currentColor; fill: none;
+      stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .l1 .c-icon { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+    .l2 .c-icon { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+    .l3 .c-icon { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+    .l4 .c-icon { background: var(--purple-bg); border: 1px solid var(--purple-border); color: var(--purple); }
+    .l5 .c-icon { background: var(--teal-bg); border: 1px solid var(--teal-border); color: var(--teal); }
+
+    .chip {
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 9.5px; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase;
+    }
+    .l1 .chip { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+    .l2 .chip { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+    .l3 .chip { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+    .l4 .chip { background: var(--purple-bg); border: 1px solid var(--purple-border); color: var(--purple); }
+    .l5 .chip { background: var(--teal-bg); border: 1px solid var(--teal-border); color: var(--teal); }
+
+    .card h3 {
+      font-size: 13.5px; font-weight: 700;
+      line-height: 1.32; color: var(--text);
+      letter-spacing: -0.2px;
+    }
+
+    .card p {
+      font-size: 12px; line-height: 1.67;
+      color: var(--muted); flex: 1; font-weight: 400;
+    }
+
+    .card-foot {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-top: 4px;
+    }
+
+    .open-link {
+      font-size: 11.5px; font-weight: 700;
+      display: flex; align-items: center; gap: 4px;
+      transition: gap 0.2s ease;
+    }
+    .card:hover .open-link { gap: 8px; }
+
+    .l1 .open-link { color: var(--blue); }
+    .l2 .open-link { color: var(--green); }
+    .l3 .open-link { color: var(--amber); }
+    .l4 .open-link { color: var(--purple); }
+    .l5 .open-link { color: var(--teal); }
+
+    .open-link svg {
+      width: 12px; height: 12px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .card-idx {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 28px; font-weight: 600;
+      color: var(--text); opacity: 0.045;
+      line-height: 1; user-select: none; letter-spacing: -1px;
+    }
+
+    /* ══════════════════════════════
+       FOOTER RULE
+    ══════════════════════════════ */
+    .foot-rule {
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 60px; opacity: 0.28;
+    }
+    .foot-rule-line { flex: 1; height: 1px; background: var(--line); }
+    .foot-rule-txt {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--subtle);
+    }
+
+    /* ══════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════ */
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: 1fr 1fr; }
+      .hero-nodes { display: none; }
+    }
+    @media (max-width: 620px) {
+      .topbar { padding: 0 18px; }
+      .academy-banner-wrap { padding: 14px 18px; }
+      .academy-banner { flex-direction: column; align-items: flex-start; }
+      .hero-inner { padding: 52px 20px 48px; }
+      main { padding: 40px 18px 70px; }
+      .cards { grid-template-columns: 1fr; }
+      .status-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 16 16"><path d="M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h4v4H9z"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>Stremini Workspace</h1>
+      <p>Unified Agent Console</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      All systems live
+    </div>
+    <div class="count-pill">15 Agents · 5 Layers</div>
+  </div>
+</header>
+
+<section class="academy-banner-wrap">
+  <div class="academy-banner">
+    <div class="academy-copy">
+      <h2> StreminiAI Academy</h2>
+      <p>Learn AI, ML, Deep Learning, and the mathematics behind intelligent systems — then turn your own ideas into real projects with guided hands-on tracks.</p>
+    </div>
+    <a class="academy-link" href="academy.html">Enter Academy</a>
+  </div>
+</section>
+
+<!-- ── HERO ── -->
+<div class="hero-wrap">
+
+  <!-- Decorative arcs -->
+  <svg class="hero-arc hero-arc-tl" width="320" height="320" viewBox="0 0 320 320" fill="none">
+    <circle cx="0" cy="320" r="160" stroke="#1a1816" stroke-width="1"/>
+    <circle cx="0" cy="320" r="260" stroke="#1a1816" stroke-width="0.7"/>
+    <circle cx="0" cy="320" r="90" stroke="#1a1816" stroke-width="1.2"/>
+  </svg>
+  <svg class="hero-arc hero-arc-br" width="320" height="320" viewBox="0 0 320 320" fill="none">
+    <circle cx="0" cy="320" r="160" stroke="#1a1816" stroke-width="1"/>
+    <circle cx="0" cy="320" r="260" stroke="#1a1816" stroke-width="0.7"/>
+    <circle cx="0" cy="320" r="90" stroke="#1a1816" stroke-width="1.2"/>
+  </svg>
+
+  <!-- Node graph decorations -->
+  <svg class="hero-nodes hero-nodes-l" width="200" height="300" viewBox="0 0 200 300">
+    <circle cx="160" cy="50" r="7" fill="#1a1816"/>
+    <circle cx="100" cy="130" r="5" fill="#1a1816"/>
+    <circle cx="150" cy="220" r="9" fill="#1a1816"/>
+    <circle cx="50" cy="170" r="4" fill="#1a1816"/>
+    <circle cx="30" cy="70" r="3" fill="#1a1816"/>
+    <line x1="160" y1="50" x2="100" y2="130" stroke="#1a1816" stroke-width="1.5"/>
+    <line x1="100" y1="130" x2="50" y2="170" stroke="#1a1816" stroke-width="1.5"/>
+    <line x1="100" y1="130" x2="150" y2="220" stroke="#1a1816" stroke-width="1.5"/>
+    <line x1="30" y1="70" x2="100" y2="130" stroke="#1a1816" stroke-width="1"/>
+    <circle cx="160" cy="50" r="16" stroke="#1a1816" stroke-width="1" fill="none" opacity="0.5"/>
+    <circle cx="150" cy="220" r="20" stroke="#1a1816" stroke-width="0.8" fill="none" opacity="0.35"/>
+  </svg>
+  <svg class="hero-nodes hero-nodes-r" width="200" height="300" viewBox="0 0 200 300">
+    <circle cx="160" cy="50" r="7" fill="#1a1816"/>
+    <circle cx="100" cy="130" r="5" fill="#1a1816"/>
+    <circle cx="150" cy="220" r="9" fill="#1a1816"/>
+    <circle cx="50" cy="170" r="4" fill="#1a1816"/>
+    <circle cx="30" cy="70" r="3" fill="#1a1816"/>
+    <line x1="160" y1="50" x2="100" y2="130" stroke="#1a1816" stroke-width="1.5"/>
+    <line x1="100" y1="130" x2="50" y2="170" stroke="#1a1816" stroke-width="1.5"/>
+    <line x1="100" y1="130" x2="150" y2="220" stroke="#1a1816" stroke-width="1.5"/>
+    <line x1="30" y1="70" x2="100" y2="130" stroke="#1a1816" stroke-width="1"/>
+    <circle cx="160" cy="50" r="16" stroke="#1a1816" stroke-width="1" fill="none" opacity="0.5"/>
+    <circle cx="150" cy="220" r="20" stroke="#1a1816" stroke-width="0.8" fill="none" opacity="0.35"/>
+  </svg>
+
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-dot"></span>
+      Unified Intelligence Platform
+    </div>
+    <h2>Choose a layer.</h2>
+    <span class="italic-line">Deploy a <span class="specialist-word">specialist.</span></span>
+    <p class="hero-desc">Five layers of intelligence — from deep research and code generation to strategy, governance, and full automation. Every agent purpose-built for its domain.</p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">15</span>
+        <span class="stat-lbl">Agents</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">5</span>
+        <span class="stat-lbl">Layers</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">∞</span>
+        <span class="stat-lbl">Workflows</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<main>
+
+  <!-- Layer 01 · Intelligence -->
+  <section class="layer l1" data-observe>
+    <div class="layer-header">
+      <div class="ghost-num">01</div>
+      <div class="layer-num">01</div>
+      <div class="h-line"></div>
+      <div class="layer-pill">
+        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Intelligence
+      </div>
+      <div class="h-line"></div>
+    </div>
+    <div class="cards">
+      <a class="card" href="Research.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <div class="chip">Research</div>
+        </div>
+        <h3>Research &amp; Math Agent</h3>
+        <p>Generate structured research papers, solve advanced math problems, and organise technical analysis with rigorous, cited outputs.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">01</div>
+        </div>
+      </a>
+      <a class="card" href="Data.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+          <div class="chip">Analytics</div>
+        </div>
+        <h3>Data &amp; Decision Intelligence</h3>
+        <p>Interpret CSV and JSON business data with retention, conversion, and anomaly analysis. Surface insights, risk flags, and priorities.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">02</div>
+        </div>
+      </a>
+      <a class="card" href="knowledge.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/><line x1="5" y1="19" x2="19" y2="19"/></svg></div>
+          <div class="chip">Knowledge</div>
+        </div>
+        <h3>Knowledge Graph Agent</h3>
+        <p>Capture notes, research, and ideas. Detect semantic patterns, build connections, and surface insights you haven't thought of yet.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">03</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Layer 02 · Foundation -->
+  <section class="layer l2" data-observe>
+    <div class="layer-header">
+      <div class="ghost-num">02</div>
+      <div class="layer-num">02</div>
+      <div class="h-line"></div>
+      <div class="layer-pill">
+        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Foundation
+      </div>
+      <div class="h-line"></div>
+    </div>
+    <div class="cards">
+      <a class="card" href="dataset-builder.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+          <div class="chip">Data Ops</div>
+        </div>
+        <h3>Dataset Builder Agent</h3>
+        <p>Create labeled, quality-scored datasets with guided workflow, exports, and generation controls for training and evaluation.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">04</div>
+        </div>
+      </a>
+      <a class="card" href="compeititve.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="chip">Strategy</div>
+        </div>
+        <h3>Competitive Intelligence Agent</h3>
+        <p>Track competitor positioning, extract market signals, and identify strategic whitespace across your sector.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">05</div>
+        </div>
+      </a>
+      <a class="card" href="conept.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+          <div class="chip">Learning</div>
+        </div>
+        <h3>Concept Explainer Agent</h3>
+        <p>Turn complex topics into clear explanations, examples, and teaching-oriented breakdowns for any audience.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">06</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Layer 03 · Creation -->
+  <section class="layer l3" data-observe>
+    <div class="layer-header">
+      <div class="ghost-num">03</div>
+      <div class="layer-num">03</div>
+      <div class="h-line"></div>
+      <div class="layer-pill">
+        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Creation
+      </div>
+      <div class="h-line"></div>
+    </div>
+    <div class="cards">
+      <a class="card" href="Architect.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="7" height="7"/><rect x="15" y="3" width="7" height="7"/><rect x="2" y="14" width="7" height="7"/><rect x="15" y="14" width="7" height="7"/></svg></div>
+          <div class="chip">AI Systems</div>
+        </div>
+        <h3>AI Systems Architect</h3>
+        <p>Design production AI systems with RAG, vector DB selection, model trade-offs, orchestration and scaling-aware cloud planning.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">07</div>
+        </div>
+      </a>
+      <a class="card" href="Code-agent.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <div class="chip">Engineering</div>
+        </div>
+        <h3>Code Agent</h3>
+        <p>Design architecture, generate production-grade code, debug, review, and audit for security and scalability — all in one place.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">08</div>
+        </div>
+      </a>
+      <a class="card" href="product.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+          <div class="chip">Product</div>
+        </div>
+        <h3>Product Builder Agent</h3>
+        <p>Describe any product idea and get a complete MVP — PRD, schema, frontend components, and deployment guide, instantly generated.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">09</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Layer 04 · Governance -->
+  <section class="layer l4" data-observe>
+    <div class="layer-header">
+      <div class="ghost-num">04</div>
+      <div class="layer-num">04</div>
+      <div class="h-line"></div>
+      <div class="layer-pill">
+        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Governance
+      </div>
+      <div class="h-line"></div>
+    </div>
+    <div class="cards">
+      <a class="card" href="automation.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><polyline points="12 6 12 12 16 14"/><path d="M22 2l-5 5M17 2h5v5"/></svg></div>
+          <div class="chip">Automation</div>
+        </div>
+        <h3>Automation Builder Agent</h3>
+        <p>Build end-to-end workflows across systems and orchestrate repetitive business operations at enterprise scale.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">10</div>
+        </div>
+      </a>
+      <a class="card" href="model-evaluator.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div class="chip">Evaluation</div>
+        </div>
+        <h3>Model Evaluator Agent</h3>
+        <p>Assess model quality, benchmark outputs, and surface reliability and performance gaps across your full AI stack.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">11</div>
+        </div>
+      </a>
+      <a class="card" href="Startup-Legal-Compliance-Agent.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="chip">Compliance</div>
+        </div>
+        <h3>Startup Legal &amp; Compliance Agent</h3>
+        <p>Support policy and regulatory readiness with practical guardrails and legal frameworks for growing organisations.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">12</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Layer 05 · Operations -->
+  <section class="layer l5" data-observe>
+    <div class="layer-header">
+      <div class="ghost-num">05</div>
+      <div class="layer-num">05</div>
+      <div class="h-line"></div>
+      <div class="layer-pill">
+        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Operations
+      </div>
+      <div class="h-line"></div>
+    </div>
+    <div class="cards">
+      <a class="card" href="Growth.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+          <div class="chip">Growth</div>
+        </div>
+        <h3>Growth Intelligence Agent</h3>
+        <p>Find growth opportunities, optimise funnels, and prioritise high-impact GTM experiments across your full pipeline.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">13</div>
+        </div>
+      </a>
+      <a class="card" href="FinAgent.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="chip">Finance</div>
+        </div>
+        <h3>Financial Agent</h3>
+        <p>Model budgets and runway, track financial health, and support scenario-based decisions with live projections.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">14</div>
+        </div>
+      </a>
+      <a class="card" href="Personal-os.html">
+        <div class="card-top">
+          <div class="c-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="chip">Productivity</div>
+        </div>
+        <h3>Personal OS Agent</h3>
+        <p>Manage execution rhythms, goals, and planning systems to run your day-to-day operations with precision.</p>
+        <div class="card-foot">
+          <div class="open-link">Open agent <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="card-idx">15</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <div class="foot-rule">
+    <div class="foot-rule-line"></div>
+    <span class="foot-rule-txt">Stremini Workspace &nbsp;·&nbsp; 15 Agents &nbsp;·&nbsp; 5 Layers</span>
+    <div class="foot-rule-line"></div>
+  </div>
+
+</main>
+
+<script>
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('[data-observe]').forEach(el => obs.observe(el));
+</script>
+
+</body>
+</html>

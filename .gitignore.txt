@@ -1,0 +1,30 @@
+# IDE & System files
+.vscode/
+.idea/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Flutter / Dart
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
+**.pub-cache
+**.pub
+
+# Node.js / React / Web
+**/node_modules/
+**/dist/
+**/.cache/
+
+# Android specific
+**/android/app/src/main/res/values/google-services.json
+**/*.keystore
+**/*.jks
+
+# iOS specific
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh

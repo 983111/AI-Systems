@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Concept Explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f7f5f2;
+  --surface:#ffffff;
+  --surface-2:#f2f0ec;
+  --surface-3:#ede9e2;
+  --border:#e4e0d8;
+  --border-subtle:#ece9e2;
+  --text-primary:#1a1814;
+  --text-secondary:#6b6459;
+  --text-muted:#9e9589;
+  --accent:#d97706;
+  --accent-light:#fef3c7;
+  --accent-hover:#b45309;
+  --green:#059669;
+  --green-bg:#f0fdf4;
+  --blue:#1d4ed8;
+  --blue-bg:#eff6ff;
+  --code-bg:#f0ede6;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.10),0 4px 16px rgba(0,0,0,.05);
+  --r:16px;--r-sm:10px;--r-xs:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',-apple-system,sans-serif;color:var(--text-primary);-webkit-font-smoothing:antialiased;}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:296px 1fr;height:100vh;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar-header{padding:24px 20px 18px;border-bottom:1px solid var(--border-subtle);}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+.logo-icon{width:30px;height:30px;background:var(--text-primary);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-icon svg{width:16px;height:16px;}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px;}
+.logo-tag{font-size:10px;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-left:39px;margin-top:2px;margin-bottom:16px;}
+
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:500;}
+.status-badge.idle{background:var(--surface-2);color:var(--text-muted);}
+.status-badge.running{background:#fef3c7;color:#92400e;}
+.status-badge.done{background:var(--green-bg);color:#065f46;}
+.status-badge.error{background:#fef2f2;color:#991b1b;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.status-badge.running .status-dot{animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.sidebar-section{padding:16px 20px;border-bottom:1px solid var(--border-subtle);}
+.sidebar-section:last-child{border-bottom:none;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+
+/* Viz type selector */
+.viz-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.viz-btn{padding:8px 6px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:var(--surface-2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text-secondary);cursor:pointer;text-align:center;line-height:1.35;transition:all .15s;}
+.viz-btn:hover{border-color:var(--accent);color:var(--accent);background:#fffbf5;}
+.viz-btn.active{border-color:var(--accent);background:var(--accent-light);color:#92400e;font-weight:600;}
+
+/* History */
+.history-list{display:flex;flex-direction:column;gap:3px;}
+.history-item{padding:8px 10px;border-radius:var(--r-xs);font-size:12px;color:var(--text-secondary);cursor:pointer;border:1px solid transparent;transition:all .15s;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.history-item:hover{background:var(--surface-2);border-color:var(--border-subtle);}
+.history-item.active{background:var(--accent-light);border-color:var(--accent);color:#92400e;font-weight:500;}
+
+.new-session{display:flex;align-items:center;gap:6px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r-xs);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--text-secondary);cursor:pointer;transition:all .15s;}
+.new-session:hover{border-color:var(--accent);color:var(--accent);background:#fffbf5;}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg);}
+
+/* Topbar */
+.topbar{padding:14px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.context-pill{display:flex;align-items:center;gap:6px;padding:5px 11px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:12.5px;font-weight:500;box-shadow:var(--shadow-sm);}
+.context-pill span{color:var(--text-secondary);font-weight:400;font-size:12px;}
+.topbar-right{display:flex;gap:8px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:var(--r-xs);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1.5px solid var(--border);}
+.btn-ghost:hover{background:var(--surface);border-color:var(--text-muted);}
+.btn-accent{background:var(--accent);color:#fff;border:none;}
+.btn-accent:hover{background:var(--accent-hover);}
+
+/* ── Canvas area ── */
+.canvas-area{flex:1;overflow-y:auto;padding:0;}
+.canvas-inner{max-width:900px;margin:0 auto;padding:32px 28px;}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;animation:fadeUp .5s ease;}
+.welcome-icon{width:64px;height:64px;background:var(--text-primary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:var(--shadow-md);}
+.welcome-icon svg{width:34px;height:34px;}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.5px;}
+.welcome p{font-size:14.5px;color:var(--text-secondary);line-height:1.7;max-width:460px;margin-bottom:28px;}
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:560px;}
+.prompt-card{padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm);}
+.prompt-card:hover{border-color:var(--accent);background:#fffbf5;transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.prompt-card-icon{font-size:20px;margin-bottom:7px;}
+.prompt-card strong{display:block;font-size:13px;font-weight:500;margin-bottom:2px;}
+.prompt-card small{font-size:11.5px;color:var(--text-muted);line-height:1.4;}
+
+/* ── Output blocks ── */
+.output-block{animation:fadeUp .4s ease;margin-bottom:8px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Concept header */
+.concept-header{margin-bottom:24px;}
+.concept-title{font-family:'Lora',serif;font-size:28px;font-weight:600;letter-spacing:-.5px;margin-bottom:6px;color:var(--text-primary);}
+.concept-subtitle{font-size:14px;color:var(--text-secondary);line-height:1.6;}
+
+/* ── Visualizations ── */
+
+/* Flow diagram */
+.flow-diagram{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:20px 0;}
+.flow-node{display:flex;align-items:center;gap:0;animation:fadeUp .3s ease both;}
+.flow-box{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 20px;font-size:13.5px;font-weight:500;color:var(--text-primary);box-shadow:var(--shadow-sm);min-width:200px;position:relative;transition:all .2s;cursor:default;}
+.flow-box:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateX(4px);}
+.flow-box.highlight{border-color:var(--accent);background:var(--accent-light);}
+.flow-box .node-label{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px;}
+.flow-box .node-desc{font-size:12px;color:var(--text-secondary);font-weight:400;margin-top:3px;line-height:1.4;}
+.flow-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:var(--surface-3);color:var(--text-secondary);margin-left:10px;vertical-align:middle;}
+.flow-arrow{display:flex;flex-direction:column;align-items:flex-start;padding-left:36px;margin:2px 0;}
+.flow-arrow-line{width:2px;height:20px;background:var(--border);margin-left:14px;}
+.flow-arrow-head{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--border);margin-left:11px;}
+.flow-arrow-label{font-size:10.5px;color:var(--text-muted);margin-left:28px;margin-top:-18px;padding-bottom:4px;}
+
+/* Concept map */
+.concept-map{position:relative;padding:16px 0;}
+.cmap-center{display:flex;justify-content:center;margin-bottom:24px;}
+.cmap-root{background:var(--text-primary);color:#fff;padding:14px 24px;border-radius:var(--r-sm);font-size:14px;font-weight:600;font-family:'Lora',serif;box-shadow:var(--shadow-md);text-align:center;}
+.cmap-branches{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.cmap-branch{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;box-shadow:var(--shadow-sm);transition:all .2s;cursor:default;animation:fadeUp .4s ease both;}
+.cmap-branch:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.cmap-branch-title{font-size:12.5px;font-weight:600;color:var(--text-primary);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.cmap-branch-icon{width:22px;height:22px;border-radius:6px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.cmap-branch-items{display:flex;flex-direction:column;gap:3px;}
+.cmap-item{font-size:12px;color:var(--text-secondary);display:flex;align-items:flex-start;gap:5px;line-height:1.4;}
+.cmap-item::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:0;padding:8px 0;}
+.timeline-item{display:flex;gap:16px;animation:fadeUp .3s ease both;}
+.timeline-rail{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:32px;}
+.timeline-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--accent-light);flex-shrink:0;margin-top:4px;box-shadow:0 0 0 3px rgba(217,119,6,.15);}
+.timeline-line{width:2px;flex:1;background:var(--border);margin:4px 0;}
+.timeline-item:last-child .timeline-line{display:none;}
+.timeline-body{padding-bottom:20px;flex:1;}
+.timeline-label{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);margin-bottom:3px;}
+.timeline-title{font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:4px;}
+.timeline-desc{font-size:13px;color:var(--text-secondary);line-height:1.6;}
+
+/* Comparison table */
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;}
+.compare-table th{padding:10px 14px;background:var(--text-primary);color:#fff;text-align:left;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+.compare-table th:first-child{border-radius:var(--r-xs) 0 0 0;}
+.compare-table th:last-child{border-radius:0 var(--r-xs) 0 0;}
+.compare-table td{padding:10px 14px;border-bottom:1px solid var(--border-subtle);color:var(--text-primary);vertical-align:top;line-height:1.5;}
+.compare-table tr:last-child td{border-bottom:none;}
+.compare-table tr:hover td{background:var(--surface-2);}
+.compare-table .feature-col{font-weight:600;color:var(--text-secondary);font-size:12px;}
+.compare-wrap{border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--shadow-sm);}
+
+/* Analogy card */
+.analogy-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--shadow-sm);}
+.analogy-header{padding:12px 16px;background:var(--surface-2);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px;}
+.analogy-header-title{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);}
+.analogy-body{padding:16px;display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;}
+.analogy-side{padding:12px 14px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface-2);}
+.analogy-side-label{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;}
+.analogy-side-content{font-size:13.5px;font-weight:500;color:var(--text-primary);line-height:1.5;}
+.analogy-arrow{font-size:20px;color:var(--text-muted);text-align:center;}
+
+/* Key concepts pills */
+.key-concepts{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0;}
+.concept-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);border:1.5px solid var(--border);color:var(--text-primary);box-shadow:var(--shadow-sm);cursor:default;transition:all .2s;}
+.concept-pill:hover{border-color:var(--accent);background:var(--accent-light);color:#92400e;}
+.concept-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+/* Explanation section */
+.explanation-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:20px 22px;box-shadow:var(--shadow-sm);line-height:1.8;font-size:14px;color:var(--text-primary);}
+.explanation-block h3{font-family:'Lora',serif;font-size:17px;font-weight:500;margin-bottom:10px;color:var(--text-primary);}
+.explanation-block p{margin-bottom:10px;color:var(--text-secondary);}
+.explanation-block p:last-child{margin-bottom:0;}
+.explanation-block strong{color:var(--text-primary);font-weight:600;}
+.explanation-block code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12.5px;}
+
+/* Section label */
+.section-label{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;margin-top:24px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border-subtle);}
+
+/* Thinking */
+.thinking-wrap{display:flex;align-items:center;gap:12px;padding:20px 0;}
+.thinking-avatar{width:32px;height:32px;border-radius:9px;background:var(--text-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.thinking-text{font-size:13px;color:var(--text-muted);}
+.thinking-dots{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle;}
+.thinking-dots span{width:5px;height:5px;background:var(--text-muted);border-radius:50%;animation:bounce 1.2s infinite;}
+.thinking-dots span:nth-child(2){animation-delay:.15s;}
+.thinking-dots span:nth-child(3){animation-delay:.30s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* Input bar */
+.input-bar{padding:18px 28px 22px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;}
+.input-inner{max-width:900px;margin:0 auto;}
+.input-row{display:flex;align-items:flex-end;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:10px 12px;box-shadow:var(--shadow-sm);transition:border-color .15s,box-shadow .15s;}
+.input-row:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,.10),var(--shadow-sm);}
+.concept-input{flex:1;border:none!important;background:transparent!important;padding:4px!important;box-shadow:none!important;font-size:14.5px;line-height:1.6;min-height:24px;max-height:160px;resize:none;overflow-y:auto;font-family:'DM Sans',sans-serif;color:var(--text-primary);outline:none;}
+.concept-input::placeholder{color:var(--text-muted);}
+.send-btn{width:34px;height:34px;background:var(--text-primary);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.send-btn:hover:not(:disabled){background:#2d2a26;transform:scale(1.05);}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.send-btn svg{width:14px;height:14px;}
+.input-hint{margin-top:7px;font-size:11px;color:var(--text-muted);text-align:center;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted);}
+
+.toast{position:fixed;top:16px;right:16px;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;animation:fadeUp .2s ease;box-shadow:var(--shadow-md);}
+.toast.success{background:var(--green-bg);border:1px solid #bbf7d0;color:#065f46;}
+.toast.error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+.toast.info{background:var(--accent-light);border:1px solid #fde68a;color:#92400e;}
+
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </div>
+      <span class="logo-name">Stremini</span>
+    </div>
+    <div class="logo-tag">Concept Explainer</div>
+    <div id="statusBadge" class="status-badge idle"><div class="status-dot"></div><span>Ready</span></div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="section-title">Visualization Type</div>
+    <div class="viz-grid">
+      <button class="viz-btn active" onclick="setViz(this,'auto')">Auto</button>
+      <button class="viz-btn" onclick="setViz(this,'flow')">Flow</button>
+      <button class="viz-btn" onclick="setViz(this,'map')">Concept Map</button>
+      <button class="viz-btn" onclick="setViz(this,'timeline')">Timeline</button>
+      <button class="viz-btn" onclick="setViz(this,'compare')">Compare</button>
+      <button class="viz-btn" onclick="setViz(this,'analogy')">Analogy</button>
+    </div>
+  </div>
+
+  <div class="sidebar-section" id="historySection" style="display:none;">
+    <div class="section-title">History</div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <div class="sidebar-section">
+    <button class="new-session" onclick="newSession()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      New Concept
+    </button>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="context-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        <span id="topicLabel">Ask anything to explain</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" id="exportBtn" style="display:none;" onclick="exportSVG()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <button class="btn btn-ghost" onclick="newSession()">Clear</button>
+    </div>
+  </div>
+
+  <div class="canvas-area" id="canvasArea">
+    <div class="canvas-inner" id="canvasInner">
+
+      <div id="welcomeScreen" class="welcome">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <h2>Concept Explainer + Visualizer</h2>
+        <p>Type any concept, architecture, algorithm, or idea. The agent breaks it down with diagrams, flows, and structured visual explanations.</p>
+        <div class="prompt-grid">
+          <div class="prompt-card" onclick="setPrompt('Explain transformer architecture')">
+            <div class="prompt-card-icon">🤖</div>
+            <strong>Transformer Architecture</strong>
+            <small>Attention, embeddings, encoder-decoder flow</small>
+          </div>
+          <div class="prompt-card" onclick="setPrompt('Explain how TCP/IP works')">
+            <div class="prompt-card-icon">🌐</div>
+            <strong>TCP/IP Networking</strong>
+            <small>Layers, handshakes, data flow</small>
+          </div>
+          <div class="prompt-card" onclick="setPrompt('Explain gradient descent optimization')">
+            <div class="prompt-card-icon">📉</div>
+            <strong>Gradient Descent</strong>
+            <small>Loss landscapes, learning rates, convergence</small>
+          </div>
+          <div class="prompt-card" onclick="setPrompt('Compare REST vs GraphQL APIs')">
+            <div class="prompt-card-icon">⚡</div>
+            <strong>REST vs GraphQL</strong>
+            <small>Side-by-side comparison of API paradigms</small>
+          </div>
+          <div class="prompt-card" onclick="setPrompt('Explain how the human immune system works')">
+            <div class="prompt-card-icon">🧬</div>
+            <strong>Immune System</strong>
+            <small>Innate, adaptive, cells, response cascade</small>
+          </div>
+          <div class="prompt-card" onclick="setPrompt('Explain blockchain and how it works')">
+            <div class="prompt-card-icon">🔗</div>
+            <strong>Blockchain</strong>
+            <small>Blocks, consensus, hashing, distributed ledger</small>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="input-inner">
+      <div class="input-row">
+        <textarea class="concept-input" id="conceptInput" rows="1" placeholder="Explain any concept, system, algorithm, or idea…"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="handleSend()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to explain · Shift+Enter for new line · Choose visualization type from sidebar</div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+const BACKEND = "https://stremini-concept.vishwajeetadkine705.workers.dev";
+
+let state = {
+  running: false,
+  vizType: "auto",
+  history: [],
+  currentConcept: "",
+};
+
+const conceptInput = document.getElementById("conceptInput");
+const sendBtn      = document.getElementById("sendBtn");
+const statusBadge  = document.getElementById("statusBadge");
+const canvasInner  = document.getElementById("canvasInner");
+const topicLabel   = document.getElementById("topicLabel");
+
+// ── Input auto-resize ──
+conceptInput.addEventListener("input", () => {
+  conceptInput.style.height = "auto";
+  conceptInput.style.height = Math.min(conceptInput.scrollHeight, 160) + "px";
+});
+conceptInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+function setViz(btn, type) {
+  document.querySelectorAll(".viz-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.vizType = type;
+}
+
+function setPrompt(text) {
+  conceptInput.value = text;
+  conceptInput.style.height = "auto";
+  conceptInput.style.height = Math.min(conceptInput.scrollHeight, 160) + "px";
+  conceptInput.focus();
+}
+
+// ── Main send ──
+async function handleSend() {
+  const concept = conceptInput.value.trim();
+  if (!concept || state.running) return;
+
+  state.running       = true;
+  state.currentConcept = concept;
+  conceptInput.value  = "";
+  conceptInput.style.height = "auto";
+  sendBtn.disabled    = true;
+  topicLabel.textContent = truncate(concept, 40);
+  setStatus("running", "Analyzing…");
+
+  hideWelcome();
+  clearCanvas();
+  showThinking();
+
+  try {
+    const res  = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ concept, vizType: state.vizType, history: state.history }),
+    });
+    const data = await res.json();
+    hideThinking();
+
+    if (data.status === "OK") {
+      state.history.push({ concept, response: data });
+      renderResponse(data);
+      addToHistory(concept);
+      setStatus("done", "Done");
+      document.getElementById("exportBtn").style.display = "";
+    } else {
+      showError(data.message || "Something went wrong.");
+      setStatus("error", "Error");
+    }
+  } catch (err) {
+    hideThinking();
+    showError("Network error: " + err.message);
+    setStatus("error", "Error");
+  }
+
+  state.running    = false;
+  sendBtn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ── RESPONSE RENDERER ──
+// ═══════════════════════════════════════════════════════════════
+function renderResponse(data) {
+  const { title, subtitle, vizType, visualization, explanation, keyConcepts, analogy } = data;
+
+  // Title
+  const header = el("div", "concept-header output-block");
+  header.innerHTML = `
+    <div class="concept-title">${esc(title || state.currentConcept)}</div>
+    ${subtitle ? `<div class="concept-subtitle">${esc(subtitle)}</div>` : ""}
+  `;
+  canvasInner.appendChild(header);
+
+  // Key concepts pills
+  if (keyConcepts && keyConcepts.length) {
+    const sec = sectionLabel("Key Concepts");
+    canvasInner.appendChild(sec);
+    const pills = el("div", "key-concepts output-block");
+    keyConcepts.forEach(k => {
+      pills.innerHTML += `<div class="concept-pill"><div class="concept-pill-dot"></div>${esc(k)}</div>`;
+    });
+    canvasInner.appendChild(pills);
+  }
+
+  // Visualization
+  const vt = vizType || "flow";
+  const sec2 = sectionLabel(vizLabel(vt));
+  canvasInner.appendChild(sec2);
+
+  let vizEl = null;
+  if      (vt === "flow"     && visualization) vizEl = renderFlow(visualization);
+  else if (vt === "map"      && visualization) vizEl = renderConceptMap(visualization);
+  else if (vt === "timeline" && visualization) vizEl = renderTimeline(visualization);
+  else if (vt === "compare"  && visualization) vizEl = renderCompare(visualization);
+  else if (vt === "analogy"  && analogy)       vizEl = renderAnalogy(analogy);
+
+  if (vizEl) {
+    vizEl.classList.add("output-block");
+    canvasInner.appendChild(vizEl);
+  }
+
+  // Analogy (if not main viz)
+  if (analogy && vt !== "analogy") {
+    const sec3 = sectionLabel("Real-World Analogy");
+    canvasInner.appendChild(sec3);
+    const aEl = renderAnalogy(analogy);
+    aEl.classList.add("output-block");
+    canvasInner.appendChild(aEl);
+  }
+
+  // Explanation
+  if (explanation) {
+    const sec4 = sectionLabel("Explanation");
+    canvasInner.appendChild(sec4);
+    const expEl = el("div", "explanation-block output-block");
+    expEl.innerHTML = formatExplanation(explanation);
+    canvasInner.appendChild(expEl);
+  }
+
+  // Scroll to top
+  document.getElementById("canvasArea").scrollTop = 0;
+}
+
+// ── Flow diagram ──
+function renderFlow(nodes) {
+  const wrap = el("div", "flow-diagram");
+  nodes.forEach((node, i) => {
+    // Animate with delay
+    const nodeWrap = el("div", "flow-node");
+    const box = el("div", `flow-box${node.highlight ? " highlight" : ""}`);
+    box.style.animationDelay = (i * 80) + "ms";
+    box.innerHTML = `
+      ${node.step ? `<div class="node-label">Step ${node.step}</div>` : ""}
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;">${esc(node.name || node.title || "")}</span>
+        ${node.badge ? `<span class="flow-badge">${esc(node.badge)}</span>` : ""}
+      </div>
+      ${node.desc || node.description ? `<div class="node-desc">${esc(node.desc || node.description)}</div>` : ""}
+    `;
+    nodeWrap.appendChild(box);
+    wrap.appendChild(nodeWrap);
+
+    // Arrow between nodes
+    if (i < nodes.length - 1) {
+      const arrow = el("div", "flow-arrow");
+      arrow.innerHTML = `
+        <div class="flow-arrow-line"></div>
+        <div class="flow-arrow-head"></div>
+        ${node.arrowLabel ? `<div class="flow-arrow-label">${esc(node.arrowLabel)}</div>` : ""}
+      `;
+      wrap.appendChild(arrow);
+    }
+  });
+  return wrap;
+}
+
+// ── Concept map ──
+function renderConceptMap(data) {
+  const wrap = el("div", "concept-map");
+  wrap.innerHTML = `
+    <div class="cmap-center">
+      <div class="cmap-root">${esc(data.center || state.currentConcept)}</div>
+    </div>
+  `;
+  const branches = el("div", "cmap-branches");
+  (data.branches || []).forEach((branch, i) => {
+    const b = el("div", "cmap-branch");
+    b.style.animationDelay = (i * 60) + "ms";
+    const icons = ["💡","🔧","📐","⚡","🔬","📊","🎯","🔑"];
+    b.innerHTML = `
+      <div class="cmap-branch-title">
+        <div class="cmap-branch-icon">${icons[i % icons.length]}</div>
+        ${esc(branch.name || branch.title)}
+      </div>
+      <div class="cmap-branch-items">
+        ${(branch.items || []).map(item => `<div class="cmap-item">${esc(item)}</div>`).join("")}
+      </div>
+    `;
+    branches.appendChild(b);
+  });
+  wrap.appendChild(branches);
+  return wrap;
+}
+
+// ── Timeline ──
+function renderTimeline(items) {
+  const wrap = el("div", "timeline");
+  items.forEach((item, i) => {
+    const row = el("div", "timeline-item");
+    row.style.animationDelay = (i * 80) + "ms";
+    row.innerHTML = `
+      <div class="timeline-rail">
+        <div class="timeline-dot"></div>
+        <div class="timeline-line"></div>
+      </div>
+      <div class="timeline-body">
+        ${item.label ? `<div class="timeline-label">${esc(item.label)}</div>` : ""}
+        <div class="timeline-title">${esc(item.title || item.name || "")}</div>
+        ${item.desc || item.description ? `<div class="timeline-desc">${esc(item.desc || item.description)}</div>` : ""}
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+
+// ── Comparison table ──
+function renderCompare(data) {
+  const wrap = el("div", "compare-wrap");
+  const { columns, rows } = data;
+  let html = `<table class="compare-table"><thead><tr>
+    <th>Feature</th>
+    ${(columns || []).map(c => `<th>${esc(c)}</th>`).join("")}
+  </tr></thead><tbody>`;
+  (rows || []).forEach(row => {
+    html += `<tr><td class="feature-col">${esc(row.feature)}</td>${(columns || []).map(c => `<td>${esc(row[c] || "—")}</td>`).join("")}</tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  return wrap;
+}
+
+// ── Analogy card ──
+function renderAnalogy(analogy) {
+  const card = el("div", "analogy-card");
+  card.innerHTML = `
+    <div class="analogy-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="analogy-header-title">Think of it like…</span>
+    </div>
+    <div class="analogy-body">
+      <div class="analogy-side">
+        <div class="analogy-side-label">Concept</div>
+        <div class="analogy-side-content">${esc(analogy.concept || state.currentConcept)}</div>
+      </div>
+      <div class="analogy-arrow">≈</div>
+      <div class="analogy-side">
+        <div class="analogy-side-label">Analogy</div>
+        <div class="analogy-side-content">${esc(analogy.comparison || analogy.analogy || "")}</div>
+      </div>
+    </div>
+    ${analogy.explanation ? `<div style="padding:12px 16px;border-top:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary);line-height:1.6;">${esc(analogy.explanation)}</div>` : ""}
+  `;
+  return card;
+}
+
+// ── Format explanation text ──
+function formatExplanation(text) {
+  if (typeof text === "string") {
+    return text
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+      .replace(/`([^`]+)`/g,"<code>$1</code>")
+      .split(/\n\n+/)
+      .map(p => `<p>${p.replace(/\n/g,"<br/>")}</p>`)
+      .join("");
+  }
+  if (Array.isArray(text)) {
+    return text.map(p => `<p>${esc(p)}</p>`).join("");
+  }
+  return esc(String(text));
+}
+
+// ── Helpers ──
+function el(tag, cls) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  return e;
+}
+function sectionLabel(text) {
+  const d = el("div", "section-label");
+  d.textContent = text;
+  return d;
+}
+function vizLabel(vt) {
+  return { flow:"Flow Diagram", map:"Concept Map", timeline:"Timeline", compare:"Comparison", analogy:"Analogy" }[vt] || "Visualization";
+}
+function esc(t) {
+  return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function truncate(s, n) { return s.length > n ? s.slice(0,n)+"…" : s; }
+
+function setStatus(type, label) {
+  statusBadge.className = `status-badge ${type}`;
+  statusBadge.innerHTML = `<div class="status-dot"></div><span>${label}</span>`;
+}
+
+function hideWelcome() {
+  const w = document.getElementById("welcomeScreen");
+  if (w) w.style.display = "none";
+}
+
+function clearCanvas() {
+  Array.from(canvasInner.children).forEach(c => {
+    if (c.id !== "welcomeScreen") c.remove();
+  });
+}
+
+function showThinking() {
+  const d = el("div", "thinking-wrap");
+  d.id = "thinkingIndicator";
+  d.innerHTML = `
+    <div class="thinking-avatar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    </div>
+    <span class="thinking-text">Breaking down the concept<div class="thinking-dots"><span></span><span></span><span></span></div></span>
+  `;
+  canvasInner.appendChild(d);
+}
+function hideThinking() {
+  const t = document.getElementById("thinkingIndicator");
+  if (t) t.remove();
+}
+
+function showError(msg) {
+  const d = el("div", "output-block");
+  d.innerHTML = `<div style="padding:14px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#991b1b;font-size:13.5px;">${esc(msg)}</div>`;
+  canvasInner.appendChild(d);
+}
+
+function addToHistory(concept) {
+  document.getElementById("historySection").style.display = "";
+  const list  = document.getElementById("historyList");
+  const items = list.querySelectorAll(".history-item");
+  items.forEach(i => i.classList.remove("active"));
+  const item = el("div", "history-item active");
+  item.textContent = concept;
+  item.title       = concept;
+  item.onclick     = () => {
+    items.forEach(i => i.classList.remove("active"));
+    item.classList.add("active");
+  };
+  list.insertBefore(item, list.firstChild);
+  // Keep max 8
+  while (list.children.length > 8) list.removeChild(list.lastChild);
+}
+
+function newSession() {
+  clearCanvas();
+  document.getElementById("welcomeScreen").style.display = "";
+  document.getElementById("exportBtn").style.display     = "none";
+  state.history        = [];
+  state.currentConcept = "";
+  topicLabel.textContent = "Ask anything to explain";
+  setStatus("idle", "Ready");
+}
+
+function exportSVG() {
+  const content = canvasInner.innerHTML;
+  const blob    = new Blob([`<html><head><style>body{font-family:system-ui;padding:32px;max-width:900px;margin:0 auto;}</style></head><body>${content}</body></html>`], {type:"text/html"});
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement("a");
+  a.href        = url;
+  a.download    = `concept-${state.currentConcept.slice(0,30).replace(/\s+/g,"-")}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Exported!", "success");
+}
+
+function showToast(msg, type="info") {
+  const d = document.createElement("div");
+  d.className   = `toast ${type}`;
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+</script>
+</body>
+</html>

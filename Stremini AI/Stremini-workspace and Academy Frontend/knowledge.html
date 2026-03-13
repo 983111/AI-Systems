@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Knowledge Graph Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber-bg:#fffbf5;
+  --cyan:#0369a1;--cyan-bg:#f0f9ff;--cyan-border:#bae6fd;
+  --green:#059669;--green-bg:#d1fae5;--green-border:#6ee7b7;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;--violet-border:#ddd6fe;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --red:#991b1b;--red-bg:#fee2e2;--red-border:#fecaca;
+  --red-full:#dc2626;--red-dark:#991b1b;
+  --rose:#be123c;--rose-bg:#fff1f2;--rose-border:#fecdd3;
+  --teal:#0d9488;--teal-bg:#f0fdfa;--teal-border:#99f6e4;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --indigo:#4338ca;--indigo-bg:#eef2ff;--indigo-border:#c7d2fe;
+  --emerald:#047857;--emerald-bg:#ecfdf5;--emerald-border:#a7f3d0;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.mode-btn svg{width:18px;height:18px;flex-shrink:0}
+.mode-btn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.on-add{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.on-connect{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-bg)}
+.mode-btn.on-explore{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.mode-btn.on-gaps{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-synthesize{border-color:var(--indigo);color:var(--indigo);background:var(--indigo-bg)}
+.mode-btn.on-teach{border-color:var(--emerald);color:var(--emerald);background:var(--emerald-bg)}
+.mode-btn.synthesize-full{grid-column:1/-1}
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--violet-bg);color:var(--violet)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+
+/* ── Topic Tags ── */
+.topic-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.topic-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--violet-bg);border:1px solid var(--violet-border);border-radius:12px;font-size:11px;font-weight:500;color:var(--violet);cursor:pointer;transition:all .12s}
+.topic-tag:hover{background:var(--violet);color:#fff}
+.topic-tag svg{width:9px;height:9px}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.mode-pill.add{color:var(--violet);border-color:var(--violet-border);background:var(--violet-bg)}
+.mode-pill.connect{color:var(--cyan);border-color:var(--cyan-border);background:var(--cyan-bg)}
+.mode-pill.explore{color:var(--teal);border-color:var(--teal-border);background:var(--teal-bg)}
+.mode-pill.gaps{color:var(--amber);border-color:#fde68a;background:var(--amber-bg)}
+.mode-pill.synthesize{color:var(--indigo);border-color:var(--indigo-border);background:var(--indigo-bg)}
+.mode-pill.teach{color:var(--emerald);border-color:var(--emerald-border);background:var(--emerald-bg)}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* ── Messages ── */
+.msgs-wrap{flex:1;overflow-y:auto;padding:28px 0;scroll-behavior:smooth}
+.msgs{max-width:880px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column}
+
+/* ── Welcome ── */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:32px;height:32px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:460px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:580px}
+.hint{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.add-h:hover{border-color:var(--violet);background:var(--violet-bg)}
+.hint.connect-h:hover{border-color:var(--cyan);background:var(--cyan-bg)}
+.hint.explore-h:hover{border-color:var(--teal);background:var(--teal-bg)}
+.hint.gaps-h:hover{border-color:var(--amber);background:var(--amber-bg)}
+.hint-em{font-size:20px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* ── Input bar ── */
+.input-bar{flex-shrink:0;padding:14px 28px 18px;background:var(--bg);border-top:1px solid var(--border)}
+.input-inner{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.input-wrap{display:flex;align-items:flex-end;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;transition:border-color .15s;box-shadow:var(--shadow)}
+.input-wrap:focus-within{border-color:#c5c0b8;box-shadow:0 0 0 3px rgba(124,58,237,.06)}
+.task-ta{flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;color:var(--txt);background:transparent;resize:none;min-height:24px;max-height:200px}
+.task-ta::placeholder{color:var(--muted)}
+.send-btn{width:34px;height:34px;background:var(--txt);border:none;border-radius:var(--r2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.send-btn:hover:not(:disabled){background:#2d2a26;transform:translateY(-1px)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.send-btn svg{width:14px;height:14px}
+.input-hint{font-size:11.5px;color:var(--muted)}
+
+/* ── Message row ── */
+.msg-row{display:flex;gap:12px;padding:18px 0;border-bottom:1px solid var(--border2);animation:fadein .3s ease}
+.msg-row:last-child{border-bottom:none}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.av-agent{background:var(--txt)}
+.av-user{background:var(--violet)}
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.msg-time{font-weight:400;font-size:11px;color:var(--muted)}
+.msg-content{font-size:14px;line-height:1.7;color:var(--txt)}
+.msg-content p{margin:0}
+
+/* ── Thinking ── */
+.thinking-row{display:flex;gap:12px;padding:18px 0}
+.dots{display:flex;gap:4px;align-items:center;height:22px}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* ── Status cards ── */
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-add{background:var(--violet-bg);color:#5b21b6;border:1px solid var(--violet-border)}
+.card-connect{background:var(--cyan-bg);color:#0c4a6e;border:1px solid var(--cyan-border)}
+.card-explore{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
+.card-gaps{background:var(--amber-bg);color:#92400e;border:1px solid #fde68a}
+.card-synthesize{background:var(--indigo-bg);color:var(--indigo);border:1px solid var(--indigo-border)}
+.card-teach{background:var(--emerald-bg);color:var(--emerald);border:1px solid var(--emerald-border)}
+.card-err{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+
+/* ── Knowledge Output Block ── */
+.kg-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:8px 0 4px;box-shadow:var(--shadow)}
+.kg-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.kg-hd-left{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600}
+.kg-hd-left.add{color:var(--violet)}
+.kg-hd-left.connect{color:var(--cyan)}
+.kg-hd-left.explore{color:var(--teal)}
+.kg-hd-left.gaps{color:var(--amber)}
+.kg-hd-left.synthesize{color:var(--indigo)}
+.kg-hd-left.teach{color:var(--emerald)}
+.copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover{background:var(--border);color:var(--txt)}
+.copy-btn.copied{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.kg-bd{padding:22px 26px;font-size:13.5px;line-height:1.85;color:var(--txt);max-height:700px;overflow-y:auto;background:#fafaf9}
+
+/* ── Graph Card ── */
+.graph-section{margin:14px 0}
+.graph-section-title{font-size:10.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.graph-section-title::after{content:'';flex:1;height:1px;background:var(--border2)}
+
+/* Node cards */
+.node-list{display:flex;flex-direction:column;gap:8px}
+.node-card{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);transition:border-color .15s}
+.node-card:hover{border-color:#c5c0b8}
+.node-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.node-icon.concept{background:var(--violet-bg)}
+.node-icon.fact{background:var(--cyan-bg)}
+.node-icon.source{background:var(--teal-bg)}
+.node-icon.question{background:var(--amber-bg)}
+.node-icon.idea{background:var(--indigo-bg)}
+.node-body{flex:1;min-width:0}
+.node-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px}
+.node-desc{font-size:12px;color:var(--txt2);line-height:1.6}
+.node-meta{display:flex;align-items:center;gap:7px;margin-top:6px}
+.node-type-badge{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.ntb-concept{background:var(--violet-bg);color:var(--violet)}
+.ntb-fact{background:var(--cyan-bg);color:var(--cyan)}
+.ntb-source{background:var(--teal-bg);color:var(--teal)}
+.ntb-question{background:var(--amber-bg);color:var(--amber)}
+.ntb-idea{background:var(--indigo-bg);color:var(--indigo)}
+.node-weight{font-size:11px;color:var(--muted)}
+
+/* Edge / connection rows */
+.edge-list{display:flex;flex-direction:column;gap:6px}
+.edge-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2)}
+.edge-from,.edge-to{font-size:12px;font-weight:600;color:var(--txt);padding:3px 8px;background:var(--surface2);border-radius:4px;flex-shrink:0;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.edge-arrow{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:80px}
+.edge-line{height:1px;width:100%;background:linear-gradient(90deg,var(--border),var(--muted),var(--border))}
+.edge-label{font-size:10px;color:var(--muted);font-style:italic;text-align:center}
+.edge-strength{font-size:10.5px;padding:2px 6px;border-radius:8px;font-weight:500}
+.es-strong{background:var(--green-bg);color:var(--green)}
+.es-moderate{background:var(--amber-bg);color:var(--amber)}
+.es-weak{background:var(--surface2);color:var(--muted)}
+
+/* Insight boxes */
+.insight-list{display:flex;flex-direction:column;gap:8px}
+.insight-box{padding:13px 15px;border-radius:var(--r);border-left:3px solid;font-size:13px;line-height:1.7}
+.ib-pattern{background:var(--indigo-bg);border-color:var(--indigo);color:#312e81}
+.ib-gap{background:var(--amber-bg);border-color:var(--amber);color:#78350f}
+.ib-connection{background:var(--cyan-bg);border-color:var(--cyan);color:#0c4a6e}
+.ib-contradiction{background:var(--rose-bg);border-color:var(--rose);color:var(--rose)}
+.ib-synthesis{background:var(--teal-bg);border-color:var(--teal);color:#134e4a}
+.insight-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;opacity:.7}
+
+/* Suggestion / idea cards */
+.suggestion-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.suggestion-card{padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;transition:all .15s}
+.suggestion-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.sc-explore:hover{border-color:var(--violet);background:var(--violet-bg)}
+.sc-gap:hover{border-color:var(--amber);background:var(--amber-bg)}
+.sc-icon{font-size:18px;margin-bottom:6px}
+.sc-title{font-size:12.5px;font-weight:600;margin-bottom:3px}
+.sc-body{font-size:11.5px;color:var(--txt2);line-height:1.5}
+
+/* Summary stats bar */
+.kg-stats-bar{display:flex;gap:10px;padding:10px 14px;background:var(--violet-bg);border:1px solid var(--violet-border);border-radius:var(--r2);margin-bottom:12px}
+.kg-stat{display:flex;flex-direction:column;gap:2px;flex:1;text-align:center}
+.kg-stat-n{font-family:'Lora',serif;font-size:17px;font-weight:500;color:var(--violet)}
+.kg-stat-l{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted)}
+
+/* Knowledge Graph Visual */
+.kg-visual{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin:12px 0;position:relative;overflow:hidden;min-height:180px}
+.kg-visual canvas{width:100%;height:180px;display:block}
+.kg-visual-placeholder{display:flex;align-items:center;justify-content:center;height:160px;color:var(--muted);font-size:13px;flex-direction:column;gap:8px}
+
+/* Prose text */
+.kg-prose{font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--txt);line-height:1.8}
+.kg-prose .sec-head{display:block;font-size:10.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 8px;padding-top:4px}
+.kg-prose .sec-div{display:block;border:none;border-top:1px solid var(--border2);margin:14px 0}
+.kg-prose .text-line{display:block;white-space:pre-wrap;word-break:break-word}
+.kg-prose .text-blank{display:block;height:.5em}
+
+/* Download row */
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:2px}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-txt{background:var(--txt);color:#fff}
+.dl-txt:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.dl-json{background:var(--teal);color:#fff}
+.dl-json:hover{background:#0f766e;transform:translateY(-1px)}
+
+/* Responsive */
+@media(max-width:720px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .hint-grid{grid-template-columns:1fr}
+  .suggestion-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+            <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Knowledge Graph</div>
+        </div>
+      </div>
+      <div class="sb-label">Mode</div>
+      <div class="mode-grid">
+        <button class="mode-btn on-add" id="btnAdd" onclick="setMode('add')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add Node
+        </button>
+        <button class="mode-btn" id="btnConnect" onclick="setMode('connect')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Connect
+        </button>
+        <button class="mode-btn" id="btnExplore" onclick="setMode('explore')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Explore
+        </button>
+        <button class="mode-btn" id="btnGaps" onclick="setMode('gaps')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Find Gaps
+        </button>
+        <button class="mode-btn synthesize-full" id="btnSynthesize" onclick="setMode('synthesize')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Synthesize &amp; Generate Ideas
+        </button>
+        <button class="mode-btn synthesize-full" id="btnTeach" onclick="setMode('teach')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6"/><path d="M2 12h6"/><path d="M12 2v6"/><path d="M12 16v6"/><circle cx="12" cy="12" r="3"/></svg>
+          User Knowledge
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="modeNote">Add Node — capture new knowledge</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Graph Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sNodes">0</div><div class="stat-l">Nodes</div></div>
+        <div class="stat-box"><div class="stat-n" id="sEdges">0</div><div class="stat-l">Links</div></div>
+        <div class="stat-box"><div class="stat-n" id="sInsights">0</div><div class="stat-l">Insights</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label" style="margin-bottom:10px">Active Topics</div>
+      <div id="topicTags" class="topic-tags"><div class="muted-note">No topics yet</div></div>
+      <div style="margin-top:14px">
+        <div class="sb-label" style="margin-bottom:8px">Recent</div>
+        <div class="recent-list" id="recentList"><div class="muted-note">No queries yet</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearChat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill add" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span id="pillTxt">Add Node Mode</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="msgs-wrap" id="msgsWrap">
+      <div class="msgs" id="msgs"></div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="input-wrap" id="inputWrap">
+          <textarea id="ta" class="task-ta" rows="1" placeholder="Add a concept, note, or piece of research to your knowledge graph…"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint" id="inputHint">Enter to send &middot; Shift+Enter for new line &middot; Paste notes, articles, or any text</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG — point this to your Cloudflare Worker URL
+// ─────────────────────────────────────────
+const BACKEND = "https://knowledge.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let currentMode  = "add";
+let running      = false;
+let chatHistory  = [];
+let nodeCount    = 0;
+let edgeCount    = 0;
+let insightCount = 0;
+let outputStore  = {};
+let knownTopics  = new Set();
+let thinkingRow  = null;
+const USER_KNOWLEDGE_KEY = "sa_user_knowledge";
+let userKnowledgeStore = JSON.parse(localStorage.getItem(USER_KNOWLEDGE_KEY) || "[]");
+
+// ─────────────────────────────────────────
+// DOM refs
+// ─────────────────────────────────────────
+const ta       = document.getElementById("ta");
+const sendBtn  = document.getElementById("sendBtn");
+const msgsEl   = document.getElementById("msgs");
+const msgsWrap = document.getElementById("msgsWrap");
+
+// ─────────────────────────────────────────
+// Textarea auto-resize
+// ─────────────────────────────────────────
+ta.addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 200) + "px";
+});
+ta.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+// ─────────────────────────────────────────
+// Mode config
+// ─────────────────────────────────────────
+const modeConfig = {
+  add: {
+    pillClass:"add", pillTxt:"Add Node Mode",
+    note:"Add Node — capture new knowledge",
+    placeholder:"Describe a concept, fact, idea, or paste notes/research…",
+    btnId:"btnAdd", btnClass:"on-add",
+    statusLabel:"Processing…", doneLabel:"Node added to graph",
+    cardClass:"card-add",
+    icon:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  },
+  connect: {
+    pillClass:"connect", pillTxt:"Connect Mode",
+    note:"Connect — build semantic relationships",
+    placeholder:"Describe how two or more concepts relate to each other…",
+    btnId:"btnConnect", btnClass:"on-connect",
+    statusLabel:"Building connections…", doneLabel:"Connections mapped",
+    cardClass:"card-connect",
+    icon:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`,
+  },
+  explore: {
+    pillClass:"explore", pillTxt:"Explore Mode",
+    note:"Explore — traverse and query the graph",
+    placeholder:"Ask a question or explore a topic in your knowledge graph…",
+    btnId:"btnExplore", btnClass:"on-explore",
+    statusLabel:"Exploring…", doneLabel:"Graph traversal complete",
+    cardClass:"card-explore",
+    icon:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  },
+  gaps: {
+    pillClass:"gaps", pillTxt:"Find Gaps Mode",
+    note:"Find Gaps — detect missing knowledge",
+    placeholder:"Describe a domain or topic — I'll find what's missing in your graph…",
+    btnId:"btnGaps", btnClass:"on-gaps",
+    statusLabel:"Analysing gaps…", doneLabel:"Knowledge gaps identified",
+    cardClass:"card-gaps",
+    icon:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  },
+  synthesize: {
+    pillClass:"synthesize", pillTxt:"Synthesize & Generate Ideas",
+    note:"Synthesize — generate insights and novel ideas",
+    placeholder:"Ask for insights, patterns, or novel ideas across your knowledge graph…",
+    btnId:"btnSynthesize", btnClass:"on-synthesize",
+    statusLabel:"Synthesizing…", doneLabel:"Synthesis complete",
+    cardClass:"card-synthesize",
+    icon:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  },
+  teach: {
+    pillClass:"teach", pillTxt:"User Knowledge Mode",
+    note:"User Knowledge — store profile, preferences, and facts",
+    placeholder:"Share user knowledge (goals, constraints, preferences, facts) to store locally…",
+    btnId:"btnTeach", btnClass:"on-teach",
+    statusLabel:"Storing user knowledge…", doneLabel:"User knowledge stored",
+    cardClass:"card-teach",
+    icon:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-6"/><path d="M2 12h6"/><path d="M12 2v6"/><path d="M12 16v6"/><circle cx="12" cy="12" r="3"/></svg>`,
+  },
+};
+
+// ─────────────────────────────────────────
+// Mode switcher
+// ─────────────────────────────────────────
+function setMode(m) {
+  currentMode = m;
+  const cfg = modeConfig[m];
+
+  Object.values(modeConfig).forEach(c => {
+    const btn = document.getElementById(c.btnId);
+    if (btn) btn.className = "mode-btn" + (["btnSynthesize","btnTeach"].includes(c.btnId) ? " synthesize-full" : "");
+  });
+  const activeBtn = document.getElementById(cfg.btnId);
+  if (activeBtn) activeBtn.className = "mode-btn" + (["synthesize","teach"].includes(m) ? " synthesize-full" : "") + " " + cfg.btnClass;
+
+  const pill = document.getElementById("modePill");
+  if (pill) pill.className = "mode-pill " + cfg.pillClass;
+  const pillTxt = document.getElementById("pillTxt");
+  if (pillTxt) pillTxt.textContent = cfg.pillTxt;
+
+  const modeNote = document.getElementById("modeNote");
+  if (modeNote) modeNote.textContent = cfg.note;
+  ta.placeholder = cfg.placeholder;
+}
+
+function hintClick(m, text) {
+  setMode(m);
+  ta.value = text;
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+  ta.focus();
+}
+
+// ─────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────
+function nowStr() {
+  return new Date().toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" });
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function scrollBottom() {
+  requestAnimationFrame(() => { msgsWrap.scrollTop = msgsWrap.scrollHeight; });
+}
+function hideWelcome() {
+  const w = document.getElementById("welcomeScreen");
+  if (w) w.style.display = "none";
+}
+function setStatus(state, label) {
+  const badge = document.getElementById("statusBadge");
+  if (!badge) return;
+  const cls = { run:"run", done:"done", err:"err" }[state] || "idle";
+  badge.className = "badge badge-" + cls;
+  badge.innerHTML = `<span class="dot"></span>${escHtml(label)}`;
+}
+function updateStats() {
+  document.getElementById("sNodes").textContent   = nodeCount;
+  document.getElementById("sEdges").textContent   = edgeCount;
+  document.getElementById("sInsights").textContent = insightCount;
+}
+function updateTopicTags() {
+  const el = document.getElementById("topicTags");
+  if (knownTopics.size === 0) {
+    el.innerHTML = `<div class="muted-note">No topics yet</div>`;
+    return;
+  }
+  el.innerHTML = [...knownTopics].slice(0,12).map(t =>
+    `<span class="topic-tag" onclick="hintClick('explore','Tell me about ${escHtml(t)} in my knowledge graph')">
+      ${escHtml(t)}
+    </span>`
+  ).join("");
+}
+function addRecent(txt) {
+  const rl = document.getElementById("recentList");
+  const shortTxt = txt.length > 50 ? txt.slice(0,50) + "…" : txt;
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<span class="ri-dot"></span><span>${escHtml(shortTxt)}</span>`;
+  item.onclick = () => { ta.value = txt; ta.focus(); };
+  if (rl.querySelector(".muted-note")) rl.innerHTML = "";
+  rl.insertBefore(item, rl.firstChild);
+  while (rl.children.length > 8) rl.removeChild(rl.lastChild);
+}
+
+// ─────────────────────────────────────────
+// Welcome screen
+// ─────────────────────────────────────────
+function buildWelcome() {
+  const div = document.createElement("div");
+  div.id = "welcomeScreen";
+  div.className = "welcome";
+  div.innerHTML = `
+    <div class="w-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <circle cx="3" cy="6" r="2"/><circle cx="21" cy="6" r="2"/>
+        <circle cx="3" cy="18" r="2"/><circle cx="21" cy="18" r="2"/>
+        <line x1="5" y1="6" x2="10" y2="11"/><line x1="19" y1="6" x2="14" y2="11"/>
+        <line x1="5" y1="18" x2="10" y2="13"/><line x1="19" y1="18" x2="14" y2="13"/>
+      </svg>
+    </div>
+    <h2>Your Knowledge Graph</h2>
+    <p>Capture notes, research, and ideas. I'll detect patterns, build semantic connections, and surface insights you haven't thought of yet.</p>
+    <div class="hint-grid">
+      <div class="hint add-h" onclick="hintClick('add','Quantum entanglement is a phenomenon where two particles become correlated such that the state of one instantly influences the other, regardless of distance. This challenges classical notions of locality and is used in quantum cryptography.')">
+        <span class="hint-em">🧩</span>
+        <div><strong>Add a concept</strong><small>Capture a new idea or piece of knowledge</small></div>
+      </div>
+      <div class="hint connect-h" onclick="hintClick('connect','How does machine learning relate to neuroscience? Both involve pattern recognition, but one is biological and the other computational.')">
+        <span class="hint-em">🔗</span>
+        <div><strong>Connect ideas</strong><small>Map relationships between concepts</small></div>
+      </div>
+      <div class="hint explore-h" onclick="hintClick('explore','What are the key themes and concepts in my knowledge graph so far?')">
+        <span class="hint-em">🔍</span>
+        <div><strong>Explore graph</strong><small>Query and traverse what you know</small></div>
+      </div>
+      <div class="hint gaps-h" onclick="hintClick('gaps','Find the missing pieces in my understanding of distributed systems.')">
+        <span class="hint-em">⚠️</span>
+        <div><strong>Find gaps</strong><small>Discover what you don't yet know</small></div>
+      </div>
+    </div>
+  `;
+  return div;
+}
+msgsEl.appendChild(buildWelcome());
+userKnowledgeStore.forEach(item => knownTopics.add("user-profile"));
+if (userKnowledgeStore.length) { nodeCount += userKnowledgeStore.length; updateStats(); updateTopicTags(); }
+
+// ─────────────────────────────────────────
+// Message rows
+// ─────────────────────────────────────────
+function addUserRow(text) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  row.innerHTML = `
+    <div class="av av-user">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">You <span class="msg-time">${nowStr()}</span></div>
+      <div class="msg-content"><p>${escHtml(text)}</p></div>
+    </div>`;
+  msgsEl.appendChild(row);
+  scrollBottom();
+}
+
+function showThinking() {
+  thinkingRow = document.createElement("div");
+  thinkingRow.className = "thinking-row";
+  thinkingRow.innerHTML = `
+    <div class="av av-agent">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>
+    </div>
+    <div class="dots"><span></span><span></span><span></span></div>`;
+  msgsEl.appendChild(thinkingRow);
+  scrollBottom();
+}
+
+function hideThinking() {
+  if (thinkingRow && thinkingRow.parentNode) {
+    thinkingRow.parentNode.removeChild(thinkingRow);
+    thinkingRow = null;
+  }
+}
+
+function addAgentRow() {
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  row.innerHTML = `
+    <div class="av av-agent">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">Knowledge Agent <span class="msg-time">${nowStr()}</span></div>
+      <div class="msg-content" id="agentBody_${Date.now()}"></div>
+    </div>`;
+  msgsEl.appendChild(row);
+  scrollBottom();
+  return row.querySelector(".msg-content");
+}
+
+// ─────────────────────────────────────────
+// Status card
+// ─────────────────────────────────────────
+function makeCardHtml(type, text) {
+  const iconMap = {
+    add:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+    connect:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`,
+    explore:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    gaps:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
+    synthesize:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    teach:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-6"/><path d="M2 12h6"/><path d="M12 2v6"/><path d="M12 16v6"/><circle cx="12" cy="12" r="3"/></svg>`,
+    err:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  };
+  const cls = type === "err" ? "card-err" : `card-${type}`;
+  return `<div class="card ${cls}">${iconMap[type]||""} ${escHtml(text)}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Render structured Knowledge Graph output
+// ─────────────────────────────────────────
+function renderKGOutput(data, mode) {
+  const wrap = document.createElement("div");
+  wrap.className = "kg-block";
+
+  // Header
+  const modeLabels = { add:"Node Added", connect:"Connections Built", explore:"Graph Explored", gaps:"Gaps Identified", synthesize:"Synthesis & Ideas", teach:"User Knowledge Stored" };
+  const modeIcons  = {
+    add:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+    connect:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`,
+    explore:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    gaps:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 00-3.42 0z"/></svg>`,
+    synthesize:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    teach:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-6"/><path d="M2 12h6"/><path d="M12 2v6"/><path d="M12 16v6"/><circle cx="12" cy="12" r="3"/></svg>`,
+  };
+  const hd = document.createElement("div");
+  hd.className = "kg-hd";
+  hd.innerHTML = `
+    <div class="kg-hd-left ${mode}">${modeIcons[mode]||""} ${modeLabels[mode]||mode}</div>
+    <button class="copy-btn" onclick="copyKGData(this, '${escHtml(JSON.stringify(data))}')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copy
+    </button>`;
+  wrap.appendChild(hd);
+
+  const bd = document.createElement("div");
+  bd.className = "kg-bd";
+
+  // Stats bar if present
+  if (data.stats) {
+    const sb = document.createElement("div");
+    sb.className = "kg-stats-bar";
+    (data.stats || []).forEach(s => {
+      sb.innerHTML += `<div class="kg-stat"><div class="kg-stat-n">${escHtml(String(s.value))}</div><div class="kg-stat-l">${escHtml(s.label)}</div></div>`;
+    });
+    bd.appendChild(sb);
+  }
+
+  // Summary
+  if (data.summary) {
+    const p = document.createElement("div");
+    p.className = "kg-prose";
+    p.style.marginBottom = "14px";
+    p.style.paddingBottom = "12px";
+    p.style.borderBottom = "1px solid var(--border2)";
+    p.textContent = data.summary;
+    bd.appendChild(p);
+  }
+
+  // Nodes section
+  if (data.nodes && data.nodes.length > 0) {
+    const sec = document.createElement("div");
+    sec.className = "graph-section";
+    sec.innerHTML = `<div class="graph-section-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg> Knowledge Nodes</div>`;
+    const nl = document.createElement("div");
+    nl.className = "node-list";
+    data.nodes.forEach(node => {
+      const typeClass = node.type || "concept";
+      const iconMap = {
+        concept:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`,
+        fact:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+        source:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`,
+        question:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        idea:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      };
+      const card = document.createElement("div");
+      card.className = "node-card";
+      card.innerHTML = `
+        <div class="node-icon ${typeClass}">${iconMap[typeClass] || iconMap.concept}</div>
+        <div class="node-body">
+          <div class="node-title">${escHtml(node.title || node.name || "")}</div>
+          ${node.description ? `<div class="node-desc">${escHtml(node.description)}</div>` : ""}
+          <div class="node-meta">
+            <span class="node-type-badge ntb-${typeClass}">${escHtml(typeClass)}</span>
+            ${node.weight ? `<span class="node-weight">Relevance: ${escHtml(String(node.weight))}</span>` : ""}
+            ${node.domain ? `<span class="node-weight">· ${escHtml(node.domain)}</span>` : ""}
+          </div>
+        </div>`;
+      nl.appendChild(card);
+    });
+    sec.appendChild(nl);
+    bd.appendChild(sec);
+  }
+
+  // Edges / connections section
+  if (data.edges && data.edges.length > 0) {
+    const sec = document.createElement("div");
+    sec.className = "graph-section";
+    sec.innerHTML = `<div class="graph-section-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Semantic Connections</div>`;
+    const el = document.createElement("div");
+    el.className = "edge-list";
+    data.edges.forEach(edge => {
+      const strength = edge.strength || "moderate";
+      const sc = strength === "strong" ? "es-strong" : strength === "weak" ? "es-weak" : "es-moderate";
+      const row = document.createElement("div");
+      row.className = "edge-row";
+      row.innerHTML = `
+        <div class="edge-from">${escHtml(edge.from || "")}</div>
+        <div class="edge-arrow">
+          <div class="edge-line"></div>
+          <div class="edge-label">${escHtml(edge.relation || "relates to")}</div>
+        </div>
+        <div class="edge-to">${escHtml(edge.to || "")}</div>
+        <span class="edge-strength ${sc}">${escHtml(strength)}</span>`;
+      el.appendChild(row);
+    });
+    sec.appendChild(el);
+    bd.appendChild(sec);
+  }
+
+  // Insights section
+  if (data.insights && data.insights.length > 0) {
+    const sec = document.createElement("div");
+    sec.className = "graph-section";
+    sec.innerHTML = `<div class="graph-section-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Insights & Patterns</div>`;
+    const il = document.createElement("div");
+    il.className = "insight-list";
+    data.insights.forEach(ins => {
+      const t = ins.type || "connection";
+      const classMap = { pattern:"ib-pattern", gap:"ib-gap", connection:"ib-connection", contradiction:"ib-contradiction", synthesis:"ib-synthesis" };
+      const box = document.createElement("div");
+      box.className = `insight-box ${classMap[t] || "ib-connection"}`;
+      box.innerHTML = `<div class="insight-label">${escHtml(t)}</div>${escHtml(ins.text || "")}`;
+      il.appendChild(box);
+    });
+    sec.appendChild(il);
+    bd.appendChild(sec);
+  }
+
+  // Suggestions section
+  if (data.suggestions && data.suggestions.length > 0) {
+    const sec = document.createElement("div");
+    sec.className = "graph-section";
+    sec.innerHTML = `<div class="graph-section-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3M6.343 6.343l-.707-.707M10.121 20.364A7.5 7.5 0 0112 6a7.5 7.5 0 011.879 14.364"/></svg> Suggested Next Steps</div>`;
+    const sg = document.createElement("div");
+    sg.className = "suggestion-grid";
+    data.suggestions.forEach(sug => {
+      const card = document.createElement("div");
+      const isGap = (sug.type === "gap");
+      card.className = `suggestion-card ${isGap ? "sc-gap" : "sc-explore"}`;
+      card.innerHTML = `
+        <div class="sc-icon">${escHtml(sug.emoji || "💡")}</div>
+        <div class="sc-title">${escHtml(sug.title || "")}</div>
+        <div class="sc-body">${escHtml(sug.body || "")}</div>`;
+      card.onclick = () => { hintClick(sug.mode || "explore", sug.prompt || sug.title || ""); };
+      sg.appendChild(card);
+    });
+    sec.appendChild(sg);
+    bd.appendChild(sec);
+  }
+
+  // Raw prose fallback
+  if (data.prose) {
+    const p = document.createElement("div");
+    p.className = "kg-prose";
+    renderProseInto(p, data.prose);
+    bd.appendChild(p);
+  }
+
+  // Download row
+  const dlRow = document.createElement("div");
+  dlRow.className = "dl-row";
+  dlRow.innerHTML = `
+    <button class="dl-btn dl-txt" onclick="downloadText(this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download .txt
+    </button>
+    <button class="dl-btn dl-json" onclick="downloadJSON(this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Export JSON
+    </button>`;
+  dlRow._data = data;
+  bd.appendChild(dlRow);
+
+  wrap.appendChild(bd);
+  return wrap;
+}
+
+// ─────────────────────────────────────────
+// Prose renderer (same pattern as Code Agent)
+// ─────────────────────────────────────────
+function renderProseInto(container, text) {
+  const lines = text.split("\n");
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (/^[━=─]{4,}/.test(trimmed)) {
+      const hr = document.createElement("span"); hr.className = "sec-div"; container.appendChild(hr);
+    } else if (/^[A-Z][A-Z &\/\-]{3,}$/.test(trimmed) && trimmed.length < 60) {
+      const sh = document.createElement("span"); sh.className = "sec-head"; sh.textContent = trimmed; container.appendChild(sh);
+    } else if (trimmed === "") {
+      const bl = document.createElement("span"); bl.className = "text-blank"; container.appendChild(bl);
+    } else {
+      const tl = document.createElement("span"); tl.className = "text-line"; tl.textContent = line; container.appendChild(tl);
+    }
+  });
+}
+
+// ─────────────────────────────────────────
+// Copy / Download
+// ─────────────────────────────────────────
+function copyKGData(btn, jsonStr) {
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    btn.textContent = "Copied!";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`; btn.classList.remove("copied"); }, 2000);
+  });
+}
+function downloadText(btn) {
+  const data = btn.parentNode._data;
+  let out = "";
+  if (data.summary) out += data.summary + "\n\n";
+  if (data.nodes) data.nodes.forEach(n => { out += `[${(n.type||"node").toUpperCase()}] ${n.title||n.name}\n${n.description||""}\n\n`; });
+  if (data.edges) data.edges.forEach(e => { out += `${e.from} --[${e.relation}]--> ${e.to} (${e.strength})\n`; });
+  if (data.insights) data.insights.forEach(i => { out += `\n[${(i.type||"insight").toUpperCase()}] ${i.text}\n`; });
+  if (data.prose) out += "\n" + data.prose;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([out], { type:"text/plain" }));
+  a.download = "knowledge-graph-" + Date.now() + ".txt";
+  a.click();
+}
+function downloadJSON(btn) {
+  const data = btn.parentNode._data;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type:"application/json" }));
+  a.download = "knowledge-graph-" + Date.now() + ".json";
+  a.click();
+}
+
+function persistUserKnowledge() {
+  localStorage.setItem(USER_KNOWLEDGE_KEY, JSON.stringify(userKnowledgeStore.slice(-100)));
+}
+
+function buildUserKnowledgeGraph(query) {
+  const entry = { id: `uk_${Date.now()}`, text: query, added_at: new Date().toISOString(), mode: "teach" };
+  userKnowledgeStore.push(entry);
+  persistUserKnowledge();
+
+  const tags = Array.from(new Set((query.match(/#[a-zA-Z0-9_-]+/g) || []).map(t => t.slice(1))));
+  const facts = query.split(/[\n\.]/).map(v => v.trim()).filter(Boolean).slice(0, 4);
+
+  return {
+    summary: "Stored user knowledge locally and linked it into graph context.",
+    stats: [
+      { label: "Knowledge Entries", value: userKnowledgeStore.length },
+      { label: "Extracted Facts", value: facts.length },
+      { label: "Tags", value: tags.length }
+    ],
+    nodes: [
+      { title: `User Memory #${userKnowledgeStore.length}`, type: "fact", description: query.slice(0, 220), tags, domain: "user-profile" },
+      ...facts.map((fact, i) => ({ title: `Fact ${i+1}`, type: "concept", description: fact, domain: "user-profile" }))
+    ],
+    edges: facts.map((_, i) => ({ from: `User Memory #${userKnowledgeStore.length}`, to: `Fact ${i+1}`, relation: "contains", strength: "strong" })),
+    insights: [{ type: "synthesis", text: "Saved for prompts that rely on user-specific context." }]
+  };
+}
+
+// ─────────────────────────────────────────
+// Send
+// ─────────────────────────────────────────
+async function handleSend() {
+  const query = ta.value.trim();
+  if (!query || running) return;
+
+  const m   = currentMode;
+  const cfg = modeConfig[m];
+
+  addUserRow(query);
+  addRecent(query);
+  ta.value = "";
+  ta.style.height = "auto";
+  running = true;
+  sendBtn.disabled = true;
+  setStatus("run", cfg.statusLabel);
+  showThinking();
+
+  chatHistory.push({ role:"user", content: query });
+
+  const requestBody = {
+    query,
+    mode: m,
+    history: chatHistory.slice(-10),
+    userKnowledge: userKnowledgeStore.slice(-20),
+    response_format: "structured_json",
+  };
+
+  let data;
+  if (m === "teach") {
+    data = { status: "USER_KNOWLEDGE", graph: buildUserKnowledgeGraph(query) };
+  } else {
+    try {
+      const res = await fetch(BACKEND, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      data = await res.json();
+    } catch (err) {
+    hideThinking();
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", "Network error: " + err.message);
+    setStatus("err", "Error");
+    running = false;
+    sendBtn.disabled = false;
+    return;
+    }
+  }
+
+  hideThinking();
+
+  const statusModeMap = {
+    NODE_ADDED:    "add",
+    CONNECTIONS:   "connect",
+    EXPLORATION:   "explore",
+    GAPS_FOUND:    "gaps",
+    SYNTHESIS:     "synthesize",
+    USER_KNOWLEDGE: "teach",
+  };
+
+  const resultMode = statusModeMap[data.status] || m;
+
+  if (data.status === "ERROR") {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", data.message || "Unknown error");
+    setStatus("err", "Error");
+
+  } else if (data.graph) {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml(resultMode, cfg.doneLabel);
+    slot.appendChild(renderKGOutput(data.graph, resultMode));
+
+    // Update stats
+    if (data.graph.nodes)    { nodeCount    += data.graph.nodes.length;    updateStats(); }
+    if (data.graph.edges)    { edgeCount    += data.graph.edges.length;    updateStats(); }
+    if (data.graph.insights) { insightCount += data.graph.insights.length; updateStats(); }
+
+    // Extract topics
+    if (data.graph.nodes) {
+      data.graph.nodes.forEach(n => {
+        if (n.domain) knownTopics.add(n.domain);
+        if (n.tags)   n.tags.forEach(t => knownTopics.add(t));
+      });
+      updateTopicTags();
+    }
+
+    chatHistory.push({ role:"assistant", content: `[${resultMode} graph output delivered — ${(data.graph.nodes||[]).length} nodes, ${(data.graph.edges||[]).length} edges]` });
+    setStatus("done", cfg.doneLabel);
+
+  } else if (data.content) {
+    // Plain-text prose fallback
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml(resultMode, cfg.doneLabel);
+    const block = document.createElement("div");
+    block.className = "kg-block";
+    const hd = document.createElement("div");
+    hd.className = "kg-hd";
+    hd.innerHTML = `<div class="kg-hd-left ${resultMode}">${cfg.icon||""} ${cfg.doneLabel}</div>`;
+    const bd = document.createElement("div");
+    bd.className = "kg-bd kg-prose";
+    renderProseInto(bd, data.content);
+    block.appendChild(hd);
+    block.appendChild(bd);
+    slot.appendChild(block);
+    chatHistory.push({ role:"assistant", content: data.content.slice(0, 300) });
+    setStatus("done", "Done");
+
+  } else {
+    const slot = addAgentRow();
+    slot.innerHTML = makeCardHtml("err", "Unexpected response from server.");
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  sendBtn.disabled = false;
+}
+
+// ─────────────────────────────────────────
+// Clear
+// ─────────────────────────────────────────
+function clearChat() {
+  while (msgsEl.firstChild) msgsEl.removeChild(msgsEl.firstChild);
+  msgsEl.appendChild(buildWelcome());
+userKnowledgeStore.forEach(item => knownTopics.add("user-profile"));
+if (userKnowledgeStore.length) { nodeCount += userKnowledgeStore.length; updateStats(); updateTopicTags(); }
+  chatHistory  = [];
+  outputStore  = {};
+  nodeCount = edgeCount = insightCount = 0;
+  knownTopics.clear();
+  updateStats();
+  updateTopicTags();
+  const rl = document.getElementById("recentList");
+  if (rl) rl.innerHTML = `<div class="muted-note">No queries yet</div>`;
+  setStatus("idle", "Ready");
+  running = false;
+  sendBtn.disabled = false;
+  thinkingRow = null;
+}
+</script>
+</body>
+</html>

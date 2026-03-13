@@ -1,0 +1,5 @@
+{
+  "name": "AgriIntel Agent",
+  "description": "Autonomous Agriculture Intelligence Agent for Indian farmers",
+  "requestFramePermissions": ["camera", "geolocation"]
+}

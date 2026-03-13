@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — AI Model Evaluator</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber2:#b45309;--amber-bg:#fffbf5;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;
+  --green:#059669;--green-bg:#d1fae5;
+  --red:#991b1b;--red-bg:#fee2e2;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none;text-align:center}
+.mode-btn svg{width:18px;height:18px}
+.mode-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-evaluate   {border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-compare    {border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mode-btn.on-hallucination{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.mode-btn.on-benchmark  {border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.mode-btn.on-score      {border-color:var(--green);color:var(--green);background:var(--green-bg)}
+
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--amber-bg);color:var(--amber)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.mode-pill.evaluate    {color:var(--amber);border-color:#fde68a;background:var(--amber-bg)}
+.mode-pill.compare     {color:var(--violet);border-color:#ddd6fe;background:var(--violet-bg)}
+.mode-pill.hallucination{color:var(--red);border-color:#fecaca;background:var(--red-bg)}
+.mode-pill.benchmark   {color:var(--blue);border-color:#bfdbfe;background:var(--blue-bg)}
+.mode-pill.score       {color:var(--green);border-color:#a7f3d0;background:var(--green-bg)}
+
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* Workspace */
+.workspace{flex:1;overflow-y:auto;padding:28px;scroll-behavior:smooth}
+.workspace-inner{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:32px;height:32px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:480px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:560px}
+.hint{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.h-eval:hover  {border-color:var(--amber);background:var(--amber-bg)}
+.hint.h-comp:hover  {border-color:var(--violet);background:var(--violet-bg)}
+.hint.h-hall:hover  {border-color:var(--red);background:var(--red-bg)}
+.hint.h-bench:hover {border-color:var(--blue);background:var(--blue-bg)}
+.hint-em{font-size:20px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* Input panel */
+.input-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.panel-hd{padding:13px 16px;border-bottom:1px solid var(--border2);background:var(--surface2);display:flex;align-items:center;justify-content:space-between}
+.panel-hd-left{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--txt2)}
+.panel-body{padding:18px}
+.field-label{font-size:11.5px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.field-label span{font-size:10px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+.field-group{display:flex;flex-direction:column;gap:14px}
+.ta-field{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13.5px;line-height:1.6;color:var(--txt);background:var(--surface);resize:vertical;outline:none;transition:border-color .15s}
+.ta-field:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.1)}
+.ta-field::placeholder{color:var(--muted)}
+.ta-prompt{min-height:80px}
+.ta-response{min-height:120px}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.model-label-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.model-label-input{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt);background:var(--surface);outline:none}
+.model-label-input:focus{border-color:var(--amber)}
+
+.run-row{display:flex;align-items:center;gap:10px;margin-top:6px;padding-top:14px;border-top:1px solid var(--border2)}
+.run-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:var(--txt);border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;transition:all .15s}
+.run-btn:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.run-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.run-hint{font-size:12px;color:var(--muted)}
+
+/* Result block */
+.result-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.result-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.result-hd-left{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.result-hd-left.evaluate    {color:var(--amber)}
+.result-hd-left.compare     {color:var(--violet)}
+.result-hd-left.hallucination{color:var(--red)}
+.result-hd-left.benchmark   {color:var(--blue)}
+.result-hd-left.score       {color:var(--green)}
+.result-hd-left.completed   {color:var(--txt2)}
+.copy-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover{background:var(--border);color:var(--txt)}
+
+.result-bd{
+  padding:24px 28px;
+  font-size:13px;
+  line-height:1.8;
+  color:#1a1814;
+  max-height:620px;
+  overflow-y:auto;
+  word-break:break-word;
+  background:#fafaf9;
+}
+.result-plain{font-family:'DM Mono','Courier New',monospace;white-space:pre-wrap;}
+.result-rich{display:flex;flex-direction:column;gap:14px;font-family:'DM Sans',sans-serif;}
+.result-section{background:var(--surface);border:1px solid var(--border2);border-radius:8px;overflow:hidden;}
+.result-section-title{padding:8px 12px;background:var(--surface2);font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--txt2);}
+.result-section-body{padding:12px 14px;color:var(--txt2);line-height:1.75;}
+.result-section-body ul{padding-left:18px;display:flex;flex-direction:column;gap:4px;}
+.result-section-body li{margin:0;}
+.result-section-body p{margin:0 0 8px;}
+.result-section-body p:last-child{margin-bottom:0;}
+.result-kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;margin-top:4px;}
+.result-kv kbd{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.35px;background:none;padding:0;}
+.result-kv span{font-size:13px;color:var(--txt);}
+
+/* Score badges inline */
+.score-highlight{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif}
+.sh-a{background:var(--green-bg);color:#065f46}
+.sh-b{background:var(--amber-bg);color:var(--amber2)}
+.sh-c{background:#fef3c7;color:#92400e}
+.sh-d{background:var(--red-bg);color:var(--red)}
+
+/* Cards */
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-ok  {background:var(--green-bg);color:#065f46;border:1px solid #a7f3d0}
+.card-work{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.card-err {background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+
+/* Download row */
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-txt{background:var(--txt);color:#fff}
+.dl-txt:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+
+/* Thinking inline */
+.thinking-card{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.dots{display:flex;gap:4px;align-items:center}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.input-row{grid-template-columns:1fr}.hint-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+            <path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+            <path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">AI Model Evaluator</div>
+        </div>
+      </div>
+      <div class="sb-label">Evaluation Mode</div>
+      <div class="mode-grid">
+        <button class="mode-btn on-evaluate" id="btn-evaluate" onclick="setMode('evaluate')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+            <path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+            <path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+          </svg>
+          Evaluate
+        </button>
+        <button class="mode-btn" id="btn-compare" onclick="setMode('compare')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          Compare
+        </button>
+        <button class="mode-btn" id="btn-hallucination" onclick="setMode('hallucination')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Hallucination
+        </button>
+        <button class="mode-btn" id="btn-benchmark" onclick="setMode('benchmark')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Benchmark
+        </button>
+        <button class="mode-btn" id="btn-score" onclick="setMode('score')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Quick Score
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="modeNote">Evaluate — deep quality analysis of a response</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sEvals">0</div><div class="stat-l">Evals</div></div>
+        <div class="stat-box"><div class="stat-n" id="sComps">0</div><div class="stat-l">Compares</div></div>
+        <div class="stat-box"><div class="stat-n" id="sHalls">0</div><div class="stat-l">Audits</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent Prompts</div>
+      <div class="recent-list" id="recentList"><div class="muted-note">No evaluations yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New evaluation
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill evaluate" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+            <path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+            <path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+          </svg>
+          <span id="pillTxt">Evaluate Mode</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearAll()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        </svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="workspace" id="workspace">
+      <div class="workspace-inner" id="workspaceInner">
+
+        <!-- WELCOME -->
+        <div class="welcome" id="welcome">
+          <div class="w-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+              <path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+              <path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+            </svg>
+          </div>
+          <h2>AI Model Evaluator</h2>
+          <p>Evaluate AI response quality, compare models head-to-head, detect hallucinations, benchmark prompts, and score reliability. Built for serious AI engineering.</p>
+          <div class="hint-grid">
+            <div class="hint h-eval" onclick="loadExample('evaluate')">
+              <div class="hint-em">📊</div>
+              <div><strong>Deep Evaluation</strong><small>Score accuracy, reasoning & more</small></div>
+            </div>
+            <div class="hint h-comp" onclick="loadExample('compare')">
+              <div class="hint-em">⚖️</div>
+              <div><strong>Model Comparison</strong><small>A vs B head-to-head verdict</small></div>
+            </div>
+            <div class="hint h-hall" onclick="loadExample('hallucination')">
+              <div class="hint-em">🔍</div>
+              <div><strong>Hallucination Audit</strong><small>Claim-by-claim fact check</small></div>
+            </div>
+            <div class="hint h-bench" onclick="loadExample('benchmark')">
+              <div class="hint-em">📐</div>
+              <div><strong>Prompt Benchmark</strong><small>Difficulty & rubric analysis</small></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INPUT PANEL (dynamic) -->
+        <div class="input-panel" id="inputPanel" style="display:none">
+          <div class="panel-hd">
+            <div class="panel-hd-left" id="panelHdLeft">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+                <path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+                <path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+              </svg>
+              <span id="panelTitle">Evaluation Input</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="field-group" id="fieldGroup"></div>
+            <div class="run-row">
+              <button class="run-btn" id="runBtn" onclick="handleRun()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Run Evaluation
+              </button>
+              <span class="run-hint" id="runHint">Deep analysis · takes 10-30 seconds</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULT (appended here) -->
+        <div id="resultZone"></div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────
+const BACKEND = "https://model-evaluator.vishwajeetadkine705.workers.dev";
+
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let mode = "evaluate";
+let running = false;
+let stats = { evals: 0, comps: 0, halls: 0 };
+
+// ─────────────────────────────────────────
+// Mode config
+// ─────────────────────────────────────────
+const MODES = {
+  evaluate: {
+    label:    "Evaluate Mode",
+    note:     "Evaluate — deep quality analysis of a response",
+    pill:     "evaluate",
+    runHint:  "Deep analysis · takes 15-30 seconds",
+    runLabel: "Run Evaluation",
+    panelTitle: "Evaluation Input",
+    fields: ["prompt","modelALabel","responseA"],
+    pillSvg: `<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/><path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/><path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>`,
+  },
+  compare: {
+    label:    "Compare Mode",
+    note:     "Compare — A vs B head-to-head model verdict",
+    pill:     "compare",
+    runHint:  "Head-to-head comparison · takes 20-40 seconds",
+    runLabel: "Run Comparison",
+    panelTitle: "Comparison Input",
+    fields: ["prompt","modelALabel","responseA","modelBLabel","responseB"],
+    pillSvg: `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
+  },
+  hallucination: {
+    label:    "Hallucination Mode",
+    note:     "Hallucination — claim-by-claim fact audit",
+    pill:     "hallucination",
+    runHint:  "Fact audit · takes 15-30 seconds",
+    runLabel: "Run Audit",
+    panelTitle: "Hallucination Audit Input",
+    fields: ["prompt","modelALabel","responseA"],
+    pillSvg: `<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+  },
+  benchmark: {
+    label:    "Benchmark Mode",
+    note:     "Benchmark — prompt difficulty & rubric analysis",
+    pill:     "benchmark",
+    runHint:  "Prompt analysis · takes 10-20 seconds",
+    runLabel: "Run Benchmark",
+    panelTitle: "Prompt Benchmark Input",
+    fields: ["prompt"],
+    pillSvg: `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
+  },
+  score: {
+    label:    "Quick Score Mode",
+    note:     "Quick Score — fast reliability score",
+    pill:     "score",
+    runHint:  "Fast scoring · takes 5-15 seconds",
+    runLabel: "Run Score",
+    panelTitle: "Quick Score Input",
+    fields: ["prompt","modelALabel","responseA"],
+    pillSvg: `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+  },
+};
+
+// ─────────────────────────────────────────
+// setMode
+// ─────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  const cfg = MODES[m];
+
+  // Sidebar buttons
+  Object.keys(MODES).forEach(k => {
+    document.getElementById("btn-" + k).className = "mode-btn" + (k === m ? " on-" + k : "");
+  });
+
+  // Topbar pill
+  const pill = document.getElementById("modePill");
+  pill.className = "mode-pill " + cfg.pill;
+  pill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${cfg.pillSvg}</svg><span id="pillTxt">${cfg.label}</span>`;
+
+  // Note
+  document.getElementById("modeNote").textContent = cfg.note;
+
+  // Panel
+  document.getElementById("panelTitle").textContent = cfg.panelTitle;
+  document.getElementById("runHint").textContent = cfg.runHint;
+  document.getElementById("runBtn").innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> ${cfg.runLabel}`;
+
+  buildFields(cfg.fields);
+  showInputPanel();
+  document.getElementById("resultZone").innerHTML = "";
+}
+
+// ─────────────────────────────────────────
+// Build dynamic fields
+// ─────────────────────────────────────────
+function buildFields(fields) {
+  const fg = document.getElementById("fieldGroup");
+  fg.innerHTML = "";
+
+  fields.forEach(f => {
+    const wrap = document.createElement("div");
+
+    if (f === "prompt") {
+      wrap.innerHTML = `
+        <div class="field-label">Prompt / Question <span>(what was asked of the model)</span></div>
+        <textarea id="f-prompt" class="ta-field ta-prompt" placeholder="Enter the original prompt or question that was given to the model…"></textarea>`;
+    }
+    else if (f === "modelALabel") {
+      wrap.innerHTML = `
+        <div class="field-label">Model Name <span>(optional label)</span></div>
+        <input id="f-modelA" class="model-label-input" type="text" placeholder="e.g. GPT-4o, Claude 3.5, K2-Think-v2…" value="Model A"/>`;
+    }
+    else if (f === "modelBLabel") {
+      wrap.innerHTML = `
+        <div class="field-label">Model B Name <span>(optional label)</span></div>
+        <input id="f-modelB" class="model-label-input" type="text" placeholder="e.g. Gemini 1.5 Pro, Llama 3…" value="Model B"/>`;
+    }
+    else if (f === "responseA") {
+      const label = fields.includes("responseB") ? "Model A Response" : "Model Response";
+      wrap.innerHTML = `
+        <div class="field-label">${label} <span>(paste the full response to evaluate)</span></div>
+        <textarea id="f-responseA" class="ta-field ta-response" placeholder="Paste the model's response here…"></textarea>`;
+    }
+    else if (f === "responseB") {
+      wrap.innerHTML = `
+        <div class="field-label">Model B Response <span>(paste the second model's response)</span></div>
+        <textarea id="f-responseB" class="ta-field ta-response" placeholder="Paste the second model's response here…"></textarea>`;
+    }
+
+    fg.appendChild(wrap);
+  });
+}
+
+// ─────────────────────────────────────────
+// Show / hide welcome & input panel
+// ─────────────────────────────────────────
+function showInputPanel() {
+  document.getElementById("welcome").style.display = "none";
+  document.getElementById("inputPanel").style.display = "block";
+}
+
+function loadExample(m) {
+  setMode(m);
+  // Prefill example data
+  const promptEl = document.getElementById("f-prompt");
+  const responseAEl = document.getElementById("f-responseA");
+  const responseBEl = document.getElementById("f-responseB");
+
+  if (m === "evaluate" || m === "score" || m === "hallucination") {
+    if (promptEl) promptEl.value = "What were the main causes of the 2008 global financial crisis?";
+    if (responseAEl) responseAEl.value = "The 2008 financial crisis was caused by several interrelated factors. The primary cause was the collapse of the US housing bubble, driven by excessive mortgage lending to subprime borrowers. Banks created complex financial instruments called CDOs (collateralised debt obligations) that bundled these risky mortgages together. Credit rating agencies incorrectly rated these as safe investments. When housing prices fell, mortgage defaults cascaded through the financial system. Lehman Brothers, founded in 1844, collapsed on September 15, 2008, becoming the largest bankruptcy in US history at $691 billion. The Federal Reserve had raised interest rates 17 consecutive times between 2004 and 2006, which contributed to the crisis. Globally, over $2.8 trillion in losses were recorded by financial institutions by 2010, and unemployment in the US reached 15.3% in October 2009.";
+    if (document.getElementById("f-modelA")) document.getElementById("f-modelA").value = "GPT-4o";
+  }
+  else if (m === "compare") {
+    if (promptEl) promptEl.value = "Explain how transformer neural networks work.";
+    if (responseAEl) responseAEl.value = "Transformers are deep learning models introduced in the 2017 paper 'Attention Is All You Need' by Vaswani et al. They use a mechanism called self-attention to process input sequences in parallel rather than sequentially. The architecture consists of an encoder and decoder, each with multiple layers of multi-head attention and feed-forward networks. Self-attention allows each token to attend to all other tokens, computing relevance scores via queries, keys, and values. This enables the model to capture long-range dependencies efficiently. Transformers are now the dominant architecture in NLP, powering models like BERT, GPT, and T5.";
+    if (responseBEl) responseBEl.value = "A transformer is an AI model that works like a big attention machine. It looks at words in a sentence and figures out which words are important by paying attention to them. It uses something called 'self-attention' which lets it look at all the words at the same time instead of one by one. This makes it much faster than older models like RNNs. The transformer was invented in 2017 and is used in ChatGPT and other AI systems. It has two parts: an encoder that reads text and a decoder that writes text.";
+    if (document.getElementById("f-modelA")) document.getElementById("f-modelA").value = "Claude 3.5";
+    if (document.getElementById("f-modelB")) document.getElementById("f-modelB").value = "Llama 3 8B";
+  }
+  else if (m === "benchmark") {
+    if (promptEl) promptEl.value = "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost?";
+  }
+}
+
+// ─────────────────────────────────────────
+// Status badge
+// ─────────────────────────────────────────
+function setStatus(type, label) {
+  const cls = { idle:"badge-idle", run:"badge-run", done:"badge-done", err:"badge-err" };
+  const el = document.getElementById("statusBadge");
+  el.className = "badge " + (cls[type] || "badge-idle");
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+
+// ─────────────────────────────────────────
+// Stats
+// ─────────────────────────────────────────
+function updateStats() {
+  document.getElementById("sEvals").textContent = stats.evals;
+  document.getElementById("sComps").textContent = stats.comps;
+  document.getElementById("sHalls").textContent = stats.halls;
+}
+
+// ─────────────────────────────────────────
+// Recent prompts
+// ─────────────────────────────────────────
+function addRecent(text, m) {
+  const list = document.getElementById("recentList");
+  const empty = list.querySelector(".muted-note");
+  if (empty) empty.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<div class="ri-dot"></div>${esc(text.slice(0,55))}${text.length>55?"…":""}`;
+  item.onclick = () => { setMode(m); document.getElementById("f-prompt").value = text; };
+  list.prepend(item);
+  while (list.children.length > 6) list.lastChild.remove();
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function formatInline(text) {
+  return esc(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function toTitleCaseHeading(text) {
+  return text
+    .replace(/^#+\s*/, "")
+    .replace(/[:：]\s*$/, "")
+    .trim();
+}
+
+function prettyEvaluatorContent(raw) {
+  const lines = String(raw || "").split(/\r?\n/);
+  const sections = [];
+  let current = { title: "Summary", lines: [] };
+
+  const flush = () => {
+    if (!current.lines.length) return;
+    sections.push(current);
+    current = { title: "", lines: [] };
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      current.lines.push("");
+      continue;
+    }
+
+    if (/^(#{1,3}\s+.+|[A-Z][A-Za-z0-9\s\-\/]{2,}:)$/.test(trimmed)) {
+      flush();
+      current.title = toTitleCaseHeading(trimmed);
+      continue;
+    }
+
+    current.lines.push(line);
+  }
+  flush();
+
+  if (!sections.length) {
+    return `<div class="result-plain">${esc(raw)}</div>`;
+  }
+
+  const html = sections.map(section => {
+    const kv = [];
+    const bullets = [];
+    const paragraphs = [];
+
+    section.lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      if (/^[-•*]\s+/.test(trimmed)) {
+        bullets.push(trimmed.replace(/^[-•*]\s+/, ""));
+        return;
+      }
+      const m = trimmed.match(/^([A-Za-z][A-Za-z0-9\s\-\/]{1,30}):\s+(.+)$/);
+      if (m) {
+        kv.push({k:m[1],v:m[2]});
+      } else {
+        paragraphs.push(trimmed);
+      }
+    });
+
+    const title = section.title || "Details";
+    return `<div class="result-section">
+      <div class="result-section-title">${formatInline(title)}</div>
+      <div class="result-section-body">
+        ${paragraphs.map(p => `<p>${formatInline(p)}</p>`).join("")}
+        ${kv.length ? `<div class="result-kv">${kv.map(({k,v}) => `<kbd>${formatInline(k)}</kbd><span>${formatInline(v)}</span>`).join("")}</div>` : ""}
+        ${bullets.length ? `<ul>${bullets.map(b => `<li>${formatInline(b)}</li>`).join("")}</ul>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  return `<div class="result-rich">${html}</div>`;
+}
+function scrollBottom() {
+  const ws = document.getElementById("workspace");
+  ws.scrollTop = ws.scrollHeight;
+}
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+// ─────────────────────────────────────────
+// Card HTML
+// ─────────────────────────────────────────
+function cardHtml(type, text) {
+  const cls = { ok:"card-ok", work:"card-work", err:"card-err" };
+  const icons = {
+    ok:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    work: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    err:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  };
+  return `<div class="card ${cls[type]||"card-ok"}">${icons[type]||""} ${text}</div>`;
+}
+
+// ─────────────────────────────────────────
+// Render result block
+// ─────────────────────────────────────────
+function renderResult(content, status) {
+  const pid = "res" + Date.now();
+
+  const labels = {
+    EVALUATION:   "Evaluation Report",
+    COMPARISON:   "Model Comparison",
+    HALLUCINATION:"Hallucination Audit",
+    BENCHMARK:    "Prompt Benchmark",
+    SCORE:        "Quick Score",
+    COMPLETED:    "Result",
+  };
+  const label = labels[status] || "Result";
+  const hClass = status.toLowerCase();
+
+  const iconPaths = {
+    EVALUATION:   `<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/><path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/><path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>`,
+    COMPARISON:   `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
+    HALLUCINATION:`<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+    BENCHMARK:    `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
+    SCORE:        `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+  };
+  const iconPath = iconPaths[status] || iconPaths.EVALUATION;
+
+  const block = document.createElement("div");
+  block.className = "result-block";
+  block.innerHTML = `
+    <div class="result-hd">
+      <div class="result-hd-left ${hClass}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${iconPath}</svg>
+        ${label}
+      </div>
+      <button class="copy-btn" id="cpbtn-${pid}">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <div class="result-bd" id="${pid}">${prettyEvaluatorContent(content)}</div>`;
+
+  // Download
+  const dlWrap = document.createElement("div");
+  dlWrap.className = "dl-row";
+  const dlBtn = document.createElement("button");
+  dlBtn.className = "dl-btn dl-txt";
+  dlBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download .txt`;
+  dlBtn.onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([content], {type:"text/plain"}));
+    a.download = `stremini-${label.toLowerCase().replace(/\s+/g,"-")}-${Date.now()}.txt`;
+    a.click();
+  };
+  dlWrap.appendChild(dlBtn);
+
+  const outer = document.createElement("div");
+  outer.appendChild(block);
+  outer.appendChild(dlWrap);
+
+  // Copy wiring
+  setTimeout(() => {
+    const btn = document.getElementById("cpbtn-" + pid);
+    if (btn) btn.onclick = () => {
+      navigator.clipboard.writeText(content)
+        .then(() => { btn.textContent = "✓ Copied"; setTimeout(() => { btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`; }, 2000); })
+        .catch(() => {});
+    };
+  }, 50);
+
+  return outer;
+}
+
+// ─────────────────────────────────────────
+// Main run handler
+// ─────────────────────────────────────────
+async function handleRun() {
+  const prompt    = val("f-prompt");
+  const responseA = val("f-responseA");
+  const responseB = val("f-responseB");
+  const modelA    = val("f-modelA") || "Model A";
+  const modelB    = val("f-modelB") || "Model B";
+
+  if (!prompt) { alert("Please enter a prompt first."); return; }
+  if (["evaluate","compare","hallucination","score"].includes(mode) && !responseA) {
+    alert("Please paste the model response to evaluate."); return;
+  }
+  if (mode === "compare" && !responseB) {
+    alert("Please paste Model B's response for comparison."); return;
+  }
+
+  if (running) return;
+  running = true;
+  document.getElementById("runBtn").disabled = true;
+
+  const statusLabels = {
+    evaluate:     "Evaluating response…",
+    compare:      "Comparing models…",
+    hallucination:"Auditing for hallucinations…",
+    benchmark:    "Benchmarking prompt…",
+    score:        "Scoring…",
+  };
+  setStatus("run", statusLabels[mode] || "Processing…");
+
+  // Show thinking
+  const rz = document.getElementById("resultZone");
+  rz.innerHTML = `<div class="thinking-card">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--muted)">
+      <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+      <path d="M15 19V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+      <path d="M21 19V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+    </svg>
+    <span style="font-size:13px;color:var(--txt2)">Stremini Evaluator is analysing…</span>
+    <div class="dots" style="margin-left:auto"><span></span><span></span><span></span></div>
+  </div>`;
+  scrollBottom();
+
+  addRecent(prompt, mode);
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, prompt, responseA, responseB, modelA, modelB }),
+    });
+    data = await res.json();
+  } catch (err) {
+    rz.innerHTML = cardHtml("err", "Network error: " + esc(err.message));
+    setStatus("err", "Error");
+    running = false;
+    document.getElementById("runBtn").disabled = false;
+    return;
+  }
+
+  const STRUCTURED = ["EVALUATION","COMPARISON","HALLUCINATION","BENCHMARK","SCORE","COMPLETED"];
+
+  if (STRUCTURED.includes(data.status)) {
+    const content = data.content || "";
+    rz.innerHTML = "";
+    rz.appendChild(renderResult(content, data.status));
+    scrollBottom();
+
+    // Update stats
+    if (data.status === "EVALUATION" || data.status === "SCORE") stats.evals++;
+    else if (data.status === "COMPARISON") stats.comps++;
+    else if (data.status === "HALLUCINATION") stats.halls++;
+    else stats.evals++;
+    updateStats();
+
+    setStatus("done", "Complete");
+  } else if (data.status === "ERROR") {
+    rz.innerHTML = cardHtml("err", esc(data.message || "Unknown error"));
+    setStatus("err", "Error");
+  } else {
+    rz.innerHTML = cardHtml("err", "Unexpected response.");
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  document.getElementById("runBtn").disabled = false;
+}
+
+// ─────────────────────────────────────────
+// Clear all
+// ─────────────────────────────────────────
+function clearAll() {
+  document.getElementById("resultZone").innerHTML = "";
+  document.getElementById("welcome").style.display = "";
+  document.getElementById("inputPanel").style.display = "none";
+  stats = { evals: 0, comps: 0, halls: 0 };
+  updateStats();
+  document.getElementById("recentList").innerHTML = `<div class="muted-note">No evaluations yet</div>`;
+  setStatus("idle", "Ready");
+  running = false;
+  document.getElementById("runBtn").disabled = false;
+  // Reset mode buttons
+  Object.keys(MODES).forEach(k => {
+    document.getElementById("btn-" + k).className = "mode-btn" + (k === "evaluate" ? " on-evaluate" : "");
+  });
+  mode = "evaluate";
+}
+
+// Init: show input panel on load so user can start immediately
+setMode("evaluate");
+</script>
+</body>
+</html>

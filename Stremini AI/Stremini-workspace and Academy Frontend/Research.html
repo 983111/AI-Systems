@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Research & Math Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface2:#f2f0ec;
+  --border:#e4e0d8;--border2:#ece9e2;
+  --txt:#1a1814;--txt2:#6b6459;--muted:#9e9589;
+  --amber:#d97706;--amber2:#b45309;--amber-bg:#fffbf5;
+  --violet:#7c3aed;--violet-bg:#f5f3ff;
+  --green:#059669;--green-bg:#d1fae5;
+  --red:#991b1b;--red-bg:#fee2e2;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-head{padding:24px 20px 18px;border-bottom:1px solid var(--border2)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:32px;height:32px;background:var(--txt);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:17px;height:17px}
+.logo-name{font-family:'Lora',serif;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sb-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.mode-btn svg{width:18px;height:18px}
+.mode-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-research{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.mode-btn.on-math{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.sb-sec{padding:16px 20px;border-bottom:1px solid var(--border2)}
+.sb-sec:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--muted)}
+.badge-run{background:#fef3c7;color:#92400e}
+.badge-done{background:var(--green-bg);color:#065f46}
+.badge-err{background:var(--red-bg);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge-run .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:2px}
+.stat-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 6px;text-align:center}
+.stat-n{font-family:'Lora',serif;font-size:19px;font-weight:500;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.recent-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.recent-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--r2);font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;line-height:1.4}
+.recent-item:hover{background:var(--amber-bg);color:var(--amber)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin-top:5px}
+.muted-note{font-size:12px;color:var(--muted);font-style:italic}
+.new-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 11px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.topbar{padding:13px 28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.mode-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;background:var(--surface);box-shadow:var(--shadow)}
+.mode-pill.research{color:var(--amber);border-color:#fde68a;background:var(--amber-bg)}
+.mode-pill.math{color:var(--violet);border-color:#ddd6fe;background:var(--violet-bg)}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;outline:none}
+.ghost-btn:hover{background:var(--surface);border-color:var(--muted)}
+
+/* Messages */
+.msgs-wrap{flex:1;overflow-y:auto;padding:28px 0;scroll-behavior:smooth}
+.msgs{max-width:860px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;padding:20px 0}
+.w-icon{width:62px;height:62px;background:var(--txt);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:var(--shadow-md)}
+.w-icon svg{width:32px;height:32px}
+.welcome h2{font-family:'Lora',serif;font-size:26px;font-weight:500;margin-bottom:8px;letter-spacing:-.4px}
+.welcome p{font-size:14.5px;color:var(--txt2);line-height:1.65;max-width:460px;margin-bottom:26px}
+.hint-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:540px}
+.hint{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.hint:hover{border-color:var(--amber);background:var(--amber-bg);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.hint.math-h:hover{border-color:var(--violet);background:var(--violet-bg)}
+.hint-em{font-size:20px;flex-shrink:0;margin-top:1px}
+.hint strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.hint small{font-size:11px;color:var(--muted)}
+
+/* Message row */
+.msg-row{display:flex;gap:12px;padding:18px 0;border-bottom:1px solid var(--border2);animation:fadein .3s ease}
+.msg-row:last-child{border-bottom:none}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-top:2px}
+.av-agent{background:var(--txt);color:#fff}
+.av-user{background:var(--amber);color:#fff}
+.msg-body{flex:1;min-width:0}
+.msg-who{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.msg-time{font-weight:400;font-size:11px;color:var(--muted)}
+.msg-content{font-size:14px;line-height:1.7;color:var(--txt)}
+
+/* Thinking */
+.thinking-row{display:flex;gap:12px;padding:18px 0}
+.dots{display:flex;gap:4px;align-items:center}
+.dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bonce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bonce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* Action cards */
+.card{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:var(--r);margin:4px 0;font-size:13px;font-weight:500}
+.card-ok{background:var(--green-bg);color:#065f46;border:1px solid #a7f3d0}
+.card-work{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.card-math{background:var(--violet-bg);color:#5b21b6;border:1px solid #ddd6fe}
+.card-err{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+
+/* Paper block */
+.paper-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:8px 0 6px;box-shadow:var(--shadow)}
+.paper-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.paper-hd-left{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.paper-hd-left.research{color:var(--amber)}
+.paper-hd-left.math{color:var(--violet)}
+.paper-hd-actions{display:flex;gap:6px;align-items:center}
+.copy-btn,.hd-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;transition:all .15s}
+.copy-btn:hover,.hd-btn:hover{background:var(--border);color:var(--txt)}
+
+/* Paper body */
+.paper-bd{
+  padding:28px 32px;
+  font-family:'Lora',Times,serif;
+  font-size:15.5px;
+  line-height:1.95;
+  color:#1a1814;
+  max-height:640px;
+  overflow-y:auto;
+}
+.paper-bd.math-bd{
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:15px;
+  line-height:1.78;
+  background:linear-gradient(180deg,#fcfcff 0%,#fafaff 100%);
+}
+.math-doc{display:flex;flex-direction:column;gap:14px}
+.math-header{border:1px solid #ddd6fe;background:linear-gradient(180deg,#f5f3ff,#eef2ff);border-radius:12px;padding:14px 16px}
+.math-kicker{font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.math-title{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;line-height:1.35;color:#1f1b4d;letter-spacing:-.2px}
+.math-section{border:1px solid #e5e7eb;background:#fff;border-radius:12px;overflow:hidden}
+.math-section-h{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.5px}
+.math-section-dot{width:8px;height:8px;border-radius:50%;background:#818cf8}
+.math-section-b{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.math-para{font-size:15px;color:#111827;line-height:1.78}
+.math-list{margin:0 0 0 18px;display:flex;flex-direction:column;gap:6px;color:#1f2937}
+.math-list li{padding-left:2px;line-height:1.65}
+.math-step{display:flex;gap:8px;align-items:flex-start;padding:10px 11px;border:1px solid #ddd6fe;background:#f5f3ff;border-radius:9px}
+.math-step-no{font-size:12px;font-weight:700;color:#5b21b6;background:#ede9fe;border-radius:999px;min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.math-step-txt{flex:1;color:#312e81;line-height:1.7}
+.math-eq{font-family:'DM Mono','SFMono-Regular',Consolas,monospace;font-size:13px;line-height:1.65;background:#111827;color:#f9fafb;border-radius:8px;padding:10px 12px;overflow-x:auto}
+.math-note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;color:#1e3a8a}
+.math-final{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:12px 14px;font-weight:600;line-height:1.65}
+.math-inline-eq{font-family:'DM Mono','SFMono-Regular',Consolas,monospace;background:#eef2ff;border:1px solid #c7d2fe;border-radius:5px;padding:0 6px;font-size:.92em;color:#312e81}
+.math-empty{color:var(--muted);font-style:italic}
+
+/* Structured paper rendering */
+.paper-title-block{text-align:center;padding:0 0 22px;border-bottom:2px solid var(--border);margin-bottom:24px}
+.paper-main-title{font-family:'Lora',serif;font-size:20px;font-weight:700;line-height:1.35;margin-bottom:10px;letter-spacing:-.3px}
+.paper-meta{font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.paper-meta span{display:flex;align-items:center;gap:4px}
+
+.paper-section{margin-bottom:26px}
+.paper-section-heading{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--amber2);margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border2)}
+.paper-section-heading.math-heading{color:var(--violet)}
+.paper-sub-heading{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--txt);margin:18px 0 8px}
+
+.paper-para{margin-bottom:14px;text-align:justify;hyphens:auto}
+.paper-para:last-child{margin-bottom:0}
+
+.paper-divider{border:none;border-top:1px solid var(--border2);margin:20px 0}
+
+.keywords-block{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 14px;margin-bottom:18px;font-size:12.5px;color:var(--txt2);font-family:'DM Sans',sans-serif}
+.keywords-block strong{color:var(--txt);margin-right:6px}
+
+.references-section{border-top:2px solid var(--border);padding-top:20px;margin-top:10px}
+.ref-item{font-size:13.5px;line-height:1.7;margin-bottom:8px;padding-left:26px;text-indent:-26px;color:var(--txt2)}
+.ref-item a{color:var(--blue);text-decoration:none}
+.ref-item a:hover{text-decoration:underline}
+
+/* Diagram inside paper */
+.diagram-wrap{margin:18px 0;background:#fafaf8;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.diagram-bar{display:flex;align-items:center;gap:7px;padding:7px 13px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px}
+.diagram-render{padding:18px;display:flex;justify-content:center;overflow-x:auto;min-height:60px}
+.diagram-render svg{max-width:100%;height:auto}
+.diagram-err{padding:12px 16px;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--red);background:var(--red-bg)}
+
+/* Download row */
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s}
+.dl-txt{background:var(--txt);color:#fff}
+.dl-txt:hover{background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.dl-rtf{background:#2563eb;color:#fff}
+.dl-rtf:hover{background:#1d4ed8;transform:translateY(-1px)}
+.dl-pdf{background:#dc2626;color:#fff}
+.dl-pdf:hover{background:#b91c1c;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+
+/* Input bar */
+.input-bar{padding:16px 28px 20px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+.input-inner{max-width:860px;margin:0 auto}
+.input-wrap{display:flex;align-items:flex-end;gap:9px;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:9px 11px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+.input-wrap:focus-within{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.1),var(--shadow)}
+.task-ta{flex:1;border:none!important;background:transparent!important;padding:3px!important;box-shadow:none!important;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:22px;max-height:160px;resize:none;overflow-y:auto;outline:none;color:var(--txt)}
+.task-ta::placeholder{color:var(--muted)}
+.send-btn{width:34px;height:34px;background:var(--txt);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.send-btn:hover{background:#2d2a26;transform:scale(1.05)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.send-btn svg{width:15px;height:15px}
+.input-hint{margin-top:7px;font-size:11px;color:var(--muted);text-align:center}
+
+/* Upload button */
+.upload-btn{width:34px;height:34px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;color:var(--txt2)}
+.upload-btn:hover{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.upload-btn svg{width:15px;height:15px}
+#fileInput{display:none}
+.file-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--amber-bg);border:1px solid #fde68a;border-radius:20px;font-size:12px;color:var(--amber2);margin-bottom:6px;max-width:100%}
+.file-chip span{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip button{background:none;border:none;cursor:pointer;color:var(--amber2);font-size:14px;line-height:1;padding:0;display:flex;align-items:center}
+.file-chip-wrap{display:none;padding:0 2px}
+.file-chip-wrap.visible{display:block}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.hint-grid{grid-template-columns:1fr}}
+
+/* ── PRINT / PDF STYLES (injected into print window) ── */
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Stremini</div>
+          <div class="logo-sub">Research Agent</div>
+        </div>
+      </div>
+      <div class="sb-label">Mode</div>
+      <div class="mode-grid">
+        <button class="mode-btn on-research" id="btnResearch" onclick="setMode('research')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+          </svg>
+          Research
+        </button>
+        <button class="mode-btn" id="btnMath" onclick="setMode('math')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="19" y1="5" x2="5" y2="19"/>
+            <circle cx="6.5" cy="6.5" r="2.5"/>
+            <circle cx="17.5" cy="17.5" r="2.5"/>
+          </svg>
+          Math
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Status</div>
+      <div id="statusBadge" class="badge badge-idle"><span class="dot"></span>Ready</div>
+      <div style="margin-top:9px;font-size:11.5px;color:var(--muted)" id="modeNote">Research — full structured papers with diagrams</div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-label">Session Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-n" id="sPapers">0</div><div class="stat-l">Papers</div></div>
+        <div class="stat-box"><div class="stat-n" id="sMath">0</div><div class="stat-l">Solved</div></div>
+        <div class="stat-box"><div class="stat-n" id="sDiags">0</div><div class="stat-l">Diagrams</div></div>
+      </div>
+    </div>
+
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-label">Recent</div>
+      <div class="recent-list" id="recentList"><div class="muted-note">No queries yet</div></div>
+    </div>
+
+    <div class="sb-sec">
+      <button class="new-btn" onclick="clearChat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New session
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tl">
+        <div class="mode-pill research" id="modePill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+          </svg>
+          <span id="pillTxt">Research Mode</span>
+        </div>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        </svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="msgs-wrap" id="msgsWrap">
+      <div class="msgs" id="msgs">
+        <div class="welcome" id="welcome">
+          <div class="w-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+            </svg>
+          </div>
+          <h2>Research &amp; Math Agent</h2>
+          <p>Write complete, structured academic papers or solve math problems step-by-step. Papers include auto-generated diagrams, proper citations, and high-quality PDF export.</p>
+          <div class="hint-grid">
+            <div class="hint" onclick="hint('research','Write a research paper on the impact of large language models on scientific discovery')">
+              <div class="hint-em">📄</div>
+              <div><strong>Research Paper</strong><small>Full structured paper + diagrams</small></div>
+            </div>
+            <div class="hint" onclick="hint('research','Write a comprehensive paper on quantum computing and cryptographic implications')">
+              <div class="hint-em">🔬</div>
+              <div><strong>Scientific Review</strong><small>Literature review &amp; analysis</small></div>
+            </div>
+            <div class="hint math-h" onclick="hint('math','Solve the integral of x squared times e to the x, dx, using integration by parts')">
+              <div class="hint-em">∫</div>
+              <div><strong>Calculus Problem</strong><small>Step-by-step solution</small></div>
+            </div>
+            <div class="hint math-h" onclick="hint('math','Prove that the square root of 2 is irrational')">
+              <div class="hint-em">📐</div>
+              <div><strong>Mathematical Proof</strong><small>Rigorous formal proof</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <div class="file-chip-wrap" id="fileChipWrap">
+          <div class="file-chip" id="fileChip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="fileChipName">document.pdf</span>
+            <button onclick="clearFile()" title="Remove file">×</button>
+          </div>
+        </div>
+        <div class="input-wrap">
+          <button class="upload-btn" onclick="document.getElementById('fileInput').click()" title="Upload PDF or DOCX">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/>
+            </svg>
+          </button>
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx" onchange="handleFileSelect(event)"/>
+          <textarea id="ta" class="task-ta" rows="1" placeholder="Enter a research topic or math problem…"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">Enter to send · Shift+Enter for new line · Upload PDF/DOCX to analyse documents</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BACKEND = "https://agentic-research.vishwajeetadkine705.workers.dev";
+
+// ── Mermaid init ──
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "neutral",
+  securityLevel: "loose",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+  flowchart: { curve: "basis", padding: 18 },
+});
+
+// ── State ──
+let mode = "research";
+let running = false;
+let history = [];
+let papers = 0, mathSolved = 0, diagramsTotal = 0;
+let diagId = 0;
+
+// ── DOM ──
+const ta       = document.getElementById("ta");
+const sendBtn  = document.getElementById("sendBtn");
+const msgs     = document.getElementById("msgs");
+const welcome  = document.getElementById("welcome");
+const msgsWrap = document.getElementById("msgsWrap");
+
+// ── Textarea ──
+ta.addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 160) + "px";
+});
+ta.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+// ── Mode switching ──
+function setMode(m) {
+  mode = m;
+  document.getElementById("btnResearch").className = "mode-btn" + (m === "research" ? " on-research" : "");
+  document.getElementById("btnMath").className     = "mode-btn" + (m === "math"     ? " on-math"     : "");
+  const pill = document.getElementById("modePill");
+  const modeNote = document.getElementById("modeNote");
+  if (m === "research") {
+    pill.className = "mode-pill research";
+    document.getElementById("pillTxt").textContent = "Research Mode";
+    modeNote.textContent = "Research — full structured papers with diagrams";
+    ta.placeholder = "Enter a research topic or question…";
+  } else {
+    pill.className = "mode-pill math";
+    document.getElementById("pillTxt").textContent = "Math Mode";
+    modeNote.textContent = "Math — solves problems step by step";
+    ta.placeholder = "Enter a math problem or proof…";
+  }
+}
+
+function hint(m, text) {
+  setMode(m);
+  ta.value = text;
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+  ta.focus();
+}
+
+// ── Status badge ──
+function setStatus(type, label) {
+  const cls = { idle:"badge-idle", run:"badge-run", done:"badge-done", err:"badge-err" };
+  const el = document.getElementById("statusBadge");
+  el.className = "badge " + (cls[type] || "badge-idle");
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+
+// ── Stats ──
+function updateStats() {
+  document.getElementById("sPapers").textContent = papers;
+  document.getElementById("sMath").textContent   = mathSolved;
+  document.getElementById("sDiags").textContent  = diagramsTotal;
+}
+
+// ── Recent ──
+function addRecent(text, m) {
+  const list = document.getElementById("recentList");
+  const empty = list.querySelector(".muted-note");
+  if (empty) empty.remove();
+  const item = document.createElement("div");
+  item.className = "recent-item";
+  item.innerHTML = `<div class="ri-dot"></div>${text.slice(0,55)}${text.length>55?"…":""}`;
+  item.onclick = () => hint(m, text);
+  list.prepend(item);
+  while (list.children.length > 5) list.lastChild.remove();
+}
+
+// ── Utils ──
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function scrollBottom() { msgsWrap.scrollTop = msgsWrap.scrollHeight; }
+function hideWelcome() { if (welcome) welcome.style.display = "none"; }
+function now() { return new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }); }
+
+// ── Add plain message ──
+function addMsg(role, htmlContent) {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  const isAgent = role === "agent";
+  row.innerHTML = `
+    <div class="av ${isAgent ? "av-agent" : "av-user"}">
+      ${isAgent
+        ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>`
+        : "Y"}
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">${isAgent ? "Stremini Agent" : "You"} <span class="msg-time">${now()}</span></div>
+      <div class="msg-content">${htmlContent}</div>
+    </div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+// ── Thinking ──
+function addThinking() {
+  hideWelcome();
+  const row = document.createElement("div");
+  row.className = "thinking-row"; row.id = "thinking";
+  row.innerHTML = `
+    <div class="av av-agent">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+      </svg>
+    </div>
+    <div class="msg-body">
+      <div class="msg-who">Stremini Agent</div>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+}
+function removeThinking() { const t=document.getElementById("thinking"); if(t)t.remove(); }
+
+// ── Card HTML ──
+function card(type, text) {
+  const cls = { ok:"card-ok", work:"card-work", math:"card-math", err:"card-err" };
+  const icons = {
+    ok:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    work: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    math: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`,
+    err:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  };
+  return `<div class="card ${cls[type]||"card-ok"}">${icons[type]||""} ${text}</div>`;
+}
+
+// ── Extract <diagram> blocks, return parts array ──────────────────
+function parseContent(content) {
+  const parts = [];
+  const re = /<diagram\s+type=["']?(\w+)["']?\s+title=["']?([^"'>]*)["']?\s*>([\s\S]*?)<\/diagram>/gi;
+  let last = 0, m;
+  while ((m = re.exec(content)) !== null) {
+    if (m.index > last) parts.push({ kind: "text", txt: content.slice(last, m.index) });
+    parts.push({ kind: "diagram", dtype: m[1], title: m[2], code: m[3].trim() });
+    last = m.index + m[0].length;
+  }
+  if (last < content.length) parts.push({ kind: "text", txt: content.slice(last) });
+  return parts;
+}
+
+// ── Render one line into the right DOM element ─────────────────────
+function renderLine(l, state) {
+  const { container, hClass } = state;
+
+  // Skip empty, dividers, diagram label lines
+  if (!l) return;
+  if (/^[━─=\-]{3,}$/.test(l)) return;
+  if (/^(MINDMAP|FLOWCHART|TIMELINE|GRAPH|SEQUENCE)\s/i.test(l)) return;
+
+  function getTarget() { return state.section || container; }
+
+  function flushPara() {
+    if (!state.para.length) return;
+    const text = state.para.join(" ").trim();
+    state.para = [];
+    if (!text) return;
+    if (/^keywords:/i.test(text)) {
+      const kb = document.createElement("div");
+      kb.className = "keywords-block";
+      kb.innerHTML = "<strong>Keywords:</strong> " + esc(text.replace(/^keywords:\s*/i, ""));
+      getTarget().appendChild(kb);
+    } else {
+      const p = document.createElement("p");
+      p.className = "paper-para";
+      p.textContent = text;
+      getTarget().appendChild(p);
+    }
+  }
+
+  // References section
+  if (/^REFERENCES\s*$/i.test(l)) {
+    flushPara();
+    state.inRefs = true;
+    const sec = document.createElement("div");
+    sec.className = "paper-section";
+    const h = document.createElement("div");
+    h.className = "paper-section-heading " + hClass;
+    h.textContent = "References";
+    sec.appendChild(h);
+    container.appendChild(sec);
+    state.section = sec;
+    state.refsDiv = sec;
+    return;
+  }
+
+  if (state.inRefs) {
+    flushPara();
+    const ri = document.createElement("div");
+    ri.className = "ref-item";
+    // Append to last ref-item if this looks like a continuation
+    const last = state.refsDiv.lastElementChild;
+    const isNewRef = /^\[\d+\]/.test(l) || /^[A-Z][a-zA-Z]+,/.test(l) || /^[A-Z][a-z]+ [A-Z]/.test(l);
+    if (isNewRef || !last || !last.classList.contains("ref-item")) {
+      ri.textContent = l;
+      state.refsDiv.appendChild(ri);
+    } else {
+      last.textContent += " " + l;
+    }
+    return;
+  }
+
+  // Abstract heading
+  if (/^ABSTRACT\s*$/i.test(l)) {
+    flushPara();
+    const sec = document.createElement("div");
+    sec.className = "paper-section";
+    const h = document.createElement("div");
+    h.className = "paper-section-heading " + hClass;
+    h.textContent = "Abstract";
+    sec.appendChild(h);
+    container.appendChild(sec);
+    state.section = sec;
+    return;
+  }
+
+  // Numbered section "1. INTRODUCTION"
+  const mjMatch = /^(\d+)\.\s+(.+)$/.exec(l);
+  if (mjMatch) {
+    flushPara();
+    const sec = document.createElement("div");
+    sec.className = "paper-section";
+    const h = document.createElement("div");
+    h.className = "paper-section-heading " + hClass;
+    h.textContent = mjMatch[1] + ". " + mjMatch[2];
+    sec.appendChild(h);
+    container.appendChild(sec);
+    state.section = sec;
+    return;
+  }
+
+  // Sub-heading "2.1 Foundational Works"
+  const sbMatch = /^(\d+\.\d+)\s+(.+)$/.exec(l);
+  if (sbMatch) {
+    flushPara();
+    const sh = document.createElement("div");
+    sh.className = "paper-sub-heading";
+    sh.textContent = sbMatch[1] + " " + sbMatch[2];
+    getTarget().appendChild(sh);
+    return;
+  }
+
+  // Keywords on its own line
+  if (/^keywords:/i.test(l)) {
+    flushPara();
+    const kb = document.createElement("div");
+    kb.className = "keywords-block";
+    kb.innerHTML = "<strong>Keywords:</strong> " + esc(l.replace(/^keywords:\s*/i, ""));
+    getTarget().appendChild(kb);
+    return;
+  }
+
+  // Everything else is prose — accumulate into paragraph
+  state.para.push(l);
+}
+
+// ── Build the full paper DOM from parts ───────────────────────────
+function buildPaperDOM(allParts, isMath) {
+  if (isMath) return buildMathDOM(allParts);
+
+  const container = document.createElement("div");
+  const hClass = isMath ? "math-heading" : "";
+
+  // Find where real structured content starts by locating the Authors: line.
+  // Everything before the title line (the line just before Authors:) is preamble and is skipped.
+  let allLines = [];
+  for (const p of allParts) {
+    if (p.kind === "text") allLines = allLines.concat(p.txt.split("\n").map(l => l.trim()));
+    else allLines.push("__DIAGRAM__");
+  }
+
+  let authorsIdx = allLines.findIndex(l => /^authors:/i.test(l));
+  // Find title: last non-empty line before authorsIdx
+  let titleIdx = 0;
+  if (authorsIdx > 0) {
+    for (let i = authorsIdx - 1; i >= 0; i--) {
+      if (allLines[i].trim()) { titleIdx = i; break; }
+    }
+  }
+
+  // Render title block
+  if (authorsIdx > 0) {
+    const tb = document.createElement("div");
+    tb.className = "paper-title-block";
+    const th = document.createElement("div");
+    th.className = "paper-main-title";
+    th.textContent = allLines[titleIdx];
+    tb.appendChild(th);
+    // Meta line (Authors | Date)
+    const metaText = allLines[authorsIdx];
+    const tm = document.createElement("div");
+    tm.className = "paper-meta";
+    metaText.split("|").map(s => s.trim()).filter(Boolean).forEach(seg => {
+      const sp = document.createElement("span");
+      sp.textContent = seg;
+      tm.appendChild(sp);
+    });
+    tb.appendChild(tm);
+    container.appendChild(tb);
+  }
+
+  // State for line-by-line rendering
+  const state = {
+    container,
+    hClass,
+    section: null,
+    para: [],
+    inRefs: false,
+    refsDiv: null,
+  };
+
+  // Track global line index to skip preamble
+  let globalIdx = 0;
+  // Lines after the Authors line (or from start if no Authors found) are real content
+  const contentStartIdx = authorsIdx >= 0 ? authorsIdx + 1 : 0;
+
+  function flushParaFinal() {
+    if (!state.para.length) return;
+    const text = state.para.join(" ").trim();
+    state.para = [];
+    if (!text) return;
+    const p = document.createElement("p");
+    p.className = "paper-para";
+    p.textContent = text;
+    (state.section || container).appendChild(p);
+  }
+
+  for (const part of allParts) {
+    if (part.kind === "diagram") {
+      flushParaFinal();
+      if (part.el) (state.section || container).appendChild(part.el);
+    } else {
+      const lines = part.txt.split("\n").map(l => l.trim());
+      for (const l of lines) {
+        if (globalIdx >= contentStartIdx) {
+          renderLine(l, state);
+        }
+        globalIdx++;
+      }
+    }
+  }
+
+  flushParaFinal();
+  return container;
+}
+
+function formatInlineMath(text) {
+  const frag = document.createDocumentFragment();
+  const re = /(\$[^$]+\$|`[^`]+`)/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const span = document.createElement("span");
+    span.className = "math-inline-eq";
+    span.textContent = m[0].replace(/^[$`]|[$`]$/g, "");
+    frag.appendChild(span);
+    last = re.lastIndex;
+  }
+  if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+  return frag;
+}
+
+function normalizeMathSectionName(raw) {
+  const key = raw.toLowerCase().replace(/[^a-z\s]/g, "").trim();
+  if (!key) return "Explanation";
+  if (/(problem|question)/.test(key)) return "Problem";
+  if (/(given|data|known)/.test(key)) return "Given";
+  if (/(approach|plan|strategy|method)/.test(key)) return "Approach";
+  if (/(step|solution|work)/.test(key)) return "Step-by-step";
+  if (/(check|verify|validation)/.test(key)) return "Verification";
+  if (/(final|answer|result|therefore)/.test(key)) return "Final Answer";
+  if (/(note|intuition|insight|tip)/.test(key)) return "Notes";
+  return raw.trim();
+}
+
+function createMathSection(container, sectionName) {
+  const sec = document.createElement("div");
+  sec.className = "math-section";
+  const hd = document.createElement("div");
+  hd.className = "math-section-h";
+  hd.innerHTML = `<span class="math-section-dot"></span>${esc(sectionName)}`;
+  const bd = document.createElement("div");
+  bd.className = "math-section-b";
+  sec.appendChild(hd);
+  sec.appendChild(bd);
+  container.appendChild(sec);
+  return bd;
+}
+
+function appendMathBlock(target, line, state) {
+  if (!line) {
+    state.currentList = null;
+    return;
+  }
+
+  if (/^[-*•]\s+/.test(line)) {
+    if (!state.currentList) {
+      state.currentList = document.createElement("ul");
+      state.currentList.className = "math-list";
+      target.appendChild(state.currentList);
+    }
+    const li = document.createElement("li");
+    li.appendChild(formatInlineMath(line.replace(/^[-*•]\s+/, "")));
+    state.currentList.appendChild(li);
+    return;
+  }
+
+  state.currentList = null;
+
+  const stepMatch = /^(?:step\s*)?(\d+)[\).:-]\s+(.+)/i.exec(line);
+  if (stepMatch) {
+    const row = document.createElement("div");
+    row.className = "math-step";
+    row.innerHTML = `<span class="math-step-no">${stepMatch[1]}</span>`;
+    const txt = document.createElement("div");
+    txt.className = "math-step-txt";
+    txt.appendChild(formatInlineMath(stepMatch[2]));
+    row.appendChild(txt);
+    target.appendChild(row);
+    return;
+  }
+
+  if (/^(final answer|answer|result|therefore)\s*[:\-]/i.test(line)) {
+    const final = document.createElement("div");
+    final.className = "math-final";
+    final.appendChild(formatInlineMath(line));
+    target.appendChild(final);
+    return;
+  }
+
+  if (/^(note|tip|intuition)\s*[:\-]/i.test(line)) {
+    const note = document.createElement("div");
+    note.className = "math-note";
+    note.appendChild(formatInlineMath(line));
+    target.appendChild(note);
+    return;
+  }
+
+  if (/^[A-Za-z\s]{0,12}[=:].*[+\-*/^()]/.test(line) || /\b(sum|integral|sqrt|lim|theta|sigma|pi|alpha|beta)\b/i.test(line)) {
+    const eq = document.createElement("div");
+    eq.className = "math-eq";
+    eq.textContent = line;
+    target.appendChild(eq);
+    return;
+  }
+
+  const p = document.createElement("div");
+  p.className = "math-para";
+  p.appendChild(formatInlineMath(line));
+  target.appendChild(p);
+}
+
+function buildMathDOM(allParts) {
+  const container = document.createElement("div");
+  container.className = "math-doc";
+
+  const lines = [];
+  for (const p of allParts) {
+    if (p.kind === "diagram") lines.push({ type: "diagram", el: p.el });
+    else p.txt.split("\n").forEach(l => lines.push({ type: "line", txt: l.trim() }));
+  }
+
+  const firstLine = lines.find(x => x.type === "line" && x.txt)?.txt || "Math Solution";
+  const header = document.createElement("div");
+  header.className = "math-header";
+  header.innerHTML = `<div class="math-kicker">Math solution</div><div class="math-title"></div>`;
+  header.querySelector(".math-title").textContent = firstLine.replace(/^#{1,3}\s*/, "");
+  container.appendChild(header);
+
+  let sectionName = "Explanation";
+  let sectionBody = createMathSection(container, sectionName);
+  const state = { currentList: null };
+
+  lines.forEach((item, idx) => {
+    if (item.type === "diagram") {
+      state.currentList = null;
+      if (item.el) sectionBody.appendChild(item.el);
+      return;
+    }
+
+    let line = item.txt;
+    if (!line) {
+      state.currentList = null;
+      return;
+    }
+
+    if (idx === 0 && line === firstLine) return;
+
+    const headingMatch = /^#{1,3}\s+(.+)$/.exec(line) || /^([A-Za-z][A-Za-z\s]{1,30})\s*:\s*$/.exec(line);
+    if (headingMatch) {
+      sectionName = normalizeMathSectionName(headingMatch[1]);
+      sectionBody = createMathSection(container, sectionName);
+      state.currentList = null;
+      return;
+    }
+
+    const explicitSectionMatch = /^(problem|given|approach|steps?|verification|final answer|result|notes?)\s*:\s*(.+)$/i.exec(line);
+    if (explicitSectionMatch) {
+      const targetSection = normalizeMathSectionName(explicitSectionMatch[1]);
+      if (targetSection !== sectionName) {
+        sectionName = targetSection;
+        sectionBody = createMathSection(container, sectionName);
+      }
+      appendMathBlock(sectionBody, explicitSectionMatch[2], state);
+      return;
+    }
+
+    appendMathBlock(sectionBody, line, state);
+  });
+
+  if (container.querySelectorAll('.math-section').length === 1 && !container.querySelector('.math-section-b').innerText.trim()) {
+    const empty = document.createElement("div");
+    empty.className = "math-empty";
+    empty.textContent = "No solution content generated.";
+    container.appendChild(empty);
+  }
+
+  return container;
+}
+
+// ── Main render function ───────────────────────────────────────────
+async function renderPaper(content, isMath) {
+  const parts = parseContent(content);
+  let diagramsFound = 0;
+  const diagramSvgMap = {};
+
+  // Render diagrams first, attach as part.el
+  for (const part of parts) {
+    if (part.kind !== "diagram") continue;
+    diagramsFound++;
+    const diagKey = "diag_" + diagramsFound;
+    const dw = document.createElement("div");
+    dw.className = "diagram-wrap";
+    dw.setAttribute("data-diag-key", diagKey);
+    dw.innerHTML = `<div class="diagram-bar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      ${esc(part.title || part.dtype)}
+    </div>`;
+    const dr = document.createElement("div");
+    dr.className = "diagram-render";
+    try {
+      const uid = "d" + (++diagId) + "_" + Date.now();
+      const { svg } = await mermaid.render(uid, part.code);
+      dr.innerHTML = svg;
+      diagramSvgMap[diagKey] = svg;
+    } catch (e) {
+      dr.className = "diagram-err";
+      dr.textContent = "Diagram error: " + e.message;
+    }
+    dw.appendChild(dr);
+    part.el = dw;
+  }
+
+  // Build outer structure
+  const wrap  = document.createElement("div");
+  const block = document.createElement("div");
+  block.className = "paper-block";
+  const pid = "p" + Date.now();
+  const hClass = isMath ? "math" : "research";
+  const hLabel = isMath ? "Math Solution" : "Research Paper";
+  const hIcon  = isMath
+    ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`
+    : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>`;
+
+  block.innerHTML = `<div class="paper-hd">
+    <div class="paper-hd-left ${hClass}">${hIcon} ${hLabel}</div>
+    <div class="paper-hd-actions">
+      <button class="copy-btn" id="cpbtn-${pid}">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+  </div>`;
+
+  const body = document.createElement("div");
+  body.className = isMath ? "paper-bd math-bd" : "paper-bd";
+  body.id = pid;
+
+  // Build the structured DOM
+  const paperDOM = buildPaperDOM(parts, isMath);
+  body.appendChild(paperDOM);
+  block.appendChild(body);
+  wrap.appendChild(block);
+
+  // Copy button handler
+  setTimeout(() => {
+    const btn = document.getElementById("cpbtn-" + pid);
+    if (btn) btn.onclick = () => {
+      navigator.clipboard.writeText(document.getElementById(pid).innerText || "")
+        .then(() => { btn.textContent = "Copied!"; setTimeout(() => btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`, 2000); })
+        .catch(() => {});
+    };
+  }, 50);
+
+  // Download buttons
+  const dlRow = document.createElement("div");
+  dlRow.className = "dl-row";
+
+  const dlTxt = document.createElement("button");
+  dlTxt.className = "dl-btn dl-txt";
+  dlTxt.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> .txt`;
+  dlTxt.onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([document.getElementById(pid).innerText || ""], { type: "text/plain" }));
+    a.download = `stremini-${Date.now()}.txt`;
+    a.click();
+  };
+  dlRow.appendChild(dlTxt);
+
+  if (!isMath) {
+    const dlPdf = document.createElement("button");
+    dlPdf.className = "dl-btn dl-pdf";
+    dlPdf.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> .pdf`;
+    dlPdf.onclick = () => printToPDF(pid, diagramSvgMap);
+    dlRow.appendChild(dlPdf);
+  }
+
+  wrap.appendChild(dlRow);
+  return { el: wrap, diagramsFound };
+}
+
+// ──────────────────────────────────────────────────────────────────
+// PRINT-TO-PDF — opens a dedicated print window with full CSS
+// This produces crisp, properly paginated, multi-page PDFs
+// ──────────────────────────────────────────────────────────────────
+function printToPDF(pid, diagramSvgMap) {
+  const bodyEl = document.getElementById(pid);
+  if (!bodyEl) return;
+
+  // Clone the body element
+  const clone = bodyEl.cloneNode(true);
+
+  // Replace diagram-render containers with inline SVGs from our map
+  clone.querySelectorAll(".diagram-wrap").forEach(dw => {
+    const key = dw.getAttribute("data-diag-key");
+    const dr = dw.querySelector(".diagram-render");
+    if (dr && key && diagramSvgMap[key]) {
+      dr.innerHTML = diagramSvgMap[key];
+    }
+  });
+
+  const printCSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @page {
+      size: A4;
+      margin: 22mm 20mm 22mm 20mm;
+    }
+
+    body {
+      font-family: 'Lora', 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.85;
+      color: #1a1814;
+      background: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .paper-bd {
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+
+    .paper-title-block {
+      text-align: center;
+      padding-bottom: 16pt;
+      border-bottom: 2pt solid #333;
+      margin-bottom: 20pt;
+      page-break-after: avoid;
+    }
+
+    .paper-main-title {
+      font-family: 'Lora', serif;
+      font-size: 16pt;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 10pt;
+      color: #111;
+    }
+
+    .paper-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 9pt;
+      color: #888;
+      display: flex;
+      gap: 16pt;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .paper-section {
+      margin-bottom: 18pt;
+    }
+
+    .paper-section-heading {
+      font-family: 'DM Sans', 'Arial', sans-serif;
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5pt;
+      color: #b45309;
+      margin-bottom: 10pt;
+      padding-bottom: 4pt;
+      border-bottom: 0.75pt solid #e4e0d8;
+      page-break-after: avoid;
+    }
+
+    .paper-sub-heading {
+      font-family: 'DM Sans', 'Arial', sans-serif;
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #1a1814;
+      margin: 14pt 0 6pt;
+      page-break-after: avoid;
+    }
+
+    .paper-para {
+      margin-bottom: 10pt;
+      text-align: justify;
+      hyphens: auto;
+      orphans: 3;
+      widows: 3;
+    }
+
+    .keywords-block {
+      background: #f5f3f0 !important;
+      border: 0.75pt solid #e4e0d8;
+      border-radius: 4pt;
+      padding: 8pt 10pt;
+      margin-bottom: 14pt;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 9.5pt;
+      color: #555;
+    }
+
+    .keywords-block strong {
+      color: #333;
+      margin-right: 4pt;
+    }
+
+    .diagram-wrap {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin: 14pt 0;
+      border: 0.75pt solid #e4e0d8;
+      border-radius: 5pt;
+      overflow: hidden;
+      background: #fafaf8 !important;
+    }
+
+    .diagram-bar {
+      background: #f2f0ec !important;
+      padding: 5pt 10pt;
+      border-bottom: 0.75pt solid #e4e0d8;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4pt;
+      color: #6b6459;
+    }
+
+    .diagram-render {
+      padding: 14pt;
+      display: flex;
+      justify-content: center;
+      overflow: visible;
+    }
+
+    .diagram-render svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .references-section {
+      border-top: 1.5pt solid #e4e0d8;
+      padding-top: 16pt;
+      margin-top: 10pt;
+    }
+
+    .ref-item {
+      font-size: 9.5pt;
+      line-height: 1.65;
+      margin-bottom: 7pt;
+      padding-left: 20pt;
+      text-indent: -20pt;
+      color: #444;
+    }
+
+    .paper-hd, .paper-hd-actions, .copy-btn {
+      display: none !important;
+    }
+  `;
+
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+  if (!printWindow) {
+    alert("Pop-up blocked. Please allow pop-ups for this page to export PDF.");
+    return;
+  }
+
+  printWindow.document.open();
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Stremini Research Paper</title>
+<style>${printCSS}</style>
+</head>
+<body>
+<div class="paper-bd">${clone.innerHTML}</div>
+</body>
+</html>`);
+  printWindow.document.close();
+
+  // Wait for fonts and images to load, then print
+  printWindow.onload = () => {
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      // Optional: close after print dialog
+      // printWindow.close();
+    }, 800);
+  };
+
+  // Fallback if onload doesn't fire
+  setTimeout(() => {
+    try {
+      printWindow.focus();
+      printWindow.print();
+    } catch(e) {}
+  }, 2000);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// PDF.js / DOCX helpers
+// ──────────────────────────────────────────────────────────────────
+function getPdfjsLib() {
+  return window.pdfjsLib || window['pdfjs-dist/build/pdf'] || null;
+}
+
+function ensurePdfjsReady() {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const check = () => {
+      const lib = getPdfjsLib();
+      if (lib) {
+        lib.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+        resolve(lib);
+      } else if (attempts++ < 30) {
+        setTimeout(check, 100);
+      } else {
+        reject(new Error("PDF.js failed to load."));
+      }
+    };
+    check();
+  });
+}
+
+let pendingDocText = null;
+let pendingDocName = null;
+
+function clearFile() {
+  pendingDocText = null;
+  pendingDocName = null;
+  document.getElementById("fileChipWrap").classList.remove("visible");
+  document.getElementById("fileInput").value = "";
+}
+
+async function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const ext = file.name.split(".").pop().toLowerCase();
+  document.getElementById("fileChipWrap").classList.add("visible");
+  document.getElementById("fileChipName").textContent = "Extracting text…";
+  try {
+    let text = "";
+    if (ext === "pdf") text = await extractPDF(file);
+    else if (ext === "docx" || ext === "doc") text = await extractDOCX(file);
+    else { alert("Only PDF and DOCX files are supported."); clearFile(); return; }
+    if (!text.trim()) { alert("Could not extract text from this file."); clearFile(); return; }
+    pendingDocText = text;
+    pendingDocName = file.name;
+    document.getElementById("fileChipName").textContent = file.name;
+  } catch (err) {
+    alert("Error reading file: " + err.message);
+    clearFile();
+  }
+}
+
+async function extractPDF(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfjs = await ensurePdfjsReady();
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+  let fullText = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    fullText += content.items.map(item => item.str).join(" ") + "\n";
+  }
+  return fullText.trim();
+}
+
+async function extractDOCX(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value.trim();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MAIN SEND HANDLER
+// ──────────────────────────────────────────────────────────────────
+async function handleSend() {
+  const query = ta.value.trim();
+  if (!query || running) return;
+
+  let finalQuery = query;
+  let displayQuery = query;
+  if (pendingDocText) {
+    const truncated = pendingDocText.length > 12000
+      ? pendingDocText.slice(0, 12000) + "\n\n[Document truncated to first 12,000 characters]"
+      : pendingDocText;
+    finalQuery = `The user has uploaded a document titled "${pendingDocName}". Here is the extracted text:\n\n---\n${truncated}\n---\n\nUser query: ${query}`;
+    displayQuery = `📄 ${pendingDocName} — ${query}`;
+    clearFile();
+  }
+
+  addMsg("user", esc(displayQuery));
+  addRecent(displayQuery, mode);
+  history.push({ role:"user", content: finalQuery });
+
+  ta.value = ""; ta.style.height = "auto";
+  running = true; sendBtn.disabled = true;
+  setStatus("run", mode === "math" ? "Solving…" : "Researching…");
+  addThinking();
+
+  let data;
+  try {
+    const res = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: finalQuery, mode, history: history.slice(-10), iteration: 0 }),
+    });
+    data = await res.json();
+  } catch (err) {
+    removeThinking();
+    addMsg("agent", card("err", "Network error: " + esc(err.message)));
+    setStatus("err", "Error"); running = false; sendBtn.disabled = false;
+    return;
+  }
+
+  removeThinking();
+
+  if (data.status === "PAPER" || data.status === "SOLUTION") {
+    const isMath = data.status === "SOLUTION";
+    const msgContent = data.content || "";
+
+    hideWelcome();
+    const row = document.createElement("div");
+    row.className = "msg-row";
+    row.innerHTML = `
+      <div class="av av-agent">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+          <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+        </svg>
+      </div>
+      <div class="msg-body">
+        <div class="msg-who">Stremini Agent <span class="msg-time">${now()}</span></div>
+        <div class="msg-content" id="agentSlot"></div>
+      </div>`;
+    msgs.appendChild(row);
+    scrollBottom();
+
+    const slot = document.getElementById("agentSlot");
+    slot.innerHTML = card("work", isMath ? "Rendering solution…" : "Rendering paper & diagrams…");
+
+    const { el, diagramsFound } = await renderPaper(msgContent, isMath);
+    slot.innerHTML = card(isMath ? "math" : "ok", isMath
+      ? "Math solution complete"
+      : `Research paper complete — ${diagramsFound} diagram${diagramsFound !== 1 ? "s" : ""} rendered`);
+    slot.appendChild(el);
+    scrollBottom();
+
+    if (isMath) {
+      mathSolved++;
+      history.push({ role:"assistant", content:"Solved math problem" });
+      setStatus("done", "Solved");
+    } else {
+      papers++;
+      diagramsTotal += diagramsFound;
+      history.push({ role:"assistant", content:"Drafted paper: " + (data.title || "") });
+      setStatus("done", "Paper Ready");
+    }
+    updateStats();
+
+  } else if (data.status === "COMPLETED") {
+    addMsg("agent", `<p>${esc(data.solution || "")}</p>`);
+    history.push({ role:"assistant", content: data.solution || "" });
+    setStatus("done", "Done");
+
+  } else if (data.status === "ERROR") {
+    addMsg("agent", card("err", esc(data.message || "Unknown error")));
+    setStatus("err", "Error");
+
+  } else {
+    addMsg("agent", card("err", "Unexpected response from agent."));
+    setStatus("err", "Error");
+  }
+
+  running = false;
+  sendBtn.disabled = false;
+}
+
+// ── Clear chat ──
+function clearChat() {
+  msgs.innerHTML = "";
+  msgs.appendChild(welcome);
+  welcome.style.display = "";
+  history = [];
+  papers = 0; mathSolved = 0; diagramsTotal = 0;
+  updateStats();
+  document.getElementById("recentList").innerHTML = `<div class="muted-note">No queries yet</div>`;
+  setStatus("idle", "Ready");
+  running = false; sendBtn.disabled = false;
+}
+</script>
+</body>
+</html>

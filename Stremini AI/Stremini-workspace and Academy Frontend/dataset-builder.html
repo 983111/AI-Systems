@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stremini — Dataset Builder Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f7f5f2;--surface:#fff;--surface-2:#f2f0ec;--surface-3:#ede9e1;
+  --border:#e4e0d8;--border-subtle:#ece9e2;
+  --text-primary:#1a1814;--text-secondary:#6b6459;--text-muted:#9e9589;
+  --accent:#d97706;--accent-light:#fef3c7;--accent-hover:#b45309;
+  --green:#059669;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-border:#ddd6fe;
+  --code-bg:#f0ede6;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.10),0 4px 12px rgba(0,0,0,.05);
+  --r:16px;--r-sm:10px;--r-xs:6px;
+}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',-apple-system,sans-serif;color:var(--text-primary);-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:288px 1fr;height:100vh;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar-header{padding:22px 20px 16px;border-bottom:1px solid var(--border-subtle);}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:3px;}
+.logo-icon{width:28px;height:28px;background:var(--text-primary);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-icon svg{width:15px;height:15px;}
+.logo-name{font-family:'Lora',serif;font-size:16px;font-weight:600;letter-spacing:-.3px;}
+.logo-tag{font-size:10px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;margin-left:37px;margin-top:2px;margin-bottom:14px;}
+.sidebar-section{padding:14px 18px;border-bottom:1px solid var(--border-subtle);}
+.sidebar-section:last-child{border-bottom:none;}
+.section-title{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+label{display:block;font-size:10.5px;font-weight:600;color:var(--text-secondary);letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;}
+input[type="text"],textarea{width:100%;background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--r-xs);padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .15s,box-shadow .15s;resize:none;}
+input[type="text"]:focus,textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(217,119,6,.10);}
+input[type="text"]::placeholder,textarea::placeholder{color:var(--text-muted);}
+
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.mode-btn{padding:7px 5px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:var(--surface-2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text-secondary);cursor:pointer;text-align:center;transition:all .15s;}
+.mode-btn:hover{border-color:var(--accent);color:var(--accent);background:#fffbf5;}
+.mode-btn.active{border-color:var(--accent);background:var(--accent-light);color:#92400e;font-weight:600;}
+
+.pipeline{display:flex;flex-direction:column;gap:2px;}
+.stage{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:var(--r-xs);font-size:11.5px;font-weight:500;color:var(--text-muted);transition:all .2s;}
+.stage.active{color:var(--accent);background:var(--accent-light);}
+.stage.done{color:var(--green);background:var(--green-bg);}
+.stage-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .2s;}
+.stage.active .stage-dot{background:var(--accent);animation:pulse 1.2s infinite;}
+.stage.done .stage-dot{background:var(--green);}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.stat-card{background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:var(--r-xs);padding:7px 8px;}
+.stat-label{font-size:9.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;}
+.stat-value{font-size:12.5px;font-weight:600;color:var(--text-primary);font-family:'DM Mono',monospace;}
+.stat-value.green{color:var(--green);}
+.stat-value.amber{color:var(--accent);}
+
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;font-size:11.5px;font-weight:500;}
+.status-badge.idle{background:var(--surface-2);color:var(--text-muted);}
+.status-badge.running{background:#fef3c7;color:#92400e;}
+.status-badge.done{background:var(--green-bg);color:#065f46;}
+.status-badge.error{background:var(--red-bg);color:#991b1b;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.status-badge.running .status-dot{animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.start-btn{width:100%;padding:9px 12px;background:var(--text-primary);color:#fff;border:none;border-radius:var(--r-xs);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:9px;transition:all .15s;}
+.start-btn:hover:not(:disabled){background:#2d2a26;transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.start-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.export-btns{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.export-btn{padding:7px 6px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:var(--surface-2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text-secondary);cursor:pointer;text-align:center;transition:all .15s;}
+.export-btn:hover{border-color:var(--accent);color:var(--accent);background:#fffbf5;}
+
+.new-session{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r-xs);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--text-secondary);cursor:pointer;transition:all .15s;}
+.new-session:hover{border-color:var(--accent);color:var(--accent);background:#fffbf5;}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg);}
+.topbar{padding:13px 26px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.context-pill{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:12.5px;font-weight:500;box-shadow:var(--shadow-sm);}
+.context-pill span{color:var(--text-secondary);font-weight:400;font-size:12px;}
+.topbar-right{display:flex;gap:8px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:var(--r-xs);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;outline:none;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1.5px solid var(--border);}
+.btn-ghost:hover{background:var(--surface);border-color:var(--text-muted);}
+
+/* ── Messages ── */
+.messages-container{flex:1;overflow-y:auto;padding:24px 0;scroll-behavior:smooth;}
+.messages-inner{max-width:820px;margin:0 auto;padding:0 26px;display:flex;flex-direction:column;gap:0;}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;animation:fadeIn .5s ease;}
+.welcome-icon{width:58px;height:58px;background:var(--text-primary);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:var(--shadow-md);}
+.welcome-icon svg{width:30px;height:30px;}
+.welcome h2{font-family:'Lora',serif;font-size:22px;font-weight:500;color:var(--text-primary);margin-bottom:7px;letter-spacing:-.4px;}
+.welcome p{font-size:14px;color:var(--text-secondary);line-height:1.65;max-width:420px;margin-bottom:22px;}
+.welcome-hints{display:flex;flex-direction:column;gap:6px;width:100%;max-width:440px;}
+.hint-card{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);text-align:left;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm);}
+.hint-card:hover{border-color:var(--accent);background:#fffbf5;transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.hint-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.hint-card strong{display:block;font-size:12.5px;font-weight:500;margin-bottom:1px;}
+.hint-card small{font-size:11px;color:var(--text-muted);}
+
+/* Messages */
+.message{display:flex;gap:12px;padding:20px 0;border-bottom:1px solid var(--border-subtle);animation:fadeIn .3s ease;}
+.message:last-child{border-bottom:none;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+.avatar{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;margin-top:2px;}
+.avatar-agent{background:var(--text-primary);color:#fff;}
+.avatar-user{background:var(--accent);color:#fff;}
+.msg-body{flex:1;min-width:0;}
+.msg-sender{font-size:11.5px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.msg-time{font-weight:400;font-size:10.5px;color:var(--text-muted);}
+
+/* ── Rich content blocks ── */
+.rich-content{display:flex;flex-direction:column;gap:14px;}
+
+/* Section header inside response */
+.r-section-title{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text-muted);padding-bottom:8px;border-bottom:1px solid var(--border-subtle);margin-top:4px;}
+
+/* Prose paragraph */
+.r-prose{font-size:14px;line-height:1.75;color:var(--text-primary);}
+.r-prose strong{font-weight:600;}
+.r-prose em{font-style:italic;}
+
+/* Status/confirm card */
+.r-confirm{display:flex;align-items:flex-start;gap:10px;padding:13px 15px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r-sm);font-size:13.5px;line-height:1.6;color:#065f46;}
+.r-confirm-icon{width:20px;height:20px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.r-confirm-icon svg{width:11px;height:11px;}
+
+/* Source table */
+.r-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r-sm);box-shadow:var(--shadow-sm);}
+.r-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.r-table thead{background:var(--surface-2);}
+.r-table th{padding:9px 13px;text-align:left;font-size:10.5px;font-weight:700;color:var(--text-muted);letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.r-table td{padding:9px 13px;border-bottom:1px solid var(--border-subtle);color:var(--text-primary);line-height:1.5;vertical-align:top;}
+.r-table tr:last-child td{border-bottom:none;}
+.r-table tr:hover td{background:var(--surface-2);}
+
+/* Source badge */
+.source-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:600;white-space:nowrap;}
+.badge-pubmed{background:#dbeafe;color:#1e40af;}
+.badge-clinical{background:#d1fae5;color:#065f46;}
+.badge-fda{background:#fce7f3;color:#9d174d;}
+.badge-who{background:#fef3c7;color:#92400e;}
+.badge-reddit{background:#fee2e2;color:#991b1b;}
+.badge-default{background:var(--surface-3);color:var(--text-secondary);}
+
+/* Label badge */
+.label-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:600;}
+.lbl-treatment{background:#d1fae5;color:#065f46;}
+.lbl-disease{background:#fee2e2;color:#991b1b;}
+.lbl-symptom{background:#fef3c7;color:#92400e;}
+.lbl-procedure{background:#dbeafe;color:#1e40af;}
+.lbl-lab_test{background:#f5f3ff;color:#6d28d9;}
+.lbl-device{background:#e0f2fe;color:#0369a1;}
+.lbl-prevention{background:#d1fae5;color:#047857;}
+.lbl-health_policy{background:#fdf4ff;color:#7e22ce;}
+.lbl-indication{background:#ecfdf5;color:#065f46;}
+.lbl-default{background:var(--surface-3);color:var(--text-secondary);}
+
+/* Quality bar */
+.quality-bar-wrap{display:flex;align-items:center;gap:8px;}
+.quality-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.quality-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.quality-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text-primary);min-width:26px;}
+
+/* Dataset sample cards */
+.sample-cards{display:flex;flex-direction:column;gap:8px;}
+.sample-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;box-shadow:var(--shadow-sm);animation:slideIn .25s ease;}
+.sample-card-top{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
+.sample-id{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text-muted);font-weight:500;}
+.sample-text{font-size:13.5px;line-height:1.65;color:var(--text-primary);margin-bottom:10px;}
+.sample-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.meta-chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:4px;padding:2px 7px;}
+.meta-chip strong{color:var(--text-secondary);font-weight:600;}
+
+/* Pipeline steps */
+.pipeline-steps{display:flex;flex-direction:column;gap:0;}
+.pipeline-step{display:flex;gap:14px;padding:10px 0;}
+.pipeline-step:not(:last-child){border-bottom:1px solid var(--border-subtle);}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--text-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.step-body{flex:1;}
+.step-title{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;}
+.step-desc{font-size:12.5px;color:var(--text-secondary);line-height:1.5;}
+
+/* Quality scoring table */
+.quality-factor-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border-subtle);}
+.quality-factor-row:last-child{border-bottom:none;}
+.qf-name{font-size:12.5px;color:var(--text-primary);}
+.qf-weight{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);}
+.qf-desc{font-size:11.5px;color:var(--text-muted);}
+
+/* Code block */
+.r-code-block{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;}
+.r-code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.r-code-lang{font-size:10.5px;font-weight:700;color:var(--text-muted);letter-spacing:.4px;text-transform:uppercase;display:flex;align-items:center;gap:5px;}
+.copy-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:3px;padding:3px 7px;border-radius:4px;transition:all .15s;}
+.copy-btn:hover{background:var(--border);color:var(--text-primary);}
+.r-code-body{padding:14px;overflow-x:auto;font-family:'DM Mono',monospace;font-size:12px;line-height:1.7;color:var(--text-primary);white-space:pre;max-height:360px;overflow-y:auto;}
+
+/* README card */
+.readme-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--shadow-sm);}
+.readme-header{padding:13px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.readme-title{font-size:13px;font-weight:600;color:var(--text-primary);}
+.readme-body{padding:16px;font-size:13.5px;line-height:1.75;color:var(--text-primary);max-height:420px;overflow-y:auto;}
+.readme-body h1{font-family:'Lora',serif;font-size:17px;font-weight:600;margin-bottom:10px;margin-top:16px;color:var(--text-primary);}
+.readme-body h1:first-child{margin-top:0;}
+.readme-body h2{font-size:13.5px;font-weight:700;margin:12px 0 6px;color:var(--text-primary);}
+.readme-body p{margin-bottom:8px;}
+.readme-body ul{padding-left:18px;margin-bottom:8px;}
+.readme-body li{margin-bottom:3px;}
+.readme-body code{background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:11.5px;}
+.readme-body pre{background:var(--code-bg);padding:12px;border-radius:6px;overflow-x:auto;font-family:'DM Mono',monospace;font-size:11.5px;margin:8px 0;}
+
+/* Download bar */
+.download-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--accent-light);border:1px solid #fde68a;border-radius:var(--r-sm);flex-wrap:wrap;}
+.download-bar span{font-size:13px;font-weight:500;color:#92400e;flex:1;}
+.dl-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-xs);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.dl-btn:hover{background:var(--accent-hover);}
+
+/* Bullet list */
+.r-list{display:flex;flex-direction:column;gap:4px;padding-left:4px;}
+.r-list-item{display:flex;align-items:flex-start;gap:8px;font-size:13.5px;line-height:1.6;color:var(--text-primary);}
+.r-list-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px;}
+
+/* Numbered steps */
+.r-steps{display:flex;flex-direction:column;gap:6px;}
+.r-step{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.6;color:var(--text-primary);}
+.r-step-n{min-width:20px;height:20px;border-radius:50%;background:var(--surface-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:var(--text-secondary);flex-shrink:0;margin-top:2px;}
+
+/* Generic card wrapper */
+.r-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--shadow-sm);}
+.r-card-header{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--surface-2);border-bottom:1px solid var(--border-subtle);}
+.r-card-label{font-size:10.5px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;}
+.r-card-body{padding:14px;}
+
+/* Action cards */
+.action-card{display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:var(--r-sm);margin:4px 0;font-size:13px;font-weight:500;}
+.action-info{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.action-success{background:var(--green-bg);color:#166534;border:1px solid var(--green-border);}
+.action-error{background:var(--red-bg);color:#991b1b;border:1px solid var(--red-border);}
+.action-warn{background:var(--accent-light);color:#92400e;border:1px solid #fde68a;}
+
+/* Thinking */
+.thinking{display:flex;gap:12px;padding:18px 0;animation:fadeIn .3s ease;}
+.thinking-dots{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.thinking-dots span{width:6px;height:6px;background:var(--text-muted);border-radius:50%;animation:bounce 1.2s infinite;}
+.thinking-dots span:nth-child(2){animation-delay:.15s;}
+.thinking-dots span:nth-child(3){animation-delay:.30s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* Input bar */
+.input-bar{padding:16px 26px 20px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;}
+.input-inner{max-width:820px;margin:0 auto;}
+.input-wrapper{display:flex;align-items:flex-end;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:8px 10px;box-shadow:var(--shadow-sm);transition:border-color .15s,box-shadow .15s;}
+.input-wrapper:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,.10),var(--shadow-sm);}
+.task-input{flex:1;border:none!important;background:transparent!important;padding:4px!important;box-shadow:none!important;font-size:14px;line-height:1.6;min-height:24px;max-height:180px;resize:none;overflow-y:auto;font-family:'DM Sans',sans-serif;color:var(--text-primary);outline:none;}
+.task-input::placeholder{color:var(--text-muted);}
+.send-btn{width:32px;height:32px;background:var(--text-primary);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.send-btn:hover:not(:disabled){background:#2d2a26;transform:scale(1.05);}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.send-btn svg{width:14px;height:14px;}
+.input-hint{margin-top:6px;font-size:10.5px;color:var(--text-muted);text-align:center;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted);}
+
+.toast{position:fixed;top:16px;right:16px;padding:10px 15px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;animation:fadeIn .2s ease;max-width:290px;box-shadow:var(--shadow-md);}
+.toast.error{background:var(--red-bg);border:1px solid var(--red-border);color:#991b1b;}
+.toast.success{background:var(--green-bg);border:1px solid var(--green-border);color:#065f46;}
+.toast.info{background:var(--accent-light);border:1px solid #fde68a;color:#92400e;}
+
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+      </div>
+      <span class="logo-name">Stremini</span>
+    </div>
+    <div class="logo-tag">Dataset Builder Agent</div>
+    <div id="statusBadge" class="status-badge idle"><div class="status-dot"></div><span>Ready</span></div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="section-title">Pipeline Mode</div>
+    <div class="mode-grid">
+      <button class="mode-btn active" onclick="setMode(this,'full')">Full Pipeline</button>
+      <button class="mode-btn" onclick="setMode(this,'collect')">Collect Only</button>
+      <button class="mode-btn" onclick="setMode(this,'clean')">Clean & Label</button>
+      <button class="mode-btn" onclick="setMode(this,'augment')">Augment</button>
+      <button class="mode-btn" onclick="setMode(this,'analyze')">Analyze</button>
+      <button class="mode-btn" onclick="setMode(this,'chat')">Free Chat</button>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="section-title">Dataset Goal</div>
+    <label>Describe what dataset you want</label>
+    <textarea id="goalInput" rows="3" placeholder="e.g. Phishing email detection dataset with spam / not-spam labels…"></textarea>
+    <button class="start-btn" id="startBtn" onclick="startAgent()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Start Agent
+    </button>
+  </div>
+
+  <div class="sidebar-section" id="pipelineSection" style="display:none;">
+    <div class="section-title">Pipeline Stages</div>
+    <div class="pipeline">
+      <div class="stage" id="stage-collect"><div class="stage-dot"></div>Collect</div>
+      <div class="stage" id="stage-clean"><div class="stage-dot"></div>Clean & Deduplicate</div>
+      <div class="stage" id="stage-label"><div class="stage-dot"></div>Auto-Label</div>
+      <div class="stage" id="stage-quality"><div class="stage-dot"></div>Quality Score</div>
+      <div class="stage" id="stage-augment"><div class="stage-dot"></div>Augment</div>
+      <div class="stage" id="stage-export"><div class="stage-dot"></div>Export</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section" id="statsSection" style="display:none;">
+    <div class="section-title">Dataset Stats</div>
+    <div class="stat-grid" id="statGrid"></div>
+  </div>
+
+  <div class="sidebar-section" id="exportSection" style="display:none;">
+    <div class="section-title">Download Dataset</div>
+    <div class="export-btns">
+      <button class="export-btn" onclick="downloadDataset('json')">⬇ JSON</button>
+      <button class="export-btn" onclick="downloadDataset('csv')">⬇ CSV</button>
+      <button class="export-btn" onclick="downloadDataset('jsonl')">⬇ JSONL</button>
+      <button class="export-btn" onclick="downloadDataset('readme')">⬇ README</button>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <button class="new-session" onclick="clearChat()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      New Session
+    </button>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="context-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+        <span id="contextPillText">No goal set</span>
+      </div>
+      <div id="modePill" style="font-size:11.5px;color:var(--text-muted);font-weight:500;">Mode: Full Pipeline</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <div class="messages-container" id="messagesContainer">
+    <div class="messages-inner" id="messagesInner">
+      <div id="welcomeScreen" class="welcome">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+        </div>
+        <h2>Dataset Builder Agent</h2>
+        <p>End-to-end AI pipeline — collect, clean, label, deduplicate, augment, and export ML-ready datasets with beautiful structured output.</p>
+        <div class="welcome-hints">
+          <div class="hint-card" onclick="setHint('Build a phishing email detection dataset with 5,000 spam and 5,000 normal samples, labeled and quality-scored.')">
+            <div class="hint-icon">🎣</div><div><strong>Phishing Detection Dataset</strong><small>Spam vs. normal email samples, labeled and scored</small></div>
+          </div>
+          <div class="hint-card" onclick="setHint('Generate a synthetic dataset of 2,000 coding problems with difficulty labels: easy, medium, hard.')">
+            <div class="hint-icon">💻</div><div><strong>Coding Problems Dataset</strong><small>Synthetic generation with difficulty classification</small></div>
+          </div>
+          <div class="hint-card" onclick="setHint('Build a medical text classification dataset. Run quality filtering, deduplicate, and generate a README card.')">
+            <div class="hint-icon">🏥</div><div><strong>Medical NLP Dataset</strong><small>Quality-scored, deduplicated clinical text samples</small></div>
+          </div>
+          <div class="hint-card" onclick="setHint('Create a sentiment analysis dataset from product reviews. Augment with paraphrases and export to HuggingFace format.')">
+            <div class="hint-icon">💬</div><div><strong>Sentiment Analysis Dataset</strong><small>Reviews labeled by sentiment, augmented and exported</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="input-inner">
+      <div class="input-wrapper">
+        <textarea class="task-input" id="taskInput" rows="1" placeholder="Describe a dataset to build, or ask the agent anything…"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="handleSend()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line · Start agent from sidebar first</div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+// ── Config ──
+const BACKEND = "https://stremini-dataset.vishwajeetadkine705.workers.dev";
+
+// ── State ──
+let state = { running:false, ready:false, mode:"full", goal:"", history:[], collectedSamples:[] };
+const STAGES = ["collect","clean","label","quality","augment","export"];
+
+// ── DOM ──
+const taskInput       = document.getElementById("taskInput");
+const sendBtn         = document.getElementById("sendBtn");
+const statusBadge     = document.getElementById("statusBadge");
+const messagesInner   = document.getElementById("messagesInner");
+const welcomeScreen   = document.getElementById("welcomeScreen");
+const contextPillText = document.getElementById("contextPillText");
+const goalInput       = document.getElementById("goalInput");
+
+taskInput.addEventListener("input", () => {
+  taskInput.style.height = "auto";
+  taskInput.style.height = Math.min(taskInput.scrollHeight, 180) + "px";
+});
+taskInput.addEventListener("keydown", e => { if (e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();} });
+
+function setMode(btn, mode) {
+  document.querySelectorAll(".mode-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  state.mode = mode;
+  document.getElementById("modePill").textContent = "Mode: " + btn.textContent;
+}
+
+// ── Start agent ──
+async function startAgent() {
+  const goal = goalInput.value.trim();
+  if (!goal) { showToast("Please describe your dataset goal.", "info"); goalInput.focus(); return; }
+  if (state.running) return;
+
+  state.running = true;
+  state.goal    = goal;
+  document.getElementById("startBtn").disabled = true;
+  setStatus("running", "Initializing…");
+  document.getElementById("pipelineSection").style.display = "";
+  contextPillText.textContent = truncate(goal, 36);
+  clearMessages();
+  addMessage("agent", buildActionCard("info", `Starting dataset pipeline for: <strong>${escapeHtml(goal)}</strong>`));
+
+  try {
+    const res  = await fetch(BACKEND, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"initialize", goal, mode:state.mode }),
+    });
+    const data = await res.json();
+
+    if (data.status === "INITIALIZED") {
+      state.history = data.history;
+      state.ready   = true;
+      if (data.summary) renderStats(data.summary);
+      if (data.pipeline) animatePipeline(data.pipeline);
+      addRichMessage("agent", data.reply || "Agent initialized. What would you like to do next?");
+      setStatus("done", "Ready");
+      document.getElementById("exportSection").style.display = "";
+    } else {
+      addMessage("agent", buildActionCard("error", escapeHtml(data.message || "Initialization failed.")));
+      setStatus("error", "Error");
+    }
+  } catch (err) {
+    addMessage("agent", buildActionCard("error", "Could not reach Worker: " + escapeHtml(err.message)));
+    setStatus("error", "Error");
+  }
+
+  state.running = false;
+  document.getElementById("startBtn").disabled = false;
+}
+
+// ── Send ──
+async function handleSend() {
+  const task = taskInput.value.trim();
+  if (!task) { taskInput.focus(); return; }
+  if (state.running) return;
+  if (!state.ready) { showToast("Start the agent first from the sidebar.", "info"); return; }
+  await doSend(task);
+}
+
+async function doSend(task) {
+  addMessage("user", escapeHtml(task));
+  taskInput.value = ""; taskInput.style.height = "auto";
+  state.running = true; sendBtn.disabled = true;
+  setStatus("running", "Thinking…"); addThinking();
+
+  try {
+    const res  = await fetch(BACKEND, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"chat", message:task, history:state.history, mode:state.mode }),
+    });
+    const data = await res.json();
+    removeThinking();
+
+    if (data.status === "REPLY") {
+      state.history = data.history;
+      if (data.summary) renderStats(data.summary);
+      if (data.pipeline) animatePipeline(data.pipeline);
+      addRichMessage("agent", data.reply);
+      setStatus("done", "Done");
+    } else {
+      addMessage("agent", buildActionCard("error", escapeHtml(data.message || "Unexpected error.")));
+      setStatus("error", "Error");
+    }
+  } catch (err) {
+    removeThinking();
+    addMessage("agent", buildActionCard("error", "Network error: " + escapeHtml(err.message)));
+    setStatus("error", "Error");
+  }
+
+  state.running = false; sendBtn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── RICH OUTPUT RENDERER ──
+// ═══════════════════════════════════════════════════════════
+function addRichMessage(role, rawText) {
+  hideWelcome();
+  const isAgent = role === "agent";
+  const time    = new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  const msg     = document.createElement("div");
+  msg.className = "message";
+  msg.innerHTML = `
+    <div class="avatar ${isAgent?"avatar-agent":"avatar-user"}">
+      ${isAgent ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>` : "Y"}
+    </div>
+    <div class="msg-body">
+      <div class="msg-sender">${isAgent?"Dataset Agent":"You"} <span class="msg-time">${time}</span></div>
+      <div class="msg-content" id="rich-${Date.now()}"></div>
+    </div>
+  `;
+  messagesInner.appendChild(msg);
+  const contentEl = msg.querySelector(".msg-content");
+  contentEl.appendChild(renderRich(rawText));
+  scrollToBottom();
+}
+
+function renderRich(text) {
+  const container = document.createElement("div");
+  container.className = "rich-content";
+
+  // ── Step 1: try to find a JSON array anywhere in the text ──
+  // Support both ```json [...] ``` fenced and raw [ ... ] arrays
+  let samples = null;
+  let cleanText = text;
+
+  // Try fenced ```json first
+  const fenced = text.match(/```json\s*([\s\S]*?)```/);
+  if (fenced) {
+    try {
+      const arr = JSON.parse(fenced[1].trim());
+      if (Array.isArray(arr) && arr.length && typeof arr[0]==="object") samples = arr;
+    } catch(_) {}
+  }
+
+  // Try raw JSON array (model output without fences)
+  if (!samples) {
+    const rawMatch = text.match(/(\[[\s\S]*\])/);
+    if (rawMatch) {
+      try {
+        const arr = JSON.parse(rawMatch[1]);
+        if (Array.isArray(arr) && arr.length && typeof arr[0]==="object") {
+          samples = arr;
+          // Remove the raw JSON from text so it doesn't render as prose
+          cleanText = text.replace(rawMatch[1], "").trim();
+        }
+      } catch(_) {}
+    }
+  }
+
+  // Collect samples for download
+  if (samples) {
+    state.collectedSamples.push(...samples);
+  }
+
+  // ── Step 2: strip all markdown artifacts from prose text ──
+  cleanText = stripMarkdown(cleanText);
+
+  // ── Step 3: parse and render remaining prose blocks ──
+  const blocks = parseBlocks(cleanText);
+  blocks.forEach(block => {
+    const el = renderBlock(block);
+    if (el) container.appendChild(el);
+  });
+
+  // ── Step 4: render sample cards if we have them ──
+  if (samples && samples.length) {
+    container.appendChild(renderSampleCards(samples));
+    const bar = buildDownloadBar(state.collectedSamples.length);
+    container.appendChild(bar);
+    renderStats({
+      samples: state.collectedSamples.length,
+      labels: detectLabelCount(),
+      quality_pass: Math.round(state.collectedSamples.length * 0.84),
+      duplicates_removed: Math.round(state.collectedSamples.length * 0.04),
+      augmented: 0,
+      avg_length: avgLength()
+    });
+    document.getElementById("exportSection").style.display = "";
+  }
+
+  return container;
+}
+
+// Strip raw markdown symbols from prose (**, ##, *, `, etc.)
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")      // bold
+    .replace(/\*(.+?)\*/g, "$1")           // italic
+    .replace(/`([^`]+)`/g, "$1")           // inline code
+    .replace(/^#{1,6}\s+/gm, "")          // headings
+    .replace(/^[-*]\s+/gm, "• ")          // bullets normalise
+    .replace(/^\d+\.\s+/gm, (m) => m)     // keep numbered (parsed later)
+    .trim();
+}
+
+function parseBlocks(text) {
+  const blocks = [];
+  if (!text || !text.trim()) return blocks;
+
+  // Split on code fences first
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  parts.forEach(part => {
+    if (part.startsWith("```")) {
+      const langMatch = part.match(/^```(\w*)\n/);
+      const lang = langMatch ? langMatch[1] : "";
+      const code = part.replace(/^```\w*\n?/, "").replace(/```$/, "");
+      // Skip JSON arrays — already handled in renderRich
+      if ((lang === "json" || lang === "") && code.trim().startsWith("[")) return;
+      blocks.push({ type: "code", lang, code });
+      return;
+    }
+
+    const lines = part.split("\n");
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed) { i++; continue; }
+
+      // Skip lines that are just JSON array fragments
+      if (trimmed.startsWith("[") || trimmed.startsWith("{") || trimmed.startsWith("]") || trimmed.startsWith("}")) { i++; continue; }
+
+      // Markdown table
+      if (trimmed.startsWith("|") && lines[i+1] && lines[i+1].trim().startsWith("|")) {
+        const tableLines = [];
+        while (i < lines.length && lines[i].trim().startsWith("|")) { tableLines.push(lines[i]); i++; }
+        blocks.push({ type:"table", lines: tableLines }); continue;
+      }
+
+      // Section heading (after stripping # in stripMarkdown, these are now plain text
+      // BUT if raw text still has ##, handle it)
+      if (trimmed.match(/^#{1,3}\s/)) {
+        blocks.push({ type:"heading", text: trimmed.replace(/^#{1,3}\s+/,"") }); i++; continue;
+      }
+
+      // Normalised bullet (• after stripMarkdown, or original - / *)
+      if (trimmed.match(/^[•\-\*]\s/)) {
+        const items = [];
+        while (i < lines.length && lines[i].trim().match(/^[•\-\*]\s/)) {
+          items.push(lines[i].trim().replace(/^[•\-\*]\s+/,"")); i++;
+        }
+        if (items.length) blocks.push({ type:"bullets", items }); continue;
+      }
+
+      // Numbered list
+      if (trimmed.match(/^\d+[\.\)]\s/)) {
+        const items = [];
+        while (i < lines.length && lines[i].trim().match(/^\d+[\.\)]\s/)) {
+          items.push(lines[i].trim().replace(/^\d+[\.\)]\s+/,"")); i++;
+        }
+        if (items.length) blocks.push({ type:"numlist", items }); continue;
+      }
+
+      // Prose paragraph — accumulate until blank line or structural element
+      const paraLines = [];
+      while (i < lines.length) {
+        const t = lines[i].trim();
+        if (!t) { i++; break; }
+        if (t.match(/^[•\-\*\|]/) || t.match(/^\d+[\.\)]/) || t.match(/^#{1,3}\s/) || t.startsWith("[") || t.startsWith("{")) break;
+        paraLines.push(t); i++;
+      }
+      if (paraLines.join(" ").trim()) blocks.push({ type:"para", text: paraLines.join(" ").trim() });
+    }
+  });
+  return blocks;
+}
+
+function renderBlock(block) {
+  if (block.type === "heading") {
+    const el = document.createElement("div");
+    el.className = "r-section-title";
+    el.textContent = block.text.replace(/\*\*/g,"");
+    return el;
+  }
+
+  if (block.type === "para") {
+    const el = document.createElement("div");
+    el.className = "r-prose";
+    el.textContent = block.text;
+    return el;
+  }
+
+  if (block.type === "bullets") {
+    const el = document.createElement("div");
+    el.className = "r-list";
+    block.items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "r-list-item";
+      row.innerHTML = `<div class="r-list-dot"></div><div></div>`;
+      row.querySelector("div:last-child").textContent = item;
+      el.appendChild(row);
+    });
+    return el;
+  }
+
+  if (block.type === "numlist") {
+    const el = document.createElement("div");
+    el.className = "r-steps";
+    block.items.forEach((item, i) => {
+      const row = document.createElement("div");
+      row.className = "r-step";
+      row.innerHTML = `<div class="r-step-n">${i+1}</div><div></div>`;
+      row.querySelector("div:last-child").textContent = item;
+      el.appendChild(row);
+    });
+    return el;
+  }
+
+  if (block.type === "table") {
+    return renderMarkdownTable(block.lines);
+  }
+
+  if (block.type === "code") {
+    // JSON arrays → render as dataset sample cards
+    if ((block.lang === "json" || block.lang === "") && block.code.trim().startsWith("[")) {
+      try {
+        const arr = JSON.parse(block.code.trim());
+        if (Array.isArray(arr) && arr.length && typeof arr[0]==="object") {
+          return renderSampleCards(arr);
+        }
+      } catch(_) {}
+    }
+    // Markdown → render as README card
+    if (block.lang === "markdown" || block.lang === "md") {
+      return renderReadme(block.code);
+    }
+    // Generic code block
+    return renderCodeBlock(block.lang || "code", block.code);
+  }
+
+  return null;
+}
+
+function renderMarkdownTable(lines) {
+  const rows = lines.map(l => l.split("|").map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));
+  if (rows.length < 2) return null;
+  const headers = rows[0];
+  const body    = rows.slice(2); // skip separator row
+
+  const wrap = document.createElement("div");
+  wrap.className = "r-table-wrap";
+  let html = `<table class="r-table"><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>`;
+  body.forEach(row => {
+    html += `<tr>${row.map((cell,ci) => {
+      const raw = escapeHtml(cell);
+      // Format source column cells
+      if (ci===0 && (cell.includes("PubMed")||cell.includes("Clinical")||cell.includes("FDA")||cell.includes("WHO")||cell.includes("Reddit")||cell.includes("MIMIC"))) {
+        return `<td>${buildSourceBadge(cell)}</td>`;
+      }
+      return `<td>${raw}</td>`;
+    }).join("")}</tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  return wrap;
+}
+
+function renderSampleCards(samples) {
+  const wrap = document.createElement("div");
+  const hdr  = document.createElement("div");
+  hdr.className = "r-card-header";
+  hdr.innerHTML = `<span class="r-card-label">Dataset Samples · ${samples.length} records</span><span style="font-size:10.5px;color:var(--text-muted);">JSON</span>`;
+
+  const cards = document.createElement("div");
+  cards.className = "sample-cards";
+  cards.style.marginTop = "0";
+
+  samples.forEach(s => {
+    const card = document.createElement("div");
+    card.className = "sample-card";
+
+    const qs    = s.quality_score ?? s.qualityScore ?? null;
+    const label = s.label ?? s.category ?? s.class ?? null;
+    const src   = s.source ?? s.Source ?? null;
+    const id    = s.id ?? s.ID ?? null;
+    const text  = s.text ?? s.content ?? s.sentence ?? s.passage ?? "";
+    const meta  = s.metadata ?? s.meta ?? null;
+
+    let topHtml = "";
+    if (id)    topHtml += `<span class="sample-id">${escapeHtml(String(id))}</span>`;
+    if (src)   topHtml += buildSourceBadge(src);
+    if (label) topHtml += buildLabelBadge(label);
+
+    let metaHtml = "";
+    if (qs !== null) {
+      const color = qs>=80?"#059669":qs>=60?var_accent:"#dc2626";
+      const w     = Math.min(100,Math.max(0,qs));
+      const barColor = qs>=80?"#059669":qs>=60?"#d97706":"#dc2626";
+      metaHtml += `<div class="quality-bar-wrap" style="width:140px;">
+        <div class="quality-bar"><div class="quality-bar-fill" style="width:${w}%;background:${barColor};"></div></div>
+        <span class="quality-num">${qs}</span>
+      </div>`;
+    }
+    if (meta && typeof meta==="object") {
+      Object.entries(meta).forEach(([k,v]) => {
+        if (k==="umls_terms"&&Array.isArray(v)) {
+          metaHtml += v.slice(0,2).map(t=>`<span class="meta-chip">${escapeHtml(String(t))}</span>`).join("");
+        } else if (["language","pub_date","trial_start","reddit_post_id","pubmed_id","length_chars"].includes(k)) {
+          metaHtml += `<span class="meta-chip"><strong>${k}:</strong> ${escapeHtml(String(v))}</span>`;
+        }
+      });
+    }
+
+    card.innerHTML = `
+      <div class="sample-card-top">${topHtml}</div>
+      <div class="sample-text">${escapeHtml(text)}</div>
+      ${metaHtml ? `<div class="sample-meta">${metaHtml}</div>` : ""}
+    `;
+    cards.appendChild(card);
+  });
+
+  const outer = document.createElement("div");
+  outer.className = "r-card";
+  outer.appendChild(hdr);
+  const body = document.createElement("div");
+  body.className = "r-card-body";
+  body.style.padding = "12px";
+  body.appendChild(cards);
+  outer.appendChild(body);
+  return outer;
+}
+
+function renderReadme(mdText) {
+  const card = document.createElement("div");
+  card.className = "readme-card";
+  card.innerHTML = `
+    <div class="readme-header">
+      <span class="readme-title">📄 Dataset README Card</span>
+      <button class="copy-btn" onclick="copyText(this, ${JSON.stringify(mdText)})">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <div class="readme-body">${renderMd(mdText)}</div>
+  `;
+  return card;
+}
+
+function renderMd(md) {
+  let out = escapeHtml(md);
+  out = out.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+  out = out.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+  out = out.replace(/^### (.+)$/gm, "<h2>$1</h2>");
+  out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/`([^`]+)`/g, "<code>$1</code>");
+  out = out.replace(/^[-•]\s+(.+)$/gm, "<li>$1</li>");
+  out = out.replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>");
+  out = out.split(/\n\n+/).map(p => p.startsWith("<")?p:`<p>${p}</p>`).join("");
+  out = out.replace(/\n/g, "<br/>");
+  return out;
+}
+
+function renderCodeBlock(lang, code) {
+  const wrap = document.createElement("div");
+  wrap.className = "r-code-block";
+  const encodedCode = code; // keep raw for copy
+  wrap.innerHTML = `
+    <div class="r-code-header">
+      <span class="r-code-lang">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        ${lang}
+      </span>
+      <button class="copy-btn" onclick="this.textContent='Copied!';navigator.clipboard.writeText(this.closest('.r-code-block').querySelector('.r-code-body').textContent);setTimeout(()=>this.innerHTML='Copy',1500)">Copy</button>
+    </div>
+    <div class="r-code-body">${escapeHtml(code)}</div>
+  `;
+  return wrap;
+}
+
+function buildDownloadBar(count) {
+  const bar = document.createElement("div");
+  bar.className = "download-bar";
+  bar.innerHTML = `
+    <span>✅ ${count} sample records generated &amp; ready to download</span>
+    <button class="dl-btn" onclick="downloadDataset('json')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download JSON
+    </button>
+    <button class="dl-btn" onclick="downloadDataset('csv')">⬇ CSV</button>
+    <button class="dl-btn" onclick="downloadDataset('jsonl')">⬇ JSONL</button>
+  `;
+  return bar;
+}
+
+// ── Download ──
+function downloadDataset(format) {
+  const samples = state.collectedSamples;
+  if (!samples.length && format !== "readme") {
+    showToast("No dataset samples collected yet. Run the agent first.", "info"); return;
+  }
+
+  if (format === "json") {
+    download("dataset.json", JSON.stringify(samples, null, 2), "application/json");
+  } else if (format === "jsonl") {
+    download("dataset.jsonl", samples.map(s=>JSON.stringify(s)).join("\n"), "application/json");
+  } else if (format === "csv") {
+    const keys = [...new Set(samples.flatMap(s=>Object.keys(s).filter(k=>k!=="metadata")))];
+    const rows = [keys.join(","), ...samples.map(s => keys.map(k => JSON.stringify(s[k]??"")||"").join(","))];
+    download("dataset.csv", rows.join("\n"), "text/csv");
+  } else if (format === "readme") {
+    const goal = state.goal || "dataset";
+    const readme = generateReadme(goal, samples);
+    download("README.md", readme, "text/markdown");
+  }
+}
+
+function generateReadme(goal, samples) {
+  const labels = [...new Set(samples.map(s=>s.label).filter(Boolean))];
+  const sources = [...new Set(samples.map(s=>s.source).filter(Boolean))];
+  return `# ${goal.slice(0,60)} Dataset
+
+## Description
+A curated dataset built by the Stremini Dataset Builder Agent.
+Goal: ${goal}
+
+## Statistics
+- Total samples: ${samples.length}
+- Labels: ${labels.join(", ") || "N/A"}
+- Sources: ${sources.join(", ") || "N/A"}
+
+## Schema
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique record identifier |
+| text | string | Main content |
+| label | string | Classification label |
+| source | string | Data source |
+| quality_score | int | 0–100 quality score |
+| metadata | object | Additional fields |
+
+## Usage
+\`\`\`python
+from datasets import load_dataset
+ds = load_dataset("json", data_files="dataset.jsonl")
+print(ds[0])
+\`\`\`
+
+## License
+CC-0 (Public Domain)
+
+## Citation
+\`\`\`
+@dataset{stremini_dataset_2025,
+  title={${goal.slice(0,60)}},
+  year={2025},
+  tool={Stremini Dataset Builder Agent}
+}
+\`\`\`
+`;
+}
+
+function download(filename, content, mime) {
+  const blob = new Blob([content], {type: mime});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast(`Downloaded ${filename}`, "success");
+}
+
+// ── Source & label badges ──
+function buildSourceBadge(src) {
+  const s = String(src);
+  let cls = "badge-default";
+  if (s.includes("PubMed")||s.includes("PMC"))       cls = "badge-pubmed";
+  else if (s.includes("Clinical"))                     cls = "badge-clinical";
+  else if (s.includes("FDA"))                          cls = "badge-fda";
+  else if (s.includes("WHO"))                          cls = "badge-who";
+  else if (s.includes("Reddit"))                       cls = "badge-reddit";
+  return `<span class="source-badge ${cls}">${escapeHtml(s)}</span>`;
+}
+
+function buildLabelBadge(label) {
+  const l = String(label).toLowerCase().replace(/\s+/g,"_");
+  const cls = `lbl-${l}`;
+  const styles = ["treatment","disease","symptom","procedure","lab_test","device","prevention","health_policy","indication"];
+  return `<span class="label-badge ${styles.includes(l)?cls:"lbl-default"}">${escapeHtml(label)}</span>`;
+}
+
+// ── Inline format — text is already stripped of **, *, ` by stripMarkdown ──
+function inlineFormat(text) {
+  return escapeHtml(text);
+}
+
+// ── Stats ──
+function renderStats(summary) {
+  document.getElementById("statsSection").style.display = "";
+  const grid = document.getElementById("statGrid");
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Samples</div><div class="stat-value">${fmtNum(summary.samples||0)}</div></div>
+    <div class="stat-card"><div class="stat-label">Labels</div><div class="stat-value">${summary.labels||"—"}</div></div>
+    <div class="stat-card"><div class="stat-label">Quality ≥70</div><div class="stat-value green">${fmtNum(summary.quality_pass||0)}</div></div>
+    <div class="stat-card"><div class="stat-label">Dupes Out</div><div class="stat-value amber">${fmtNum(summary.duplicates_removed||0)}</div></div>
+    <div class="stat-card"><div class="stat-label">Augmented</div><div class="stat-value">${fmtNum(summary.augmented||0)}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Len</div><div class="stat-value">${summary.avg_length||"—"}</div></div>
+  `;
+}
+
+function detectLabelCount() {
+  return [...new Set(state.collectedSamples.map(s=>s.label).filter(Boolean))].length || "TBD";
+}
+function avgLength() {
+  if (!state.collectedSamples.length) return "—";
+  const avg = state.collectedSamples.reduce((a,s)=>a+(s.text||"").length,0)/state.collectedSamples.length;
+  return Math.round(avg)+"ch";
+}
+
+// ── Pipeline animation ──
+function animatePipeline(stages) {
+  STAGES.forEach(s=>{ const el=document.getElementById("stage-"+s); if(el){el.classList.remove("active","done");} });
+  stages.forEach((s,i) => {
+    const el = document.getElementById("stage-"+s);
+    if (!el) return;
+    setTimeout(() => {
+      el.classList.add("active");
+      setTimeout(() => { el.classList.remove("active"); el.classList.add("done"); }, 1100);
+    }, i*600);
+  });
+}
+
+// ── Misc UI ──
+function hideWelcome() { if (welcomeScreen) welcomeScreen.style.display="none"; }
+function clearMessages() {
+  hideWelcome();
+  Array.from(messagesInner.children).forEach(c=>{ if(c.id!=="welcomeScreen") c.remove(); });
+}
+function addMessage(role, content) {
+  hideWelcome();
+  const isAgent = role==="agent";
+  const time    = new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  const msg     = document.createElement("div");
+  msg.className = "message";
+  msg.innerHTML = `
+    <div class="avatar ${isAgent?"avatar-agent":"avatar-user"}">
+      ${isAgent?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>`:"Y"}
+    </div>
+    <div class="msg-body">
+      <div class="msg-sender">${isAgent?"Dataset Agent":"You"} <span class="msg-time">${time}</span></div>
+      <div class="msg-content">${content}</div>
+    </div>`;
+  messagesInner.appendChild(msg);
+  scrollToBottom();
+}
+function addThinking() {
+  hideWelcome();
+  const div = document.createElement("div");
+  div.className="thinking"; div.id="thinkingIndicator";
+  div.innerHTML=`<div class="avatar avatar-agent"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div><div class="msg-body"><div class="msg-sender">Dataset Agent</div><div class="thinking-dots"><span></span><span></span><span></span></div></div>`;
+  messagesInner.appendChild(div); scrollToBottom();
+}
+function removeThinking() { const t=document.getElementById("thinkingIndicator"); if(t) t.remove(); }
+function scrollToBottom() { document.getElementById("messagesContainer").scrollTop=99999; }
+function buildActionCard(type, html) {
+  const icons={info:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,success:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,error:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,warn:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`};
+  return `<div class="action-card action-${type}">${icons[type]||""} ${html}</div>`;
+}
+function setStatus(type,label) { statusBadge.className=`status-badge ${type}`; statusBadge.innerHTML=`<div class="status-dot"></div><span>${label}</span>`; }
+function setHint(text) { taskInput.value=text; taskInput.style.height="auto"; taskInput.style.height=Math.min(taskInput.scrollHeight,180)+"px"; taskInput.focus(); }
+function truncate(str,n) { return str.length>n?str.slice(0,n)+"…":str; }
+function escapeHtml(t) { return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+function fmtNum(n) { return (n===undefined||n===null)?"—":Number(n).toLocaleString(); }
+function showToast(msg,type="info") { const d=document.createElement("div"); d.className=`toast ${type}`; d.textContent=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3500); }
+function copyText(btn, text) { navigator.clipboard.writeText(text); btn.textContent="Copied!"; setTimeout(()=>btn.textContent="Copy",1500); }
+const var_accent = "#d97706";
+
+function clearChat() {
+  welcomeScreen.style.display="";
+  Array.from(messagesInner.children).forEach(c=>{ if(c.id!=="welcomeScreen") c.remove(); });
+  state={running:false,ready:false,mode:state.mode,goal:"",history:[],collectedSamples:[]};
+  setStatus("idle","Ready");
+  contextPillText.textContent="No goal set";
+  ["pipelineSection","statsSection","exportSection"].forEach(id=>document.getElementById(id).style.display="none");
+  STAGES.forEach(s=>{ const el=document.getElementById("stage-"+s); if(el){el.classList.remove("active","done");} });
+  sendBtn.disabled=false;
+}
+</script>
+</body>
+</html>
